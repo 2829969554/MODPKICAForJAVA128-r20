@@ -149,7 +149,8 @@ public final class WebAdmin {
                         + "CRL=http://localhost:80/CRL/{CID}.crl\r\n"
                         + "CRT=http://localhost:80/CRT/{CID}.crt\r\n"
                         + "CPS=https://gitee.com/wxgshuju/modpkica\r\n"
-                        + "CPS_Nonice=http://example.com/nonice\r\n";
+                        + "CPS_Nonice=http://example.com/nonice\r\n"
+                        + "CTLOGapi=/ct/add\r\n";
                 Files.write(f, tpl.getBytes(StandardCharsets.UTF_8));
                 return;
             }
@@ -209,6 +210,9 @@ public final class WebAdmin {
     }
 
     /** 独立启动时探测本机 MAIN 服务（CONFIG.txt WEBPORT，默认 80）是否在运行。 */
+    private static volatile boolean integrated = false;
+
+    /** 独立启动时探测本机 MAIN 服务（CONFIG.txt WEBPORT，默认 80）是否在运行。 */
     private static void probeMain() {
         int p = 0;
         String cfg = readConfigWebPort();
@@ -227,8 +231,11 @@ public final class WebAdmin {
     /** 距上次探测的时间间隔（毫秒），避免每次状态请求都做 TCP 探测。 */
     private static volatile long lastProbeTime = 0;
 
-    /** 状态接口调用时按需刷新 MAIN 探测结果（3 秒缓存）。 */
+    /** 状态接口调用时按需刷新 MAIN 探测结果（3 秒缓存）。集成模式不探测（WebAdmin 存活即 MAIN 存活）。 */
     private static void probeMainIfStale() {
+        if (integrated) {
+            return;
+        }
         long now = System.currentTimeMillis();
         if (now - lastProbeTime < 3000) {
             return;
@@ -240,7 +247,7 @@ public final class WebAdmin {
     /** 尝试 TCP 连接本机端口，用于探测 MAIN 服务是否在运行。 */
     private static boolean canConnect(int port) {
         try (java.net.Socket s = new java.net.Socket()) {
-            s.connect(new java.net.InetSocketAddress("127.0.0.1", port), 400);
+            s.connect(new java.net.InetSocketAddress("127.0.0.1", port), 1000);
             return true;
         } catch (Exception e) {
             return false;
@@ -263,6 +270,9 @@ public final class WebAdmin {
         }
         ensureSuportConfig();
         if (mainWebPort != null && mainWebPort.matches("\\d+")) {
+            // 集成模式：WebAdmin 由 MAIN 同进程启动，WebAdmin 存活即代表 MAIN 存活，
+            // 状态直接取自 MAIN 传入的端口，不再做 TCP 探测（避免瞬时探测失败误报"未运行"）。
+            integrated = true;
             mainPort = mainWebPort;
             mainRunning = true;
         }
@@ -580,6 +590,23 @@ public final class WebAdmin {
                     return;
                 case "/api/ctlog/publicFetch":
                     runAction(ex, m -> ctlogPublicFetch());
+                    return;
+                case "/api/ctlog/tree":
+                    if ("GET".equalsIgnoreCase(method)) {
+                        sendJson(ex, 200, ctlogTreeJson());
+                    } else {
+                        sendJson(ex, 405, Map.of("ok", false, "message", "仅支持 GET"));
+                    }
+                    return;
+                case "/api/ctlog/samplechain":
+                    if ("GET".equalsIgnoreCase(method)) {
+                        sendJson(ex, 200, ctlogSampleChainJson());
+                    } else {
+                        sendJson(ex, 405, Map.of("ok", false, "message", "仅支持 GET"));
+                    }
+                    return;
+                case "/api/ctlog/v1proxy":
+                    runAction(ex, m -> ctlogV1Proxy(m));
                     return;
                 default:
                     sendJson(ex, 404, Map.of("ok", false, "message", "未知 API: " + path));
@@ -2098,7 +2125,7 @@ public final class WebAdmin {
         Map<String, String> d = new LinkedHashMap<>();
         Path f = Paths.get(baseDir, "PKI", "CONFIG.txt");
         boolean exists = Files.exists(f);
-        String webport = "80", suport = "8080", ocsp = "", crl = "", crt = "", cps = "", cpsNonice = "";
+        String webport = "80", suport = "8080", ocsp = "", crl = "", crt = "", cps = "", cpsNonice = "", ctlogApi = "/ct/add";
         if (exists) {
             try {
                 for (String line : Files.readAllLines(f, StandardCharsets.UTF_8)) {
@@ -2114,6 +2141,13 @@ public final class WebAdmin {
                     String v = t.substring(idx + 1).trim();
                     if (k.equalsIgnoreCase("SUPORT")) {
                         suport = v;
+                        continue;
+                    }
+                    if (k.equalsIgnoreCase("CTLOGapi")) {
+                        if (v.equals("/ct/add") || v.equals("/ct/v1/add-chain")
+                                || v.equals("/ct/v1/add-pre-chain")) {
+                            ctlogApi = v;
+                        }
                         continue;
                     }
                     switch (k) {
@@ -2141,6 +2175,7 @@ public final class WebAdmin {
             crt = "http://localhost:80/CRT/{CID}.crt";
             cps = "https://gitee.com/wxgshuju/modpkica";
             cpsNonice = "http://example.com/nonice";
+            ctlogApi = "/ct/add";
         }
         d.put("webport", webport);
         d.put("suport", suport);
@@ -2149,6 +2184,7 @@ public final class WebAdmin {
         d.put("crt", crt);
         d.put("cps", cps);
         d.put("cpsNonice", cpsNonice);
+        d.put("ctlogApi", ctlogApi);
         return Map.of("ok", true, "exists", exists, "data", d);
     }
 
@@ -2168,6 +2204,14 @@ public final class WebAdmin {
         String nonice = str(m, "cpsNonice");
         nonice = nonice.replace("\r\n", "\n").replace('\r', '\n').replace("\n", "\\n");
         updates.put("CPS_Nonice", nonice);
+        // CTLOGapi：默认 ctlog 请求方式，白名单校验，非法回退 /ct/add
+        String ctApi = str(m, "ctlogApi");
+        if (ctApi == null || ctApi.isEmpty()
+                || !(ctApi.equals("/ct/add") || ctApi.equals("/ct/v1/add-chain")
+                     || ctApi.equals("/ct/v1/add-pre-chain"))) {
+            ctApi = "/ct/add";
+        }
+        updates.put("CTLOGapi", ctApi);
 
         Path f = Paths.get(baseDir, "PKI", "CONFIG.txt");
         java.util.List<String> lines;
@@ -2182,7 +2226,8 @@ public final class WebAdmin {
                     "CRL=http://localhost:80/CRL/{CID}.crl",
                     "CRT=http://localhost:80/CRT/{CID}.crt",
                     "CPS=https://gitee.com/wxgshuju/modpkica",
-                    "CPS_Nonice=http://example.com/nonice"));
+                    "CPS_Nonice=http://example.com/nonice",
+                    "CTLOGapi=/ct/add"));
         }
         StringBuilder sb = new StringBuilder();
         java.util.Set<String> done = new java.util.HashSet<>();
@@ -3052,8 +3097,11 @@ public final class WebAdmin {
         if (b < 0 || e < 0) {
             return pemBytes;
         }
+        // 从 PEM 头后的换行开始收集 base64 字符，避免把 "BEGIN CERTIFICATE" 头部的字母误当数据
+        int nl = txt.indexOf('\n', b);
+        int start = (nl >= 0 && nl < e) ? nl + 1 : b + 27;
         StringBuilder sb = new StringBuilder();
-        for (int i = b; i < e; i++) {
+        for (int i = start; i < e; i++) {
             char c = txt.charAt(i);
             if ((c >= 'A' && c <= 'Z') || (c >= 'a' && c <= 'z')
                     || (c >= '0' && c <= '9') || c == '+' || c == '/' || c == '=') {
@@ -3703,6 +3751,281 @@ public final class WebAdmin {
             return "未找到该 log_id";
         }
         return "usable".equals(state) ? "已启用（usable）" : "已暂停（disable）";
+    }
+
+    // ============================================================
+    // SCT 仪表盘（Merkle 树） + /ct/v1 调试代理（v1.28-r3 新增）
+    // ============================================================
+
+    /** hex → 字节。 */
+    private static byte[] hexToBytes(String hex) {
+        int len = hex.length();
+        byte[] out = new byte[len / 2];
+        for (int i = 0; i < len; i += 2) {
+            out[i / 2] = (byte) ((Character.digit(hex.charAt(i), 16) << 4)
+                    | Character.digit(hex.charAt(i + 1), 16));
+        }
+        return out;
+    }
+
+    private static final class MainResp {
+        int code;
+        byte[] body;
+        MainResp(int c, byte[] b) {
+            code = c;
+            body = b;
+        }
+    }
+
+    /** 通用请求本机 MAIN 服务（GET/POST），返回 HTTP 状态码与响应字节。 */
+    private static MainResp requestMainAny(String method, String path, String contentType, byte[] body) throws Exception {
+        String port = readConfigWebPort();
+        if (port == null || port.isEmpty() || "未配置".equals(port)) {
+            port = "80";
+        }
+        URL url = new java.net.URI("http://127.0.0.1:" + port + path).toURL();
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setRequestMethod(method);
+        conn.setConnectTimeout(5000);
+        conn.setReadTimeout(15000);
+        if (contentType != null && !contentType.isEmpty()) {
+            conn.setRequestProperty("Content-Type", contentType);
+        }
+        if (body != null && body.length > 0) {
+            conn.setDoOutput(true);
+            try (OutputStream os = conn.getOutputStream()) {
+                os.write(body);
+            }
+        }
+        int code = conn.getResponseCode();
+        ByteArrayOutputStream bos = new ByteArrayOutputStream();
+        try (InputStream is = code >= 400 ? conn.getErrorStream() : conn.getInputStream()) {
+            if (is != null) {
+                byte[] buf = new byte[4096];
+                int n;
+                while ((n = is.read(buf)) > 0) {
+                    bos.write(buf, 0, n);
+                }
+            }
+        }
+        return new MainResp(code, bos.toByteArray());
+    }
+
+    /** /api/ctlog/v1proxy：可视化调试 /ct/v1/* 8 个接口（转发到 MAIN，返回状态 + 响应原文）。 */
+    private static String ctlogV1Proxy(Map<String, Object> m) throws Exception {
+        String path = str(m, "path");
+        String method = str(m, "method");
+        String query = str(m, "query");
+        String bodyB64 = str(m, "bodyB64");
+        String contentType = str(m, "contentType");
+        if (path == null || !path.startsWith("/ct/v1/")) {
+            throw new IllegalArgumentException("path 必须以 /ct/v1/ 开头");
+        }
+        String mtd = (method == null || method.isEmpty()) ? "GET" : method.toUpperCase();
+        if (!"GET".equals(mtd) && !"POST".equals(mtd)) {
+            throw new IllegalArgumentException("method 仅支持 GET / POST");
+        }
+        byte[] body = (bodyB64 == null || bodyB64.isEmpty()) ? null : Base64.getDecoder().decode(bodyB64);
+        String full = path + ((query == null || query.isEmpty()) ? "" : "?" + query);
+        long t0 = System.currentTimeMillis();
+        MainResp r = requestMainAny(mtd, full,
+                (contentType == null || contentType.isEmpty()) ? "application/json" : contentType, body);
+        long ms = System.currentTimeMillis() - t0;
+        String text = new String(r.body, StandardCharsets.UTF_8);
+        StringBuilder sb = new StringBuilder();
+        sb.append("MAIN ").append(mtd).append(" ").append(full)
+                .append(" → HTTP ").append(r.code).append("，耗时 ").append(ms).append(" ms");
+        if (r.body != null && r.body.length > 0) {
+            sb.append("\n\n").append(text);
+        } else {
+            sb.append("\n\n（响应体为空）");
+        }
+        return sb.toString();
+    }
+
+    /** /api/ctlog/tree：全部日志的 Merkle 树仪表盘数据（树节点 + 叶子证书信息）。 */
+    private static Map<String, Object> ctlogTreeJson() {
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        Map<String, CtLog.LogKey> keyMap = new LinkedHashMap<>();
+        for (CtLog.LogKey k : CtLog.loadKeys(baseDir)) {
+            keyMap.put(k.logId, k);
+        }
+        List<Map<String, Object>> trees = new ArrayList<>();
+        Path dir = Paths.get(baseDir, "PKI", "CTLOG", "trees");
+        List<String> files = new ArrayList<>();
+        if (Files.isDirectory(dir)) {
+            try (Stream<Path> s = Files.list(dir)) {
+                s.filter(p -> p.getFileName().toString().endsWith(".json"))
+                        .forEach(p -> files.add(p.getFileName().toString()));
+            } catch (IOException ignore) {
+            }
+        }
+        java.util.Collections.sort(files);
+        int totalEntries = 0;
+        SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        for (String fn : files) {
+            String hex = fn.substring(0, fn.length() - 5);
+            byte[] raw = hexToBytes(hex);
+            String logIdB64 = Base64.getEncoder().encodeToString(raw);
+            CtLog.LogKey k = keyMap.get(logIdB64);
+            List<CtLog.TreeEntry> entries = CtLog.loadTreeEntries(baseDir, logIdB64);
+            Map<String, Object> t = new LinkedHashMap<>();
+            t.put("logId", logIdB64);
+            t.put("logIdHex", hex);
+            t.put("description", k != null ? k.description : "");
+            t.put("type", k != null ? k.type : "");
+            t.put("state", k != null ? k.state : "");
+            t.put("entryCount", entries.size());
+            totalEntries += entries.size();
+            List<byte[]> leafHashes = new ArrayList<>();
+            for (CtLog.TreeEntry e : entries) {
+                try {
+                    leafHashes.add(CtLog.leafHash(Base64.getDecoder().decode(e.leafInput)));
+                } catch (Exception ignore) {
+                }
+            }
+            List<Map<String, Object>> nodeList = new ArrayList<>();
+            String rootHash = "";
+            try {
+                List<CtLog.MthNode> nodes = CtLog.computeMthNodes(leafHashes);
+                for (CtLog.MthNode nd : nodes) {
+                    Map<String, Object> nm = new LinkedHashMap<>();
+                    nm.put("level", nd.level);
+                    nm.put("start", nd.start);
+                    nm.put("end", nd.end);
+                    nm.put("hash", hexOf(nd.hash));
+                    nodeList.add(nm);
+                    if (nd.level == 0) {
+                        rootHash = hexOf(nd.hash);
+                    }
+                }
+                if (nodes.isEmpty() && !leafHashes.isEmpty()) {
+                    rootHash = hexOf(leafHashes.get(0));
+                }
+            } catch (Exception ignore) {
+            }
+            t.put("nodes", nodeList);
+            t.put("rootHash", rootHash);
+            List<Map<String, Object>> entList = new ArrayList<>();
+            for (int i = 0; i < entries.size(); i++) {
+                CtLog.TreeEntry e = entries.get(i);
+                Map<String, Object> em = new LinkedHashMap<>();
+                em.put("index", i);
+                try {
+                    byte[] li = Base64.getDecoder().decode(e.leafInput);
+                    long ts = CtLog.treeEntryTimestamp(li);
+                    em.put("ts", ts);
+                    em.put("tsText", sdf.format(new Date(ts)));
+                    em.put("entryType", CtLog.parseLeafEntryType(li) == 1 ? "precert" : "x509");
+                    em.put("leafHash", hexOf(CtLog.leafHash(li)));
+                } catch (Exception ignore) {
+                    em.put("ts", 0L);
+                    em.put("tsText", "");
+                    em.put("entryType", "");
+                    em.put("leafHash", "");
+                }
+                String serial = "";
+                String subject = "";
+                String issuer = "";
+                try {
+                    byte[] li = Base64.getDecoder().decode(e.leafInput);
+                    // x509_entry：叶子证书在 leaf_input 的 leaf_certificate 字段；
+                    // precert_entry：extra_data 首个为完整预证书
+                    byte[] certDer = (CtLog.parseLeafEntryType(li) == 1)
+                            ? CtLog.extraDataFirstCert(Base64.getDecoder().decode(e.extraData))
+                            : CtLog.leafCertFromLeafInput(li);
+                    if (certDer != null) {
+                        X509CertificateHolder h = new X509CertificateHolder(certDer);
+                        serial = h.getSerialNumber().toString(16);
+                        subject = h.getSubject().toString();
+                        issuer = h.getIssuer().toString();
+                    }
+                } catch (Exception ignore) {
+                }
+                em.put("serial", serial);
+                em.put("subject", subject);
+                em.put("issuer", issuer);
+                entList.add(em);
+            }
+            t.put("entries", entList);
+            trees.add(t);
+        }
+        out.put("trees", trees);
+        out.put("totalEntries", totalEntries);
+        out.put("treeCount", trees.size());
+        return out;
+    }
+
+    /** /api/ctlog/samplechain：从 CERTS.txt 取一个终端证书链（E→C→R），返回 base64(DER) 数组，供调试区 add-chain 使用。 */
+    private static Map<String, Object> ctlogSampleChainJson() throws Exception {
+        List<String[]> rows = new ArrayList<>();
+        Path p = Paths.get(baseDir, "PKI", "CERTS.txt");
+        if (Files.exists(p)) {
+            for (String line : Files.readAllLines(p, StandardCharsets.UTF_8)) {
+                String t = line.trim();
+                if (!t.isEmpty() && !t.startsWith("#")) {
+                    String[] q = t.split("\\s+");
+                    if (q.length >= 7) {
+                        rows.add(q);
+                    }
+                }
+            }
+        }
+        String leafSerial = null;
+        for (String[] q : rows) {
+            if ("E".equals(q[1]) && !"R".equals(q[2])) {
+                leafSerial = q[0];
+                break;
+            }
+        }
+        if (leafSerial == null) {
+            for (String[] q : rows) {
+                if ("E".equals(q[1])) {
+                    leafSerial = q[0];
+                    break;
+                }
+            }
+        }
+        if (leafSerial == null) {
+            return Map.of("ok", false, "message", "CERTS.txt 中没有 E 类型终端证书，无法生成示例链");
+        }
+        List<String> chainB64 = new ArrayList<>();
+        List<String> chainSerials = new ArrayList<>();
+        String cur = leafSerial;
+        Set<String> seen = new LinkedHashSet<>();
+        while (cur != null && !cur.isEmpty() && seen.add(cur)) {
+            String type = null;
+            String issuerId = null;
+            for (String[] q : rows) {
+                if (q[0].equalsIgnoreCase(cur)) {
+                    type = q[1];
+                    issuerId = q[5];
+                    break;
+                }
+            }
+            String dir = "R".equals(type) ? "ROOT" : "C".equals(type) ? "CA" : "E".equals(type) ? "CERT" : null;
+            if (dir != null) {
+                Path cf = Paths.get(baseDir, "PKI", dir, cur + ".crt");
+                if (Files.exists(cf)) {
+                    byte[] der = pemToDer(Files.readAllBytes(cf));
+                    if (der != null && der.length > 0) {
+                        chainB64.add(Base64.getEncoder().encodeToString(der));
+                        chainSerials.add(cur);
+                    }
+                }
+            }
+            cur = issuerId;
+        }
+        if (chainB64.isEmpty()) {
+            return Map.of("ok", false, "message", "证书链文件不存在（CERT/CA/ROOT 目录）");
+        }
+        Map<String, Object> out = new LinkedHashMap<>();
+        out.put("ok", true);
+        out.put("leafSerial", leafSerial);
+        out.put("chainSerials", chainSerials);
+        out.put("chain", chainB64);
+        return out;
     }
 
     // ============================================================
@@ -4995,6 +5318,15 @@ public final class WebAdmin {
                     <input id="cfgCps" placeholder="https://gitee.com/wxgshuju/modpkica" spellcheck="false">
                     <p class="cfg-hint">证书策略限定符指向的 CPS 链接。</p>
                   </div>
+                  <div class="cfg-field">
+                    <label>CTLOGapi <span class="cfg-tag">默认 ctlog 请求方式</span></label>
+                    <select id="cfgCtlogApi" onchange="saveCtlogApi()">
+                      <option value="/ct/add">/ct/add（PEM 预证书 + 颁发者）</option>
+                      <option value="/ct/v1/add-chain">/ct/v1/add-chain（RFC 6962 正式证书链）</option>
+                      <option value="/ct/v1/add-pre-chain">/ct/v1/add-pre-chain（RFC 6962 预证书链）</option>
+                    </select>
+                    <p class="cfg-hint">签发证书嵌入 SCT 时使用的 CT 日志提交接口；变更后实时写入 CONFIG.txt。</p>
+                  </div>
                   <div class="cfg-field cfg-field-wide">
                     <label>CPS_Nonice <span class="cfg-tag">用户通告文本（支持多行）</span></label>
                     <textarea id="cfgCpsNonice" rows="5" spellcheck="false" placeholder="http://example.com/nonice"></textarea>
@@ -5405,12 +5737,32 @@ public final class WebAdmin {
                 .ct-tabs { display: flex; gap: 6px; margin-bottom: 12px; border-bottom: 2px solid var(--border); }
                 .ct-tab { padding: 8px 18px; border: 1px solid var(--border); border-bottom: none; border-radius: 8px 8px 0 0; background: var(--panel); color: var(--text); cursor: pointer; font-size: 14px; font-weight: 600; }
                 .ct-tab.active { background: #2563eb; color: #fff; }
+                /* Merkle 树仪表盘（crt.sh 风格：等宽、信息优先、hover 高亮） */
+                .ct-tree-stats { display: flex; gap: 14px; flex-wrap: wrap; margin: 10px 0; }
+                .ct-tree-stat { background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; min-width: 150px; }
+                .ct-tree-stat b { display: block; font-size: 12px; color: var(--dim); font-weight: 600; margin-bottom: 3px; }
+                .ct-tree-stat span { font-family: var(--mono); font-size: 13px; word-break: break-all; }
+                #ctTreeView { font-family: var(--mono); font-size: 13px; line-height: 1.7; background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 12px; overflow: auto; max-height: 46vh; }
+                .ct-tree-line { white-space: nowrap; cursor: default; border-radius: 4px; padding: 1px 6px; }
+                .ct-tree-line:hover { background: rgba(37,99,235,.10); }
+                .ct-tree-node { color: #7c3aed; }
+                .ct-tree-leaf { color: #0f766e; }
+                .ct-tree-leaf .sn { color: #1d4ed8; font-weight: 700; }
+                .ct-tree-leaf .dm { color: var(--dim); }
+                #ctTreeDetail { font-family: var(--mono); font-size: 12px; color: var(--text); background: var(--panel2); border: 1px solid var(--border); border-left: 3px solid var(--accent); border-radius: 8px; padding: 10px 14px; margin-top: 8px; display: none; white-space: pre-wrap; word-break: break-all; }
+                #v1Params label { display: inline-block; min-width: 110px; color: var(--dim); font-size: 13px; }
+                #v1Params .v1-row { margin-bottom: 8px; }
+                #v1Params input, #v1Params select { font-family: var(--mono); }
+                #v1Params textarea { width: 100%; height: 120px; box-sizing: border-box; font-family: var(--mono); font-size: 12px; }
+                #v1LogTable td { font-family: var(--mono); font-size: 12px; white-space: pre-wrap; word-break: break-all; }
               </style>
               <div class="card">
                 <div class="ct-tabs">
                   <button class="ct-tab active" id="ctTabBtnKeys" onclick="ctSwitchTab('keys')">CT 日志密钥管理</button>
                   <button class="ct-tab" id="ctTabBtnLogs" onclick="ctSwitchTab('logs')">CT 请求日志</button>
                   <button class="ct-tab" id="ctTabBtnPub" onclick="ctSwitchTab('pub')">可信公网CT公钥管理</button>
+                  <button class="ct-tab" id="ctTabBtnTree" onclick="ctSwitchTab('tree')">仪表盘</button>
+                  <button class="ct-tab" id="ctTabBtnV1" onclick="ctSwitchTab('v1debug')">调试区</button>
                 </div>
                 <div id="ctPaneKeys">
                   <div class="hint">MAIN 服务 /ct/add 按 RFC 6962 标准对预证书签发 SCT。密钥库：PKI/CTLOG/modpkica_ct_list.json（支持 ECDSA-P256 / RSA-2048 / SM2-P256，结构参考 Google log_list v3；状态 usable=启用 / disable=暂停）。</div>
@@ -5450,6 +5802,44 @@ public final class WebAdmin {
                   <div style="overflow:auto;max-height:52vh">
                     <table id="ctPubTable">
                       <thead><tr><th>#</th><th>日志名称</th><th>日志公钥 ID（log_id）</th><th>状态</th><th>日志地址（url）</th></tr></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+                <div id="ctPaneTree" style="display:none">
+                  <div class="hint">Merkle 树仪表盘（参考 crt.sh 风格）：展示每个 CT 日志的树型图与全部节点信息。数据源 PKI/CTLOG/trees/{log_id hex}.json（JSON Lines 逐行追加，append-only）。节点含内部节点（MTH 子树哈希）与叶子（证书条目：索引/时间戳/类型/序列号/DN）。</div>
+                  <div class="toolbar">
+                    <select id="ctTreeSel" onchange="ctRenderTree()" style="max-width:430px"></select>
+                    <button onclick="loadCtTree()">刷新</button>
+                    <span id="ctTreeMsg" style="margin-left:12px;font-size:12px"></span>
+                  </div>
+                  <div id="ctTreeStats" class="ct-tree-stats"></div>
+                  <div id="ctTreeView"></div>
+                  <div id="ctTreeDetail"></div>
+                </div>
+                <div id="ctPaneV1Debug" style="display:none">
+                  <div class="hint">调试区：可视化参数调试 RFC 6962 §4 的 /ct/v1/* 全部 8 个接口（add-chain / add-pre-chain / get-sth / get-roots / get-entries / get-proof-by-hash / get-sth-consistency / get-entry-and-proof）。请求实际转发到本机 MAIN 服务（CONFIG.txt WEBPORT），返回真实 HTTP 状态与响应体。</div>
+                  <div class="toolbar">
+                    <select id="v1ApiSel" onchange="v1ShowForm()" style="max-width:300px">
+                      <option value="/ct/v1/add-chain">POST /ct/v1/add-chain</option>
+                      <option value="/ct/v1/add-pre-chain">POST /ct/v1/add-pre-chain</option>
+                      <option value="/ct/v1/get-sth">GET /ct/v1/get-sth</option>
+                      <option value="/ct/v1/get-roots">GET /ct/v1/get-roots</option>
+                      <option value="/ct/v1/get-entries">GET /ct/v1/get-entries</option>
+                      <option value="/ct/v1/get-proof-by-hash">GET /ct/v1/get-proof-by-hash</option>
+                      <option value="/ct/v1/get-sth-consistency">GET /ct/v1/get-sth-consistency</option>
+                      <option value="/ct/v1/get-entry-and-proof">GET /ct/v1/get-entry-and-proof</option>
+                    </select>
+                    <button onclick="v1Send()">发送请求</button>
+                    <button class="ghost" onclick="v1ClearLog()">清空日志</button>
+                    <span id="v1Msg" style="margin-left:12px;font-size:12px"></span>
+                  </div>
+                  <div id="v1Params" style="margin:10px 0 4px 0"></div>
+                  <div id="v1Resp" class="out" style="display:none;max-height:30vh;overflow:auto;white-space:pre-wrap;word-break:break-all;font-family:var(--mono);font-size:12px"></div>
+                  <div style="margin-top:12px;font-size:13px;color:var(--dim);font-weight:600">请求日志（最近 20 条）</div>
+                  <div style="overflow:auto;max-height:24vh">
+                    <table id="v1LogTable">
+                      <thead><tr><th style="width:6%">#</th><th style="width:94%">请求 / 响应</th></tr></thead>
                       <tbody></tbody>
                     </table>
                   </div>
@@ -5970,23 +6360,27 @@ const $ = id => document.getElementById(id);
             const r = await api('/api/status');
             if (!r.ok) return;
             const d = r.data;
-            $('stPort').textContent = d.mainPort;
-            $('stUptime').textContent = fmtUptime(d.uptimeSeconds);
-            $('stAdmin').textContent = d.adminPort;
-            $('stCalls').textContent = d.totalCalls;
-            $('stLogs').textContent = d.logLines;
-            $('stBase').textContent = d.baseDir;
-            $('mainPort').textContent = 'MAIN: ' + d.mainPort;
+            if ($('stPort')) $('stPort').textContent = d.mainPort;
+            if ($('stUptime')) $('stUptime').textContent = fmtUptime(d.uptimeSeconds);
+            if ($('stAdmin')) $('stAdmin').textContent = d.adminPort;
+            if ($('stCalls')) $('stCalls').textContent = d.totalCalls;
+            if ($('stLogs')) $('stLogs').textContent = d.logLines;
+            if ($('stBase')) $('stBase').textContent = d.baseDir;
+            if ($('mainPort')) $('mainPort').textContent = 'MAIN: ' + d.mainPort;
             const st = $('mainState');
-            st.textContent = d.mainRunning ? '● 运行中' : '○ 未运行';
-            st.className = 'badge ' + (d.mainRunning ? 'ok' : 'err');
-            $('sideVersion').textContent = d.version;
-            // 最近日志
-            const lr = await api('/api/logs?lines=30');
-            if (lr.ok) $('dashLogs').textContent = lr.data;
+            if (st) {
+              st.textContent = d.mainRunning ? '● 运行中' : '○ 未运行';
+              st.className = 'badge ' + (d.mainRunning ? 'ok' : 'err');
+            }
+            if ($('sideVersion')) $('sideVersion').textContent = d.version;
+            // 最近日志（仅仪表盘页拉取，避免其它页面白耗流量）
+            if ($('page-dashboard') && $('page-dashboard').classList.contains('active')) {
+              const lr = await api('/api/logs?lines=30');
+              if (lr.ok && $('dashLogs')) $('dashLogs').textContent = lr.data;
+            }
           } catch (e) {
-            $('mainState').textContent = '连接失败';
-            $('mainState').className = 'badge err';
+            const st = $('mainState');
+            if (st) { st.textContent = '连接失败'; st.className = 'badge err'; }
           }
         }
 
@@ -7045,6 +7439,7 @@ const $ = id => document.getElementById(id);
             $('cfgCrt').value = d.crt;
             $('cfgCps').value = d.cps;
             $('cfgCpsNonice').value = d.cpsNonice;
+            $('cfgCtlogApi').value = d.ctlogApi || '/ct/add';
             $('cfgState').textContent = r.exists
               ? '已加载 PKI/CONFIG.txt'
               : 'PKI/CONFIG.txt 不存在，保存时将按默认模板创建';
@@ -7065,7 +7460,8 @@ const $ = id => document.getElementById(id);
               crl: $('cfgCrl').value.trim(),
               crt: $('cfgCrt').value.trim(),
               cps: $('cfgCps').value.trim(),
-              cpsNonice: $('cfgCpsNonice').value.trim()
+              cpsNonice: $('cfgCpsNonice').value.trim(),
+              ctlogApi: $('cfgCtlogApi').value
             });
             showOut('cfgOut', r.message || 'OK', !!r.ok);
             if (r.ok) $('cfgState').textContent = '已保存 PKI/CONFIG.txt';
@@ -7075,9 +7471,30 @@ const $ = id => document.getElementById(id);
             btn.disabled = false;
           }
         }
+        // CTLOGapi 下拉变更：实时保存（同时携带其它字段当前值，避免覆盖）
+        async function saveCtlogApi() {
+          const el = $('cfgOut');
+          el.hidden = false; el.className = 'out'; el.textContent = '保存中...';
+          try {
+            const r = await api('/api/config', {
+              webport: $('cfgWebport').value.trim(),
+              suport: $('cfgSuport').value.trim(),
+              ocsp: $('cfgOcsp').value.trim(),
+              crl: $('cfgCrl').value.trim(),
+              crt: $('cfgCrt').value.trim(),
+              cps: $('cfgCps').value.trim(),
+              cpsNonice: $('cfgCpsNonice').value.trim(),
+              ctlogApi: $('cfgCtlogApi').value
+            });
+            showOut('cfgOut', r.message || 'OK', !!r.ok);
+            if (r.ok) $('cfgState').textContent = '已保存 PKI/CONFIG.txt（CTLOGapi=' + $('cfgCtlogApi').value + '）';
+          } catch (e) {
+            showOut('cfgOut', '请求失败: ' + e, false);
+          }
+        }
         setInterval(() => {
           if ($('logAuto') && $('logAuto').checked && $('page-logs').classList.contains('active')) loadLogs();
-          if ($('page-dashboard').classList.contains('active')) loadStatus();
+          loadStatus();   // 任意页面都刷新状态徽章（内部已按页面判空）
         }, 3000);
 
         // ===== 启动 =====
@@ -7359,10 +7776,18 @@ const $ = id => document.getElementById(id);
           document.getElementById('ctTabBtnKeys').className = 'ct-tab' + (t==='keys' ? ' active' : '');
           document.getElementById('ctTabBtnLogs').className = 'ct-tab' + (t==='logs' ? ' active' : '');
           document.getElementById('ctTabBtnPub').className = 'ct-tab' + (t==='pub' ? ' active' : '');
+          document.getElementById('ctTabBtnTree').className = 'ct-tab' + (t==='tree' ? ' active' : '');
+          document.getElementById('ctTabBtnV1').className = 'ct-tab' + (t==='v1debug' ? ' active' : '');
           document.getElementById('ctPaneKeys').style.display = t==='keys' ? '' : 'none';
           document.getElementById('ctPaneLogs').style.display = t==='logs' ? '' : 'none';
           document.getElementById('ctPanePub').style.display = t==='pub' ? '' : 'none';
-          if (t==='keys') loadCtKeys(); else if (t==='logs') loadCtLogs(); else loadCtPub();
+          document.getElementById('ctPaneTree').style.display = t==='tree' ? '' : 'none';
+          document.getElementById('ctPaneV1Debug').style.display = t==='v1debug' ? '' : 'none';
+          if (t==='keys') loadCtKeys();
+          else if (t==='logs') loadCtLogs();
+          else if (t==='pub') loadCtPub();
+          else if (t==='tree') loadCtTree();
+          else if (t==='v1debug') v1ShowForm();
         }
         async function loadCtKeys() {
           try {
@@ -7451,6 +7876,230 @@ const $ = id => document.getElementById(id);
           el.style.color = ok === false ? '#dc2626' : 'var(--ok)';
           clearTimeout(ctTip._t);
           ctTip._t = setTimeout(() => { el.textContent = ''; }, 3500);
+        }
+
+        // ===== SCT 仪表盘（Merkle 树，crt.sh 风格） =====
+        let CT_TREE_DATA = null;
+        async function loadCtTree() {
+          const msg = $('ctTreeMsg');
+          if (msg) msg.textContent = '正在加载…';
+          try {
+            const r = await api('/api/ctlog/tree');
+            CT_TREE_DATA = r;
+            if (msg) msg.textContent = r.ok ? '' : ('加载失败: ' + (r.message || ''));
+            const sel = $('ctTreeSel');
+            const prev = sel.value;
+            sel.innerHTML = '';
+            (r.trees || []).forEach(t => {
+              const o = document.createElement('option');
+              o.value = t.logId;
+              o.textContent = (t.description || t.logIdHex) + ' [' + (t.type || '') + '] 条目=' + t.entryCount + ' 状态=' + (t.state || '');
+              sel.appendChild(o);
+            });
+            if (prev && Array.from(sel.options).some(o => o.value === prev)) sel.value = prev;
+            ctRenderTree();
+          } catch (e) {
+            if (msg) msg.textContent = '加载异常: ' + e;
+          }
+        }
+        function shortHash(h) {
+          if (!h) return '-';
+          return h.length > 24 ? h.slice(0, 12) + '…' + h.slice(-12) : h;
+        }
+        function ctRenderTree() {
+          const sel = $('ctTreeSel');
+          const tree = ((CT_TREE_DATA && CT_TREE_DATA.trees) || []).find(t => t.logId === sel.value) || null;
+          const stats = $('ctTreeStats');
+          const view = $('ctTreeView');
+          const det = $('ctTreeDetail');
+          det.style.display = 'none';
+          if (!tree) {
+            stats.innerHTML = '<div class="ct-tree-stat"><b>日志总数</b><span>' + (CT_TREE_DATA ? CT_TREE_DATA.treeCount : 0) + '</span></div>' +
+              '<div class="ct-tree-stat"><b>总条目</b><span>' + (CT_TREE_DATA ? CT_TREE_DATA.totalEntries : 0) + '</span></div>';
+            view.innerHTML = '<div style="color:var(--dim);padding:12px">暂无 Merkle 树数据 —— 使用 /ct/v1/add-chain 或 /ct/v1/add-pre-chain 提交证书后生成。</div>';
+            return;
+          }
+          stats.innerHTML =
+            '<div class="ct-tree-stat"><b>日志总数</b><span>' + (CT_TREE_DATA ? CT_TREE_DATA.treeCount : 0) + '</span></div>' +
+            '<div class="ct-tree-stat"><b>总条目</b><span>' + (CT_TREE_DATA ? CT_TREE_DATA.totalEntries : 0) + '</span></div>' +
+            '<div class="ct-tree-stat"><b>当前日志</b><span>' + esc(tree.description || tree.logIdHex) + '</span></div>' +
+            '<div class="ct-tree-stat"><b>类型 / 状态</b><span>' + esc((tree.type || '-') + ' / ' + (tree.state || '-')) + '</span></div>' +
+            '<div class="ct-tree-stat"><b>条目数</b><span>' + tree.entryCount + '</span></div>' +
+            '<div class="ct-tree-stat"><b>Merkle 根</b><span title="' + esc(tree.rootHash) + '">' + esc(shortHash(tree.rootHash)) + '</span></div>';
+          const nodes = tree.nodes || [];
+          const entries = tree.entries || [];
+          const rootNode = nodes.find(n => n.level === 0) || null;
+          let html = '';
+          if (rootNode) {
+            html += ctTreeLine('root', 0, 'Root MTH [' + rootNode.start + ',' + rootNode.end + ')  ' + shortHash(rootNode.hash), rootNode.hash, null);
+            html += ctRenderMth(nodes, entries, rootNode, 1);
+          } else if (entries.length === 1) {
+            html += ctTreeLine('root', 0, 'Root MTH（单叶子）  ' + shortHash(entries[0].leafHash), entries[0].leafHash, null);
+            html += ctTreeLeaf(entries[0], 1);
+          } else if (entries.length > 1) {
+            html += '<div style="color:#dc2626;padding:8px">树内部节点缺失（computeMthNodes 失败）</div>';
+            entries.forEach(e => { html += ctTreeLeaf(e, 1); });
+          } else {
+            html = '<div style="color:var(--dim);padding:12px">该日志树为空（0 个条目）。</div>';
+          }
+          view.innerHTML = html;
+        }
+        function ctRenderMth(nodes, entries, node, level) {
+          let html = '';
+          const children = nodes.filter(n => n.level === node.level + 1 && n.start >= node.start && n.end <= node.end);
+          if (!children.length) {
+            for (let i = node.start; i < node.end && i < entries.length; i++) {
+              html += ctTreeLeaf(entries[i], level);
+            }
+            return html;
+          }
+          children.sort((a, b) => a.start - b.start);
+          children.forEach(c => {
+            html += ctTreeLine('node', level, '[' + c.start + ',' + c.end + ')  ' + shortHash(c.hash), c.hash, null);
+            html += ctRenderMth(nodes, entries, c, level + 1);
+          });
+          return html;
+        }
+        function ctTreeLine(cls, level, text, hash, idx) {
+          const pad = new Array(level * 4 + 1).join(' ');
+          return '<div class="ct-tree-line ' + cls + '" data-hash="' + esc(hash || '') + '" onclick="ctTreeDetail(this)" title="' + esc(hash || '') + '">' + pad + '└─ ' + esc(text) + '</div>';
+        }
+        function ctTreeLeaf(e, level) {
+          const pad = new Array(level * 4 + 1).join(' ');
+          return '<div class="ct-tree-line ct-tree-leaf" data-index="' + e.index + '" onclick="ctTreeDetail(this)" title="leafHash: ' + esc(e.leafHash || '') + '">' + pad +
+            '└─ [' + e.index + '] ' + esc(e.tsText) + ' ' + (e.entryType === 'precert' ? '预证书' : 'x509') +
+            ' SN=<span class="sn">' + esc(e.serial || '-') + '</span> <span class="dm">' + esc(e.subject || '') + '</span></div>';
+        }
+        function ctTreeDetail(el) {
+          const det = $('ctTreeDetail');
+          const tree = ((CT_TREE_DATA && CT_TREE_DATA.trees) || []).find(t => t.logId === $('ctTreeSel').value) || null;
+          if (!tree) return;
+          const idx = el.getAttribute('data-index');
+          if (idx !== null && idx !== undefined && idx !== '') {
+            const e = tree.entries[parseInt(idx, 10)];
+            if (!e) return;
+            det.style.display = 'block';
+            det.textContent = '叶节点 #' + e.index + '\\n' +
+              '时间戳: ' + e.tsText + ' (' + e.ts + ' ms)\\n' +
+              '条目类型: ' + (e.entryType === 'precert' ? 'precert_entry（预证书，含 poison 扩展）' : 'x509_entry（正式证书）') + '\\n' +
+              '证书序列号: ' + e.serial + '\\n' +
+              '使用者 DN: ' + e.subject + '\\n' +
+              '颁发者 DN: ' + e.issuer + '\\n' +
+              '叶哈希 (SHA-256(0x00 || leaf_input)): ' + e.leafHash;
+          } else {
+            const h = el.getAttribute('data-hash');
+            if (h) {
+              det.style.display = 'block';
+              det.textContent = 'MTH 节点哈希: ' + h;
+            }
+          }
+        }
+
+        // ===== /ct/v1 调试区（RFC 6962 §4 全部 8 接口） =====
+        const V1_API = {
+          '/ct/v1/add-chain': { method: 'POST', params: [['chain', 'textarea', '证书链 base64(DER) JSON 数组，如 ["b64叶子","b64颁发者","b64根"]']] },
+          '/ct/v1/add-pre-chain': { method: 'POST', params: [['chain', 'textarea', '预证书链 base64(DER) JSON 数组（[0]=含 poison 扩展的预证书）']] },
+          '/ct/v1/get-sth': { method: 'GET', params: [['log_id', 'text', '日志 ID（base64，可选，默认第一个可用）']] },
+          '/ct/v1/get-roots': { method: 'GET', params: [] },
+          '/ct/v1/get-entries': { method: 'GET', params: [['start', 'text', '起始索引（必填）'], ['end', 'text', '结束索引（必填）'], ['log_id', 'text', '日志 ID（可选）']] },
+          '/ct/v1/get-proof-by-hash': { method: 'GET', params: [['hash', 'text', '叶子哈希 hex（必填）'], ['tree_size', 'text', '树大小（必填）'], ['log_id', 'text', '日志 ID（可选）']] },
+          '/ct/v1/get-sth-consistency': { method: 'GET', params: [['first', 'text', '旧树大小（必填）'], ['second', 'text', '新树大小（必填）'], ['log_id', 'text', '日志 ID（可选）']] },
+          '/ct/v1/get-entry-and-proof': { method: 'GET', params: [['leaf_index', 'text', '叶子索引（必填）'], ['tree_size', 'text', '树大小（必填）'], ['log_id', 'text', '日志 ID（可选）']] }
+        };
+        function v1ShowForm() {
+          const apiName = $('v1ApiSel').value;
+          const def = V1_API[apiName] || { method: 'GET', params: [] };
+          const box = $('v1Params');
+          box.innerHTML = '<div style="font-size:12px;color:var(--dim);margin-bottom:6px">方法 ' + def.method + ' ' + apiName + ' —— 参数：</div>';
+          if (!def.params.length) {
+            box.innerHTML += '<div style="font-size:13px;color:var(--dim)">（无参数）</div>';
+          }
+          def.params.forEach(p => {
+            const name = p[0], kind = p[1], hint = p[2];
+            if (kind === 'textarea') {
+              box.innerHTML += '<div class="v1-row"><label>' + esc(name) + '</label><br><textarea id="v1p_' + name + '" placeholder="' + esc(hint) + '"></textarea></div>';
+            } else {
+              box.innerHTML += '<div class="v1-row"><label>' + esc(name) + '</label><input id="v1p_' + name + '" placeholder="' + esc(hint) + '" style="width:360px"></div>';
+            }
+          });
+          if (def.method === 'POST') {
+            box.innerHTML += '<div class="v1-row"><label></label><button class="ghost" onclick="v1LoadSample()">载入示例链（从证书库取终端证书链）</button> <span style="font-size:12px;color:var(--dim)" id="v1SampleMsg"></span></div>';
+          }
+          $('v1Resp').style.display = 'none';
+        }
+        async function v1LoadSample() {
+          const msg = $('v1SampleMsg');
+          if (msg) msg.textContent = '载入中…';
+          try {
+            const r = await api('/api/ctlog/samplechain');
+            if (r.ok) {
+              const ta = $('v1p_chain');
+              if (ta) ta.value = JSON.stringify(r.chain, null, 1);
+              if (msg) msg.textContent = '已载入链: ' + (r.chainSerials || []).join(' → ');
+            } else {
+              if (msg) msg.textContent = r.message || '载入失败';
+            }
+          } catch (e) { if (msg) msg.textContent = '载入异常: ' + e; }
+        }
+        async function v1Send() {
+          const apiName = $('v1ApiSel').value;
+          const def = V1_API[apiName] || { method: 'GET', params: [] };
+          const qs = [];
+          const body = {};
+          let bodyB64 = '';
+          def.params.forEach(p => {
+            const el = $('v1p_' + p[0]);
+            const val = el ? el.value.trim() : '';
+            if (def.method === 'GET') {
+              if (val) qs.push(encodeURIComponent(p[0]) + '=' + encodeURIComponent(val));
+            } else {
+              if (val) {
+                if (p[0] === 'chain') {
+                  try { body[p[0]] = JSON.parse(val); } catch (e) { body[p[0]] = val; }
+                } else {
+                  body[p[0]] = val;
+                }
+              }
+            }
+          });
+          if (def.method === 'POST') {
+            bodyB64 = btoa(unescape(encodeURIComponent(JSON.stringify(body))));
+          }
+          const out = $('v1Resp');
+          out.style.display = 'block';
+          out.className = 'out';
+          out.textContent = '正在转发到 MAIN ' + def.method + ' ' + apiName + ' …';
+          try {
+            const r = await api('/api/ctlog/v1proxy', {
+              path: apiName,
+              method: def.method,
+              query: qs.join('&'),
+              bodyB64: bodyB64,
+              contentType: def.method === 'POST' ? 'application/json' : ''
+            });
+            out.className = 'out ' + (r.ok ? 'ok' : 'err');
+            out.textContent = r.message || '(无输出)';
+            v1Log(apiName, def.method, qs.join('&'), def.method === 'POST' ? body : null, r.ok, r.message || '');
+          } catch (e) {
+            out.className = 'out err';
+            out.textContent = '请求失败: ' + e;
+            v1Log(apiName, def.method, qs.join('&'), def.method === 'POST' ? body : null, false, '请求失败: ' + e);
+          }
+        }
+        function v1Log(apiName, method, query, body, ok, resp) {
+          const tb = $('v1LogTable').querySelector('tbody');
+          const now = new Date();
+          const ts = now.getFullYear() + '-' + String(now.getMonth() + 1).padStart(2, '0') + '-' + String(now.getDate()).padStart(2, '0') + ' ' +
+            String(now.getHours()).padStart(2, '0') + ':' + String(now.getMinutes()).padStart(2, '0') + ':' + String(now.getSeconds()).padStart(2, '0');
+          const reqDesc = method + ' ' + apiName + (query ? '?' + query : '') + (body ? '\\nbody: ' + JSON.stringify(body) : '');
+          const tr = document.createElement('tr');
+          tr.innerHTML = '<td><div style="color:var(--dim)">' + ts + '</div></td>' +
+            '<td><div>' + esc(reqDesc) + '\\n→ ' + (ok ? '[成功] ' : '[失败] ') + esc(resp || '') + '</div></td>';
+          tb.insertBefore(tr, tb.firstChild);
+          while (tb.rows.length > 20) tb.deleteRow(tb.rows.length - 1);
+        }
+        function v1ClearLog() {
+          $('v1LogTable').querySelector('tbody').innerHTML = '';
         }
         </script>
         </html>

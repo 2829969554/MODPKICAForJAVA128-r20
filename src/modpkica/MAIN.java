@@ -791,8 +791,11 @@ public final class MAIN {
         verifyChainLinks(chain);
         X509Certificate leaf = chain.get(0);
         boolean sm2 = CtLog.isSm2Precert(leaf);
-        CtLog.LogKey k = resolveLogKey(baseDir, queryParam(ex, "log_id"), sm2);
+        String lid = queryParam(ex, "log_id");
+        CtLog.LogKey k = lid.isEmpty() ? pickFreshLogKey(baseDir, sm2)
+                : resolveLogKey(baseDir, lid, sm2);
         long ts = System.currentTimeMillis();
+        CtLog.saveRawCert(baseDir, chainDer.get(0), ts);   // 保存提交的原始正式证书副本
         CtLog.SctOutcome out = CtLog.signOneSct(baseDir, k, 0, ts, null, null, chainDer);
         MLog.append(baseDir, "CTLog add-chain",
                 "日志=" + k.description + " log_id=" + k.logId + " 叶子=" + leaf.getSubjectX500Principal(),
@@ -802,7 +805,8 @@ public final class MAIN {
         sendJson(ex, 200, "{\"sct_version\":0,\"id\":\"" + k.logId
                 + "\",\"timestamp\":" + ts
                 + ",\"extensions\":\"\",\"signature\":\""
-                + Base64.getEncoder().encodeToString(out.signature) + "\"}");
+                + Base64.getEncoder().encodeToString(out.signature)
+                + "\",\"type\":\"" + k.type + "\"}");
     }
 
     /** POST /ct/v1/add-pre-chain：提交预证书链，返回该日志的 SCT（RFC 6962 §4.2）。 */
@@ -828,8 +832,11 @@ public final class MAIN {
         byte[] tbs = CtLog.tbsWithoutPoison(precert);
         byte[] issuerKeyHash = CtLog.sha256(chain.get(1).getPublicKey().getEncoded());
         boolean sm2 = CtLog.isSm2Precert(precert);
-        CtLog.LogKey k = resolveLogKey(baseDir, queryParam(ex, "log_id"), sm2);
+        String lid = queryParam(ex, "log_id");
+        CtLog.LogKey k = lid.isEmpty() ? pickFreshLogKey(baseDir, sm2)
+                : resolveLogKey(baseDir, lid, sm2);
         long ts = System.currentTimeMillis();
+        CtLog.saveRawCert(baseDir, chainDer.get(0), ts);   // 保存提交的原始预证书副本
         CtLog.SctOutcome out = CtLog.signOneSct(baseDir, k, 1, ts, tbs, issuerKeyHash, chainDer);
         MLog.append(baseDir, "CTLog add-pre-chain",
                 "日志=" + k.description + " log_id=" + k.logId + " 预证书=" + precert.getSubjectX500Principal(),
@@ -839,7 +846,8 @@ public final class MAIN {
         sendJson(ex, 200, "{\"sct_version\":0,\"id\":\"" + k.logId
                 + "\",\"timestamp\":" + ts
                 + ",\"extensions\":\"\",\"signature\":\""
-                + Base64.getEncoder().encodeToString(out.signature) + "\"}");
+                + Base64.getEncoder().encodeToString(out.signature)
+                + "\",\"type\":\"" + k.type + "\"}");
     }
 
     /** GET /ct/v1/get-sth：最新签名树头（RFC 6962 §4.3）。可选 ?log_id= 指定日志，默认第一个 usable。 */
@@ -1091,6 +1099,40 @@ public final class MAIN {
             return k;
         }
         throw new IOException("没有 usable 的 CT 日志密钥，请先在「SCT服务管理」生成并启用密钥");
+    }
+
+    /** 最近已用于响应 SCT 的日志公钥 ID（保证连续多次 add-chain/add-pre-chain 请求用不同密钥）。 */
+    private static final java.util.Set<String> recentSctLogIds =
+            java.util.Collections.synchronizedSet(new java.util.LinkedHashSet<String>());
+
+    /**
+     * 随机选一组 usable 且类型匹配的日志密钥，尽量避开最近已响应的日志：
+     * SM2 预证书只选 SM2 密钥，其他类型只选 RSA/ECDSA 密钥（禁用 SM2 日志密钥）。
+     * 密钥池 ≥3 组时，连续 3 次调用必然返回 3 组不同密钥。
+     */
+    private static synchronized CtLog.LogKey pickFreshLogKey(String baseDir, boolean sm2Only)
+            throws IOException {
+        List<CtLog.LogKey> pool = CtLog.pickLogKeys(baseDir, sm2Only);
+        if (pool.isEmpty()) {
+            throw new IOException("没有 usable 且类型匹配的 CT 日志密钥，请先在「SCT服务管理」生成并启用密钥");
+        }
+        CtLog.LogKey chosen = pool.get(0);
+        for (CtLog.LogKey k : pool) {
+            if (!recentSctLogIds.contains(k.logId)) {
+                chosen = k;
+                break;
+            }
+        }
+        recentSctLogIds.add(chosen.logId);
+        if (recentSctLogIds.size() > 64) {
+            // 保留最近 32 个，清掉最旧的 32 个
+            java.util.Iterator<String> it = recentSctLogIds.iterator();
+            for (int i = 0; i < 32 && it.hasNext(); i++) {
+                it.next();
+                it.remove();
+            }
+        }
+        return chosen;
     }
 
     /** 读取 GET query 参数（无则返回空串）。 */

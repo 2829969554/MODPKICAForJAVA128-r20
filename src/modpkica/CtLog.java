@@ -12,6 +12,7 @@ import org.bouncycastle.asn1.DERTaggedObject;
 import org.bouncycastle.asn1.x509.Extension;
 import org.bouncycastle.asn1.x509.SubjectPublicKeyInfo;
 import org.bouncycastle.cert.X509CertificateHolder;
+import org.bouncycastle.operator.ContentSigner;
 import org.bouncycastle.cert.jcajce.JcaX509CertificateConverter;
 import org.bouncycastle.jcajce.provider.asymmetric.ec.BCECPublicKey;
 import org.bouncycastle.util.io.pem.PemObject;
@@ -755,46 +756,128 @@ public final class CtLog {
     // ============================================================
 
     /**
-     * 将 PEM 预证书 + PEM 颁发者证书以 POST 提交到自身 MAIN /ct/add，
-     * 返回 SCTList（二进制，直接作为 1.3.6.1.4.1.11129.2.4.2 扩展值）。
+     * 读取 CONFIG.txt 的 CTLOGapi 参数（大小写不敏感），决定签发证书时向 CT 日志
+     * 服务提交预证书所用的接口。缺省或非法值回退 {@code /ct/add}。
+     */
+    public static String readCtlogApi(String baseDir) {
+        try {
+            Path f = Paths.get(baseDir, "PKI", "CONFIG.txt");
+            if (Files.exists(f)) {
+                for (String line : Files.readAllLines(f, StandardCharsets.UTF_8)) {
+                    String t = line.trim();
+                    if (t.isEmpty() || t.startsWith("#")) {
+                        continue;
+                    }
+                    int idx = t.indexOf('=');
+                    if (idx <= 0) {
+                        continue;
+                    }
+                    if (t.substring(0, idx).trim().equalsIgnoreCase("CTLOGapi")) {
+                        String v = t.substring(idx + 1).trim();
+                        if (v.equals("/ct/add") || v.equals("/ct/v1/add-chain")
+                                || v.equals("/ct/v1/add-pre-chain")) {
+                            return v;
+                        }
+                    }
+                }
+            }
+        } catch (Exception ignored) {
+        }
+        return "/ct/add";
+    }
+
+    /**
+     * 将 PEM 预证书 + PEM 颁发者证书提交到自身 MAIN CT 日志服务，返回 SCTList
+     * （二进制，直接作为 1.3.6.1.4.1.11129.2.4.2 扩展值）。
+     * <p>提交接口由 CONFIG.txt {@code CTLOGapi} 决定：
+     * <ul>
+     *   <li>{@code /ct/add}（默认）：PEM 预证书 + PEM 颁发者，text/plain，响应=SCTList 二进制；</li>
+     *   <li>{@code /ct/v1/add-pre-chain}：RFC 6962 §4.2 JSON {@code {chain:[b64(预证书DER),b64(颁发者DER)]}}；</li>
+     *   <li>{@code /ct/v1/add-chain}：RFC 6962 §4.1 JSON {@code {chain:[b64(去poison正式证书DER),b64(颁发者DER)]}}。</li>
+     * </ul>
+     * 后两者响应为 JSON，客户端主动请求 3 次（服务端每次换用不同 usable 日志密钥），
+     * 按日志公钥 ID 去重后拼装 SCTList（最多 3 条，密钥池不足 3 组时按可用组数）。
      * MAIN 服务未启动（HTTP 失败）时回退本地签名，保证签发流程可用。
      */
     public static byte[] submitPrecert(String baseDir, X509CertificateHolder precert,
-                                       X509Certificate issuerCert, String port) throws Exception {
-        String body = pemCert(precert.getEncoded()) + pemCert(issuerCert.getEncoded());
-        String url = "http://127.0.0.1:" + port + "/ct/add";
+                                       X509Certificate issuerCert, java.security.PrivateKey issuerKey,
+                                       String issuerAlgo, String hash, String port) throws Exception {
+        String api = readCtlogApi(baseDir);
+        String url;
+        String body;
+        String contentType;
+        boolean v1Json = "/ct/v1/add-pre-chain".equalsIgnoreCase(api)
+                || "/ct/v1/add-chain".equalsIgnoreCase(api);
+        if ("/ct/v1/add-pre-chain".equalsIgnoreCase(api)) {
+            url = "http://127.0.0.1:" + port + "/ct/v1/add-pre-chain";
+            body = "{\"chain\":[\"" + Base64.getEncoder().encodeToString(precert.getEncoded())
+                    + "\",\"" + Base64.getEncoder().encodeToString(issuerCert.getEncoded()) + "\"]}";
+            contentType = "application/json";
+        } else if ("/ct/v1/add-chain".equalsIgnoreCase(api)) {
+            url = "http://127.0.0.1:" + port + "/ct/v1/add-chain";
+            // RFC 6962 §4.1：add-chain 不接受含 poison 扩展的预证书；
+            // 用颁发者私钥对"去 poison 的 TBS"重新签名，构造临时正式证书
+            // （其 TBS 与最终证书 TBS 一致，链签名校验可通过，SCT 按 x509_entry 签发）
+            X509Certificate pc = new JcaX509CertificateConverter().setProvider("BC")
+                    .getCertificate(precert);
+            byte[] tbs = tbsWithoutPoison(pc);
+            ContentSigner signer = CertUtil.createContentSigner(issuerKey, issuerAlgo,
+                    "SM2".equalsIgnoreCase(issuerAlgo) ? "sm3" : hash);
+            java.io.OutputStream sos = signer.getOutputStream();
+            sos.write(tbs);
+            sos.close();
+            org.bouncycastle.asn1.ASN1EncodableVector v = new org.bouncycastle.asn1.ASN1EncodableVector();
+            v.add(org.bouncycastle.asn1.ASN1Primitive.fromByteArray(tbs));
+            v.add(signer.getAlgorithmIdentifier());
+            v.add(new org.bouncycastle.asn1.DERBitString(signer.getSignature()));
+            X509CertificateHolder tmp = new X509CertificateHolder(
+                    org.bouncycastle.asn1.x509.Certificate.getInstance(
+                            new org.bouncycastle.asn1.DERSequence(v)));
+            body = "{\"chain\":[\"" + Base64.getEncoder().encodeToString(tmp.getEncoded())
+                    + "\",\"" + Base64.getEncoder().encodeToString(issuerCert.getEncoded()) + "\"]}";
+            contentType = "application/json";
+        } else {
+            url = "http://127.0.0.1:" + port + "/ct/add";
+            body = pemCert(precert.getEncoded()) + pemCert(issuerCert.getEncoded());
+            contentType = "text/plain";
+        }
         try {
-            java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
-                    java.net.URI.create(url).toURL().openConnection();
-            conn.setRequestMethod("POST");
-            conn.setDoOutput(true);
-            conn.setConnectTimeout(5000);
-            conn.setReadTimeout(20000);
-            conn.setRequestProperty("Content-Type", "text/plain");
-            try (java.io.OutputStream os = conn.getOutputStream()) {
-                os.write(body.getBytes(StandardCharsets.UTF_8));
-            }
-            int code = conn.getResponseCode();
-            java.io.InputStream is = code >= 400 ? conn.getErrorStream() : conn.getInputStream();
-            byte[] resp;
-            try (java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream()) {
-                byte[] buf = new byte[8192];
-                int n;
-                while ((n = is.read(buf)) != -1) {
-                    bos.write(buf, 0, n);
+            if (v1Json) {
+                // 请求 3 次：服务端每次换用不同 usable 日志密钥（SM2 证书仅 SM2 密钥可用），
+                // 按日志公钥 ID 去重后拼装 SCTList；密钥池不足 3 组时按可用组数嵌入。
+                ByteArrayOutputStream acc = new ByteArrayOutputStream();
+                int total = 0;
+                java.util.Set<String> seen = new java.util.HashSet<>();
+                String lastJson = null;
+                for (int i = 0; i < 3; i++) {
+                    String json = new String(
+                            postAndRead(url, body, contentType, api, baseDir), StandardCharsets.UTF_8);
+                    lastJson = json;
+                    java.util.Map<String, Object> m = MiniJson.parse(json);
+                    String id = m.get("id") == null ? "" : String.valueOf(m.get("id"));
+                    if (!seen.add(id)) {
+                        continue;   // 与已嵌入的日志重复 → 跳过（下一轮服务端自动换组）
+                    }
+                    byte[] one = sctListFromV1Json(json);
+                    acc.write(one, 2, one.length - 2);
+                    total += one.length - 2;
                 }
-                resp = bos.toByteArray();
+                if (total == 0 && lastJson != null) {
+                    // 密钥池仅 1 组时三次响应同组 → 至少嵌入 1 条
+                    byte[] one = sctListFromV1Json(lastJson);
+                    acc.write(one, 2, one.length - 2);
+                    total += one.length - 2;
+                }
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                out.write((total >> 8) & 0xff);
+                out.write(total & 0xff);
+                out.write(acc.toByteArray());
+                return out.toByteArray();
             }
-            if (code != 200) {
-                throw new IOException("CT 日志服务 /ct/add 返回 " + code + ": "
-                        + new String(resp, StandardCharsets.UTF_8));
-            }
-            MLog.append(baseDir, "CTLog提交预证书", "url=" + url + " 长度=" + body.length() + "字节",
-                    "获取 SCT 列表 " + resp.length + "字节");
-            return resp;
+            return postAndRead(url, body, contentType, api, baseDir);
         } catch (Exception e) {
             // 本地回退：MAIN 未运行或连接失败时直接本地签名
-            MLog.append(baseDir, "CTLog本地回退", "url=" + url + " 错误=" + e.getMessage(),
+            MLog.append(baseDir, "CTLog本地回退", "url=" + url + " 接口=" + api + " 错误=" + e.getMessage(),
                     "改用本地签名生成 SCT 列表");
             X509Certificate pc = new JcaX509CertificateConverter().setProvider("BC")
                     .getCertificate(precert);
@@ -802,6 +885,75 @@ public final class CtLog {
             byte[] ikh = sha256(issuerCert.getPublicKey().getEncoded());
             return signSctList(baseDir, tbs, ikh, pickLogKeys(baseDir, isSm2Precert(pc)));
         }
+    }
+
+    /**
+     * 保存提交的原始证书（DER→PEM）到 {@code PKI/CTLOG/crtRAW/}，
+     * 文件名格式 {@code {序列号}_{毫秒时间戳}.crt}，便于审计 add-chain / add-pre-chain 的原始提交物。
+     */
+    public static void saveRawCert(String baseDir, byte[] der, long ts) throws Exception {
+        java.nio.file.Path dir = java.nio.file.Paths.get(baseDir, "PKI", "CTLOG", "crtRAW");
+        java.nio.file.Files.createDirectories(dir);
+        X509CertificateHolder h = new X509CertificateHolder(der);
+        String sn = h.getSerialNumber().toString(16);
+        java.nio.file.Path out = dir.resolve(sn + "_" + ts + ".crt");
+        java.nio.file.Files.write(out, pemCert(der).getBytes(StandardCharsets.UTF_8));
+        MLog.append(baseDir, "CTLog保存原始证书", "接口原始证书", "文件=" + out.getFileName()
+                + " 序列号=" + sn + " 时间戳=" + ts);
+    }
+
+    /** POST 一次 CT 日志接口并读取响应字节，记录操作日志。状态非 200 抛异常。 */
+    private static byte[] postAndRead(String url, String body, String contentType,
+            String api, String baseDir) throws Exception {
+        java.net.HttpURLConnection conn = (java.net.HttpURLConnection)
+                java.net.URI.create(url).toURL().openConnection();
+        conn.setRequestMethod("POST");
+        conn.setDoOutput(true);
+        conn.setConnectTimeout(5000);
+        conn.setReadTimeout(20000);
+        conn.setRequestProperty("Content-Type", contentType);
+        try (java.io.OutputStream os = conn.getOutputStream()) {
+            os.write(body.getBytes(StandardCharsets.UTF_8));
+        }
+        int code = conn.getResponseCode();
+        java.io.InputStream is = code >= 400 ? conn.getErrorStream() : conn.getInputStream();
+        byte[] resp;
+        try (java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream()) {
+            byte[] buf = new byte[8192];
+            int n;
+            while ((n = is.read(buf)) != -1) {
+                bos.write(buf, 0, n);
+            }
+            resp = bos.toByteArray();
+        }
+        if (code != 200) {
+            throw new IOException("CT 日志服务 " + api + " 返回 " + code + ": "
+                    + new String(resp, StandardCharsets.UTF_8));
+        }
+        MLog.append(baseDir, "CTLog提交预证书", "url=" + url + " 接口=" + api + " 长度=" + body.length() + "字节",
+                "获取 SCT 列表 " + resp.length + "字节");
+        return resp;
+    }
+
+    /**
+     * 解析 /ct/v1/add-chain / add-pre-chain 的 JSON 响应，组装单条 SCTList
+     * （TLS 编码：u16 总长 + u16 长度 + SerializedSCT，可直接作为证书扩展值）。
+     */
+    static byte[] sctListFromV1Json(String json) throws Exception {
+        java.util.Map<String, Object> m = MiniJson.parse(json);
+        String id = m.get("id") == null ? "" : String.valueOf(m.get("id"));
+        long ts = Long.parseLong(String.valueOf(m.get("timestamp")));
+        byte[] sig = Base64.getDecoder().decode(String.valueOf(m.get("signature")));
+        String type = m.get("type") == null ? "ECDSA" : String.valueOf(m.get("type"));
+        byte[] sct = buildSerializedSct(id, ts, sig, type);
+        ByteArrayOutputStream list = new ByteArrayOutputStream();
+        int len = sct.length + 2;
+        list.write((len >> 8) & 0xff);
+        list.write(len & 0xff);
+        list.write((sct.length >> 8) & 0xff);
+        list.write(sct.length & 0xff);
+        list.write(sct, 0, sct.length);
+        return list.toByteArray();
     }
     // ============================================================
     // 请求日志（ctlogs.txt，只追加）
@@ -1049,15 +1201,15 @@ public final class CtLog {
      * chainDer：完整证书链 DER（[0]=叶子证书，其余为颁发者链）。
      * 返回 [leaf_input, extra_data]。
      */
-    public static byte[][] buildX509LeafAndExtra(long ts, List<byte[]> chainDer) {
+    public static byte[][] buildX509LeafAndExtra(long ts, List<byte[]> chainDer) throws Exception {
         ByteArrayOutputStream leaf = new ByteArrayOutputStream();
         leaf.write(0);                                   // version = v1
         leaf.write(0);                                   // leaf_type = timestamped_entry
         writeU64(leaf, ts);                              // timestamp
         writeU16(leaf, 0);                               // entry_type = x509_entry
-        byte[] cert = chainDer.get(0);                   // leaf_certificate
-        writeU24(leaf, cert.length);
-        leaf.write(cert, 0, cert.length);
+        byte[] tbs = tbsOf(chainDer.get(0));             // leaf_certificate = TBSCertificate（RFC 6962 §3.4）
+        writeU24(leaf, tbs.length);
+        leaf.write(tbs, 0, tbs.length);
         writeU16(leaf, 0);                               // CtExtensions（空）
         // extra_data = certificate_chain 向量（从颁发者开始，每证书 3 字节长度前缀）
         ByteArrayOutputStream extra = new ByteArrayOutputStream();
@@ -1192,16 +1344,22 @@ public final class CtLog {
         return signInput(Base64.getDecoder().decode(k.privateKey), b.toByteArray(), k.type);
     }
 
-    /** RFC 6962 §3.2 SCT 签名输入（x509_entry 版：signed_entry = 叶子证书 DER）。 */
-    public static byte[] buildSctInputX509(long ts, byte[] leafCertDer) {
+    /** RFC 6962 §3.2 SCT 签名输入（x509_entry 版：signed_entry = 叶子证书 TBSCertificate 的 DER）。 */
+    public static byte[] buildSctInputX509(long ts, byte[] leafTbsDer) {
         ByteArrayOutputStream bos = new ByteArrayOutputStream();
         bos.write(0);                                  // sct_version = v1
         bos.write(0);                                  // signature_type = certificate_timestamp
         writeU64(bos, ts);
         writeU16(bos, 0);                              // entry_type = x509_entry
-        writeU24(bos, leafCertDer.length);
-        bos.write(leafCertDer, 0, leafCertDer.length);
+        writeU24(bos, leafTbsDer.length);
+        bos.write(leafTbsDer, 0, leafTbsDer.length);
+        writeU16(bos, 0);                              // CtExtensions（空）
         return bos.toByteArray();
+    }
+
+    /** 提取证书 DER 的 TBSCertificate（RFC 6962 x509_entry 的 signed_entry 用）。 */
+    public static byte[] tbsOf(byte[] certDer) throws Exception {
+        return new X509CertificateHolder(certDer).getTBSCertificate().getEncoded();
     }
 
     /** 单条 SCT 签发结果（RFC 6962 §4.1/§4.2 响应用）。 */
@@ -1224,7 +1382,7 @@ public final class CtLog {
     public static SctOutcome signOneSct(String baseDir, LogKey k, int entryType, long ts,
             byte[] tbsNoPoison, byte[] issuerKeyHash, List<byte[]> chainDer) throws Exception {
         byte[] input = (entryType == 0)
-                ? buildSctInputX509(ts, chainDer.get(0))
+                ? buildSctInputX509(ts, tbsOf(chainDer.get(0)))
                 : buildSctInput(ts, tbsNoPoison, issuerKeyHash);
         byte[] sig = signInput(Base64.getDecoder().decode(k.privateKey), input, k.type);
         byte[] sct = buildSerializedSct(k.logId, ts, sig, k.type);
@@ -1256,5 +1414,106 @@ public final class CtLog {
         } catch (Exception e) {
             return "";
         }
+    }
+
+    // ==================== RFC 6962 树分析（仪表盘 / 调试区专用，v1.28-r3 新增） ====================
+
+    /** 从 MerkleTreeLeaf 解析 LogEntryType（[10..12) 大端 u16）：0=x509_entry，1=precert_entry。 */
+    public static int parseLeafEntryType(byte[] leafInput) {
+        if (leafInput == null || leafInput.length < 12) {
+            return -1;
+        }
+        return ((leafInput[10] & 0xff) << 8) | (leafInput[11] & 0xff);
+    }
+
+    /**
+     * 从 x509_entry 的 MerkleTreeLeaf 解析叶子证书 DER（leaf_certificate 字段）。
+     * 布局：[0]version [1]leaf_type [2..10)ts [10..12)entry_type [12..15)cert_len(u24) [15..)cert [..)extensions(u16)
+     * （RFC 6962 §3.4：x509_entry 的 signed_entry = ASN.1Cert，无 cert_type 字节）
+     */
+    public static byte[] leafCertFromLeafInput(byte[] leafInput) {
+        if (leafInput == null || leafInput.length < 17 || parseLeafEntryType(leafInput) != 0) {
+            return null;
+        }
+        int len = ((leafInput[12] & 0xff) << 16) | ((leafInput[13] & 0xff) << 8) | (leafInput[14] & 0xff);
+        if (len < 1 || 15 + len > leafInput.length) {
+            return null;
+        }
+        return java.util.Arrays.copyOfRange(leafInput, 15, 15 + len);
+    }
+
+    /** 从 extra_data（ASN.1Cert 向量：u24 长度前缀 + DER）解析首个证书 DER。 */
+    public static byte[] extraDataFirstCert(byte[] extraData) {
+        if (extraData == null || extraData.length < 3) {
+            return null;
+        }
+        int len = ((extraData[0] & 0xff) << 16) | ((extraData[1] & 0xff) << 8) | (extraData[2] & 0xff);
+        if (len < 1 || 3 + len > extraData.length) {
+            return null;
+        }
+        return java.util.Arrays.copyOfRange(extraData, 3, 3 + len);
+    }
+
+    /** 从 extra_data 解析全部证书 DER（u24 长度前缀序列）。 */
+    public static List<byte[]> extraDataCerts(byte[] extraData) {
+        List<byte[]> out = new ArrayList<>();
+        if (extraData == null) {
+            return out;
+        }
+        int off = 0;
+        while (off + 3 <= extraData.length) {
+            int len = ((extraData[off] & 0xff) << 16) | ((extraData[off + 1] & 0xff) << 8) | (extraData[off + 2] & 0xff);
+            if (len < 1 || off + 3 + len > extraData.length) {
+                break;
+            }
+            out.add(java.util.Arrays.copyOfRange(extraData, off + 3, off + 3 + len));
+            off += 3 + len;
+        }
+        return out;
+    }
+
+    /** MTH 内部节点（Merkle 树结构节点，不含叶子层）。 */
+    public static final class MthNode {
+        public int level;   // 0 = 根，越大越深
+        public int start;   // 叶子区间起点（含）
+        public int end;     // 叶子区间终点（不含）
+        public byte[] hash;
+    }
+
+    /** 计算整棵 Merkle 树的全部内部节点（RFC 6962 §3.4.1 MTH，自顶向下枚举）。 */
+    public static List<MthNode> computeMthNodes(List<byte[]> leafHashes) throws Exception {
+        List<MthNode> out = new ArrayList<>();
+        if (leafHashes == null || leafHashes.isEmpty()) {
+            return out;
+        }
+        collectMth(leafHashes, 0, leafHashes.size(), 0, out);
+        return out;
+    }
+
+    private static byte[] collectMth(List<byte[]> leafHashes, int start, int end, int level,
+            List<MthNode> out) throws Exception {
+        int n = end - start;
+        if (n == 1) {
+            return leafHashes.get(start);
+        }
+        int k = Integer.highestOneBit(n - 1);
+        byte[] left = collectMth(leafHashes, start, start + k, level + 1, out);
+        byte[] right = collectMth(leafHashes, start + k, end, level + 1, out);
+        byte[] node = sha256(concat(new byte[]{0x01}, left, right));
+        out.add(new MthNode());
+        MthNode nd = out.get(out.size() - 1);
+        nd.level = level;
+        nd.start = start;
+        nd.end = end;
+        nd.hash = node;
+        return node;
+    }
+
+    private static byte[] concat(byte[] a, byte[] b, byte[] c) {
+        byte[] r = new byte[a.length + b.length + c.length];
+        System.arraycopy(a, 0, r, 0, a.length);
+        System.arraycopy(b, 0, r, a.length, b.length);
+        System.arraycopy(c, 0, r, a.length + b.length, c.length);
+        return r;
     }
 }

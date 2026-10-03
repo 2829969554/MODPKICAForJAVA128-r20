@@ -1,4 +1,4 @@
-# MODPKICA Java 复刻版 v1.28-r3（BC 1.85 离线）
+# MODPKICA Java 复刻版 v1.28-r4（BC 1.85 离线）
 
 > 使用 **Java + BouncyCastle 1.85** 离线复刻 Go 版 MODPKICA 全套 PKI 功能：X.509 证书签发、CRL 吊销列表、OCSP 在线状态、RFC3161 / Authenticode 时间戳、RFC 6962 CT 日志服务（SCT 服务管理）、WebAdmin 浏览器管理面板。
 >
@@ -525,6 +525,12 @@ A：离线 / 无外网环境会请求失败，但签名**不中断**——时间
 ---
 
 ## 更新记录
+- **v1.28-r4（2026-10-03）——证书库列表验证 SCT 原始类型标注 + CertVerify KeyUsage NPE 修复**
+  - **SCT 原始类型标注（RFC 6962 §3.2）**：证书库列表「验证」弹窗与 CLI `CertVerify` 中，若证书含 SCT 列表扩展（`1.3.6.1.4.1.11129.2.4.2`），验证每条 SCT 记录时标注其签名的原始数据模式——按 RFC 6962 §3.2 先构造「预证书模式（precert_entry：`entry_type=1 + issuer_key_hash(32B) + u24(len)+去 SCT 扩展的 PreCert TBS` + `u16(extensions)`）」输入验签，失败再回退「正式证书模式（x509_entry：`entry_type=0 + 剥离 SCT 扩展后的 TBSCertificate` + `u16(extensions)`）」；`sctStatus` 返回值由 `String` 改为内部类 `SctVerifyOutcome{status, mode}`，`printSctList` 在「签名类型 / 签名」之后新增 `原始类型:  预证书模式(precert_entry) / 正式证书模式(x509_entry) / 无法判定` 行，再接原「状态:」行（冒号与「签名」保持对齐）
+  - **端到端实测（两条路径均真实签发验证）**：`CTLOGapi=/ct/v1/add-pre-chain` 签发终端证书 → 3 条 SCT 全部标注「预证书模式(precert_entry)」且验签「签名有效」；`CTLOGapi=/ct/v1/add-chain` 签发 → 全部标注「正式证书模式(x509_entry)」且验签「签名有效」；冒烟测试证书与 crtRAW 提交记录已清理，`PKI/CONFIG.txt` 恢复用户原配置
+  - **修复 CertVerify KeyUsage NPE**（验证 `331d3b67…` 等无 KeyUsage 扩展的证书时崩溃）：根因是 `run()` 中 `"密钥用法： " + cert.getKeyUsage() != null` 的运算符优先级错误——`+` 先于 `!=`，字符串拼接结果恒非空、恒走 `bitsToString(null)` 分支导致 `bits.length` 空指针；修复为拆出局部变量判空，并在 `bitsToString` 开头增加 `bits == null` 返回「无」的兜底
+  - **回归**：全量编译零错误；单元测试 **173 passed / 0 failed**（SCT 改动后重跑确认）；MAIN 已重启加载最新 class，面板「证书验证」同样输出原始类型标注
+
 - **v1.28-r3（2026-10-03）——CT 日志服务扩展：RFC 6962 §4 标准 HTTP API 全套（/ct/v1）**
   - **背景**：用户问「/ct/add 是不是太简洁了」，要求在不改动现有 `/ct/add`（及现有任何函数/接口）的前提下，按 RFC 6962 §4 扩展完整 CT 日志 API——**全部为独立新增 function，现有 `signSctList / pickLogKeys / buildSctInput / submitPrecert` 一行未动**
   - **新增 8 个标准接口（`/ct/v1` 前缀，MAIN.java 新 handler `handleCtV1` 统一分发，未知路径 404，校验错误 400，内部异常 500）**：

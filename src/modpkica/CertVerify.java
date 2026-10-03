@@ -156,8 +156,8 @@ public final class CertVerify {
         printAiaAndCrl(cert);
 
         // ---- KeyUsage / BasicConstraints ----
-        System.out.println("密钥用法： " + cert.getKeyUsage() != null
-                ? bitsToString(cert.getKeyUsage()) : "无");
+        boolean[] kuArr = cert.getKeyUsage();
+        System.out.println("密钥用法： " + (kuArr != null ? bitsToString(kuArr) : "无"));
         if (cert.getBasicConstraints() >= 0) {
             System.out.println("基本约束(关键)：\n              Subject Type="
                     + (cert.getBasicConstraints() > 0 ? "CA" : "End Entity")
@@ -584,9 +584,11 @@ public final class CertVerify {
             }
             System.out.println("        签名类型:  " + sigName(hash, sigType));
             System.out.println("            签名:  " + hex(signature));
-            System.out.println("            状态:  " + sctStatus(logId, version, timestamp,
+            SctVerifyOutcome outcome = sctStatus(logId, version, timestamp,
                     extensions, hash, sigType, signature, logKeys, issuer,
-                    issuerKeyHash, tbsNoSct, certDer));
+                    issuerKeyHash, tbsNoSct, certDer);
+            System.out.println("        原始类型:  " + (outcome.mode.isEmpty() ? "无法判定" : outcome.mode));
+            System.out.println("            状态:  " + outcome.status);
             System.out.println("");
             pos = s + sctLen;
             parsedAny = true;
@@ -1498,6 +1500,9 @@ public final class CertVerify {
     }
 
     private static String bitsToString(boolean[] bits) {
+        if (bits == null) {
+            return "无";
+        }
         StringBuilder sb = new StringBuilder();
         String[] names = {"digitalSignature", "nonRepudiation", "keyEncipherment",
                 "dataEncipherment", "keyAgreement", "keyCertSign", "cRLSign",
@@ -1590,19 +1595,20 @@ public final class CertVerify {
     /**
      * 计算单条 SCT 的验证状态（并入 SCT列表 详细输出）。
      * 状态三态：签名有效 / 签名无效 / 未知日志，无法验证。
+     * 原始类型：签名输入按 precert_entry（预证书模式）还是 x509_entry（正式证书模式）验签成功。
      */
-    private static String sctStatus(byte[] logId, int version, long timestamp,
-                                    byte[] extensions, int hashAlg, int sigAlg,
-                                    byte[] signature, Map<String, String[]> logKeys,
-                                    X509Certificate issuer, byte[] issuerKeyHash,
-                                    byte[] tbsNoSct, byte[] certDer) {
+    private static SctVerifyOutcome sctStatus(byte[] logId, int version, long timestamp,
+                                              byte[] extensions, int hashAlg, int sigAlg,
+                                              byte[] signature, Map<String, String[]> logKeys,
+                                              X509Certificate issuer, byte[] issuerKeyHash,
+                                              byte[] tbsNoSct, byte[] certDer) {
         String b64 = Base64.getEncoder().encodeToString(logId);
         String[] lk = logKeys == null ? null : logKeys.get(b64);
         if (lk == null) {
-            return "未知日志，无法验证。";
+            return new SctVerifyOutcome("未知日志，无法验证。", "");
         }
         if (issuer == null || issuerKeyHash == null || tbsNoSct == null || certDer == null) {
-            return "未知日志，无法验证。";
+            return new SctVerifyOutcome("未知日志，无法验证。", "");
         }
         try {
             byte[] spki = Base64.getDecoder().decode(lk[1]);
@@ -1614,15 +1620,32 @@ public final class CertVerify {
             sct.hashAlg = hashAlg;
             sct.sigAlg = sigAlg;
             sct.signature = signature;
-            boolean ok = verifySctSignature(
+            // 先按预证书模式（precert_entry，issuer_key_hash + PreCert TBS）验签；
+            // 失败再按正式证书模式（x509_entry，剥离 SCT 扩展的 TBSCertificate）验签。
+            boolean okPre = verifySctSignature(
                     buildSctInput(sct, issuerKeyHash, tbsNoSct, certDer, true), sct, spki);
-            if (!ok) {
-                ok = verifySctSignature(
-                        buildSctInput(sct, issuerKeyHash, tbsNoSct, certDer, false), sct, spki);
+            if (okPre) {
+                return new SctVerifyOutcome("签名有效", "预证书模式(precert_entry)");
             }
-            return ok ? "签名有效" : "签名无效";
+            boolean okX = verifySctSignature(
+                    buildSctInput(sct, issuerKeyHash, tbsNoSct, certDer, false), sct, spki);
+            if (okX) {
+                return new SctVerifyOutcome("签名有效", "正式证书模式(x509_entry)");
+            }
+            return new SctVerifyOutcome("签名无效", "");
         } catch (Exception e) {
-            return "签名无效";
+            return new SctVerifyOutcome("签名无效", "");
+        }
+    }
+
+    /** SCT 验证结果：状态 + 原始类型标注。 */
+    private static final class SctVerifyOutcome {
+        final String status;
+        final String mode;
+
+        SctVerifyOutcome(String status, String mode) {
+            this.status = status;
+            this.mode = mode;
         }
     }
 
@@ -1640,9 +1663,10 @@ public final class CertVerify {
             writeU24(bos, tbsNoSct.length);
             bos.write(tbsNoSct);
         } else {
+            // RFC 6962 §3.2：x509_entry 的 signed_entry = 叶子证书 TBSCertificate（剥离 SCT 扩展后的 TBS）
             writeU16(bos, 0);                       // entry_type = x509_entry
-            writeU24(bos, certDer.length);
-            bos.write(certDer);
+            writeU24(bos, tbsNoSct.length);
+            bos.write(tbsNoSct);
         }
         writeU16(bos, sct.extensions.length);
         bos.write(sct.extensions);

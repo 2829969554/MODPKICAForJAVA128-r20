@@ -425,8 +425,9 @@ public final class MakeCert {
                     isCa, pathLen, keyUsage, issuerSki, userSki, eku, unknownEku, isTsa, isOcsp,
                     ocspUrl, crtUrl, crlUrl, certPolicies, dnsArg, ipsArg, true);
             X509CertificateHolder precert = cbPre.build(signer);
-            // 2) 提交自身 CT 日志服务 /ct/add（PEM 预证书 + PEM 颁发者），取回 SCT 列表
-            byte[] sctList = CtLog.submitPrecert(baseDir, precert, issuerCert, cfg.getWebPort());
+            // 2) 按 CONFIG.txt CTLOGapi 指定接口提交自身 CT 日志服务（预证书 + 颁发者），取回 SCT 列表
+            byte[] sctList = CtLog.submitPrecert(baseDir, precert, issuerCert, issuerKey, rootAlgo, hash,
+                    cfg.getWebPort());
             // 3) 最终证书：重建（无 poison）+ SCT 列表扩展（1.3.6.1.4.1.11129.2.4.2）
             JcaX509v3CertificateBuilder cbFin = buildCertBuilder(
                     issuerName, serial, notBefore, notAfter, subject, certKp.getPublic(),
