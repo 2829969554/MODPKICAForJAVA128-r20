@@ -71,6 +71,7 @@ import java.util.Locale;
  *   [7] 有效期（年数 或 "开始T结束"）
  *   [8] 域名列表（逗号分隔，SAN）
  *   [9] IP 列表（逗号分隔，SAN）
+ *   [10] 扩展控制（null 或 "noAIA"：不签发 AIA/CRL 扩展，供吊销检查严格的客户端使用）
  *   [11] 颁发者ID（CERTS.txt 中 R/C 类型证书序列号）
  *   [12] 使用者算法类型 RSA/ECC/SM2
  * </pre>
@@ -373,9 +374,14 @@ public final class MakeCert {
         byte[] issuerSki = CertUtil.getSubjectKeyIdentifier(issuerCert.getPublicKey());
         byte[] userSki = CertUtil.getSubjectKeyIdentifier(certKp.getPublic());
         String serialHex = serial.toString(16);
-        String ocspUrl = cfg.getOcspUrl();
-        String crtUrl = cfg.getCrtUrl().replace("{CID}", issuerCert.getSerialNumber().toString(16));
-        String crlUrl = cfg.getCrlUrl().replace("{CID}", issuerCert.getSerialNumber().toString(16));
+        // a[9]（Kernel 参数位，原被忽略）：传 "noAIA" 时不签发 AIA/CRL 扩展，
+        // 供对吊销检查严格的客户端（如 iOS 原生 IKEv2 无法访问 localhost OCSP/CRL）使用。
+        boolean noAia = a.length >= 10 && a[9] != null && "noAIA".equalsIgnoreCase(a[9].trim());
+        String ocspUrl = noAia ? null : cfg.getOcspUrl();
+        String crtUrl = noAia ? null
+                : cfg.getCrtUrl().replace("{CID}", issuerCert.getSerialNumber().toString(16));
+        String crlUrl = noAia ? null
+                : cfg.getCrlUrl().replace("{CID}", issuerCert.getSerialNumber().toString(16));
 
         // CPS 证书策略扩展（参考 smplus 组合方式：CertificatePolicies 标准类，一次生成不重复）
         // 合成：带 CPS URI + UserNotice 限定符的策略 + 其余纯 OID 策略
