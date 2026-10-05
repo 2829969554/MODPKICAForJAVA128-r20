@@ -1,0 +1,5 @@
+# MODPKICA RADIUS 用户库
+# 字段顺序: 用户名 密码 状态 组 备注   (状态: E=启用 D=停用)
+# 删除 = 行首加 # 注释（不真正删除）
+admin666 admin666 E admin admin
+admin888 admin888 D admin admin

@@ -121,6 +121,12 @@ public final class WebAdmin {
     private static volatile String baseDir = AppPaths.baseDir();
     private static HttpServer server;
 
+    /** RADIUS 服务（UDP 认证 1812 / 计费 1813，面板启停，用户库 PKI/USERS.txt）。 */
+    private static final RadiusServer RADIUS = new RadiusServer(AppPaths.baseDir());
+
+    /** PPPoE 服务（RFC 2516，Discovery/UDP 512 + Session/UDP 513 模拟，认证复用 PKI/USERS.txt）。 */
+    private static final PPPoEServer PPPOE = new PPPoEServer(AppPaths.baseDir());
+
     private WebAdmin() {
     }
 
@@ -150,9 +156,42 @@ public final class WebAdmin {
                         + "CRT=http://localhost:80/CRT/{CID}.crt\r\n"
                         + "CPS=https://gitee.com/wxgshuju/modpkica\r\n"
                         + "CPS_Nonice=http://example.com/nonice\r\n"
-                        + "CTLOGapi=/ct/add\r\n";
+                        + "CTLOGapi=/ct/add\r\n"
+                        + "RADIUSPORT=1812\r\n"
+                        + "RADIUSACCT=1813\r\n"
+                        + "RADIUSKEY=mytestkey\r\n"
+                        + "RADIUSAUTO=off\r\n";
                 Files.write(f, tpl.getBytes(StandardCharsets.UTF_8));
                 return;
+            }
+            // 已存在：补齐缺失的 RADIUS 配置键（保留注释与未知键）
+            java.util.List<String> lines = Files.readAllLines(f, StandardCharsets.UTF_8);
+            java.util.Set<String> keys = new java.util.HashSet<>();
+            for (String line : lines) {
+                int idx = line.indexOf('=');
+                if (idx > 0) {
+                    keys.add(line.substring(0, idx).trim());
+                }
+            }
+            if (!keys.contains("RADIUSPORT") || !keys.contains("RADIUSACCT")
+                    || !keys.contains("RADIUSKEY") || !keys.contains("RADIUSAUTO")) {
+                StringBuilder sb = new StringBuilder();
+                for (String line : lines) {
+                    sb.append(line).append("\r\n");
+                }
+                if (!keys.contains("RADIUSPORT")) {
+                    sb.append("RADIUSPORT=1812\r\n");
+                }
+                if (!keys.contains("RADIUSACCT")) {
+                    sb.append("RADIUSACCT=1813\r\n");
+                }
+                if (!keys.contains("RADIUSKEY")) {
+                    sb.append("RADIUSKEY=mytestkey\r\n");
+                }
+                if (!keys.contains("RADIUSAUTO")) {
+                    sb.append("RADIUSAUTO=on\r\n");
+                }
+                Files.write(f, sb.toString().getBytes(StandardCharsets.UTF_8));
             }
             boolean hasSuport = false;
             for (String line : Files.readAllLines(f, StandardCharsets.UTF_8)) {
@@ -346,7 +385,10 @@ public final class WebAdmin {
             "/api/ctlog/gen", "/api/ctlog/delete",
             "/api/ctlog/enable", "/api/ctlog/pause", "/api/ctlog/publicFetch",
             // 模板管理（写 PKI/tamplate/data.json）
-            "/api/template/save", "/api/template/delete", "/api/template/sign");
+            "/api/template/save", "/api/template/delete", "/api/template/sign",
+            // 用户管理（写 PKI/USERS.txt）与 RADIUS 服务启停 / 配置（写 CONFIG.txt）
+            "/api/users/add", "/api/users/update", "/api/users/delete", "/api/users/status",
+            "/api/radius/start", "/api/radius/stop", "/api/radius/config");
 
     /** 写操作全局锁：保证 PKI 文件（证书/私钥/CRL/CONFIG/日志）串行修改。 */
     private static final Object WRITE_LOCK = new Object();
@@ -607,6 +649,94 @@ public final class WebAdmin {
                     return;
                 case "/api/ctlog/v1proxy":
                     runAction(ex, m -> ctlogV1Proxy(m));
+                    return;
+                // ===== 用户管理（PKI/USERS.txt） =====
+                case "/api/users/list":
+                    if ("GET".equalsIgnoreCase(method)) {
+                        sendJson(ex, 200, usersListJson());
+                    } else {
+                        sendJson(ex, 405, Map.of("ok", false, "message", "仅支持 GET"));
+                    }
+                    return;
+                case "/api/users/add":
+                    runAction(ex, m -> usersAdd(m));
+                    return;
+                case "/api/users/update":
+                    runAction(ex, m -> usersUpdate(m));
+                    return;
+                case "/api/users/delete":
+                    runAction(ex, m -> usersDelete(m));
+                    return;
+                case "/api/users/status":
+                    runAction(ex, m -> usersSetState(m));
+                    return;
+                // ===== Radius 服务管理 =====
+                case "/api/radius/status":
+                    if ("GET".equalsIgnoreCase(method)) {
+                        sendJson(ex, 200, radiusStatusJson());
+                    } else {
+                        sendJson(ex, 405, Map.of("ok", false, "message", "仅支持 GET"));
+                    }
+                    return;
+                case "/api/radius/logs":
+                    if ("GET".equalsIgnoreCase(method)) {
+                        String q = ex.getRequestURI().getQuery();
+                        sendJson(ex, 200, radiusLogsJson(qp(q, "lines")));
+                    } else {
+                        sendJson(ex, 405, Map.of("ok", false, "message", "仅支持 GET"));
+                    }
+                    return;
+                case "/api/radius/start":
+                    runAction(ex, m -> radiusStart(m));
+                    return;
+                case "/api/radius/stop":
+                    runAction(ex, m -> radiusStop());
+                    return;
+                case "/api/radius/reset":
+                    runAction(ex, m -> radiusReset());
+                    return;
+                case "/api/radius/clearlogs":
+                    runAction(ex, m -> radiusClearLogs());
+                    return;
+                case "/api/radius/config":
+                    runAction(ex, m -> radiusSaveConfig(m));
+                    return;
+                case "/api/radius/dial":
+                    runAction(ex, m -> radiusDial(m));
+                    return;
+                // ===== PPPoE 服务管理 =====
+                case "/api/pppoe/status":
+                    if ("GET".equalsIgnoreCase(method)) {
+                        sendJson(ex, 200, pppoeStatusJson());
+                    } else {
+                        sendJson(ex, 405, Map.of("ok", false, "message", "仅支持 GET"));
+                    }
+                    return;
+                case "/api/pppoe/logs":
+                    if ("GET".equalsIgnoreCase(method)) {
+                        String q = ex.getRequestURI().getQuery();
+                        sendJson(ex, 200, pppoeLogsJson(qp(q, "lines")));
+                    } else {
+                        sendJson(ex, 405, Map.of("ok", false, "message", "仅支持 GET"));
+                    }
+                    return;
+                case "/api/pppoe/start":
+                    runAction(ex, m -> pppoeStart(m));
+                    return;
+                case "/api/pppoe/stop":
+                    runAction(ex, m -> pppoeStop());
+                    return;
+                case "/api/pppoe/reset":
+                    runAction(ex, m -> pppoeReset());
+                    return;
+                case "/api/pppoe/clearlogs":
+                    runAction(ex, m -> pppoeClearLogs());
+                    return;
+                case "/api/pppoe/config":
+                    runAction(ex, m -> pppoeSaveConfig(m));
+                    return;
+                case "/api/pppoe/dial":
+                    runAction(ex, m -> pppoeDial(m));
                     return;
                 default:
                     sendJson(ex, 404, Map.of("ok", false, "message", "未知 API: " + path));
@@ -3754,6 +3884,406 @@ public final class WebAdmin {
     }
 
     // ============================================================
+    // 用户管理（PKI/USERS.txt）
+    // ============================================================
+
+    /** /api/users/list：用户列表（不含 # 注释行）。 */
+    private static Map<String, Object> usersListJson() {
+        List<Map<String, Object>> list = new ArrayList<>();
+        int i = 1;
+        for (UsersDB.User u : UsersDB.load(baseDir)) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("index", i++);
+            m.put("username", u.username);
+            m.put("password", u.password);
+            m.put("state", u.state);
+            m.put("enabled", u.enabled());
+            m.put("group", u.group);
+            m.put("note", u.note);
+            list.add(m);
+        }
+        return Map.of("ok", true, "users", list);
+    }
+
+    /** /api/users/add：新增用户。 */
+    private static String usersAdd(Map<String, Object> m) {
+        String name = str(m, "username");
+        String pw = str(m, "password");
+        String state = str(m, "state");
+        String group = str(m, "group");
+        String note = str(m, "note");
+        UsersDB.add(baseDir, name, pw, state, group, note);
+        return "已添加用户: " + name.trim();
+    }
+
+    /** /api/users/update：修改用户。 */
+    private static String usersUpdate(Map<String, Object> m) {
+        String oldName = str(m, "old_username");
+        String name = str(m, "username");
+        String pw = str(m, "password");
+        String state = str(m, "state");
+        String group = str(m, "group");
+        String note = str(m, "note");
+        UsersDB.update(baseDir, oldName, name, pw, state, group, note);
+        return "已更新用户: " + oldName.trim() + " → " + name.trim();
+    }
+
+    /** /api/users/delete：删除用户（行首加 # 注释，保留原行）。 */
+    private static String usersDelete(Map<String, Object> m) {
+        String name = str(m, "username");
+        UsersDB.remove(baseDir, name);
+        return "已删除用户: " + name.trim() + "（USERS.txt 中该行已加 # 注释）";
+    }
+
+    /** /api/users/status：启用 / 停用。 */
+    private static String usersSetState(Map<String, Object> m) {
+        String name = str(m, "username");
+        String st = str(m, "state");
+        boolean enable = !"D".equalsIgnoreCase(st);
+        UsersDB.setState(baseDir, name, enable);
+        return "用户 " + name.trim() + " 已" + (enable ? "启用" : "停用");
+    }
+
+    // ============================================================
+    // Radius 服务管理（UDP 认证 1812 / 计费 1813 + EAP）
+    // ============================================================
+
+    /** 读取 CONFIG.txt 键值（缺省回退）。 */
+    private static String configGet(String key, String def) {
+        try {
+            Map<String, String> raw = new Config(baseDir).getRaw();
+            String v = raw.get(key);
+            return (v == null || v.isEmpty()) ? def : v;
+        } catch (Exception e) {
+            return def;
+        }
+    }
+
+    /**
+     * MAIN 启动时调用：若 CONFIG 中 RADIUSAUTO=on（缺省 off，仅用户勾选后开启），
+     * 用共享实例自动拉起 RADIUS。与面板启停使用同一个实例，保证页面状态/统计/日志真实一致。
+     *
+     * @return 是否成功自动启动
+     */
+    public static boolean startRadiusIfConfigured() {
+        try {
+            if (!"on".equalsIgnoreCase(configGet("RADIUSAUTO", "off"))) {
+                return false;
+            }
+            int ap = RadiusServer.portOf(configGet("RADIUSPORT", null), RadiusServer.DEFAULT_AUTH_PORT);
+            int cpt = RadiusServer.portOf(configGet("RADIUSACCT", null), RadiusServer.DEFAULT_ACCT_PORT);
+            String key = configGet("RADIUSKEY", "mytestkey");
+            RADIUS.start(ap, cpt, key);
+            return true;
+        } catch (Exception e) {
+            System.err.println("RADIUS 自动启动失败（忽略，不影响主服务）: " + e.getMessage());
+            return false;
+        }
+    }
+
+    /**
+     * MAIN 启动时调用：若 CONFIG 中 PPPOEAUTO=on（缺省 off，仅用户勾选后开启），
+     * 用共享实例自动拉起 PPPoE。与面板启停使用同一个实例，保证页面状态/统计/日志真实一致。
+     *
+     * @return 是否成功自动启动
+     */
+    public static boolean startPppoeIfConfigured() {
+        try {
+            if (!"on".equalsIgnoreCase(configGet("PPPOEAUTO", "off"))) {
+                return false;
+            }
+            int disc = pppoePortOf(configGet("PPPOEDISC", null), PPPoEServer.DEFAULT_DISC_PORT);
+            int sess = pppoePortOf(configGet("PPPOESESS", null), PPPoEServer.DEFAULT_SESS_PORT);
+            PPPOE.start(disc, sess);
+            return true;
+        } catch (Exception e) {
+            System.err.println("PPPoE 自动启动失败（忽略，不影响主服务）: " + e.getMessage());
+            return false;
+        }
+    }
+
+    private static int radiusPortOf(String s, int def) {
+        if (s == null || s.trim().isEmpty()) {
+            return def;
+        }
+        try {
+            int v = Integer.parseInt(s.trim());
+            return v > 0 && v < 65536 ? v : def;
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    /** /api/radius/status：运行状态 + CONFIG 配置 + 统计。 */
+    private static Map<String, Object> radiusStatusJson() {
+        Map<String, Object> m = new LinkedHashMap<>(RADIUS.statusJson());
+        m.put("ok", true);
+        m.put("cfgAuthPort", radiusPortOf(configGet("RADIUSPORT", null), RadiusServer.DEFAULT_AUTH_PORT));
+        m.put("cfgAcctPort", radiusPortOf(configGet("RADIUSACCT", null), RadiusServer.DEFAULT_ACCT_PORT));
+        m.put("cfgSecret", configGet("RADIUSKEY", "mytestkey"));
+        m.put("cfgAuto", "on".equalsIgnoreCase(configGet("RADIUSAUTO", "off")));
+        return m;
+    }
+
+    /** /api/radius/logs：环形日志（WinRadius 风格，最新在前）。 */
+    private static Map<String, Object> radiusLogsJson(String lines) {
+        int n = 100;
+        if (lines != null) {
+            try {
+                n = Math.max(1, Math.min(Integer.parseInt(lines.trim()), RadiusServer.MAX_LOG_ENTRIES));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (RadiusServer.LogEntry e : RADIUS.logs(n)) {
+            Map<String, Object> m = new LinkedHashMap<>();
+            m.put("id", e.id);
+            m.put("time", e.time);
+            m.put("message", e.message);
+            list.add(m);
+        }
+        return Map.of("ok", true, "logs", list);
+    }
+
+    /** /api/radius/start：按参数启动（未给则用 CONFIG 或默认）。 */
+    private static String radiusStart(Map<String, Object> m) {
+        int ap = radiusPortOf(str(m, "auth_port"), radiusPortOf(configGet("RADIUSPORT", null), RadiusServer.DEFAULT_AUTH_PORT));
+        int cpt = radiusPortOf(str(m, "acct_port"), radiusPortOf(configGet("RADIUSACCT", null), RadiusServer.DEFAULT_ACCT_PORT));
+        String key = str(m, "secret");
+        if (key == null || key.isEmpty()) {
+            key = configGet("RADIUSKEY", "mytestkey");
+        }
+        try {
+            return RADIUS.start(ap, cpt, key);
+        } catch (Exception e) {
+            throw new IllegalStateException("RADIUS 启动失败（端口可能被占用）: " + e.getMessage());
+        }
+    }
+
+    /** /api/radius/stop。 */
+    private static String radiusStop() {
+        return RADIUS.stop();
+    }
+
+    /** /api/radius/reset：统计清零。 */
+    private static String radiusReset() {
+        RADIUS.resetStats();
+        return "统计已清零";
+    }
+
+    /** /api/radius/clearlogs：清空环形日志。 */
+    private static String radiusClearLogs() {
+        RADIUS.clearLogs();
+        return "日志已清空";
+    }
+
+    /** /api/radius/config：参数化保存 CONFIG.txt（RADIUSPORT / RADIUSACCT / RADIUSKEY / RADIUSAUTO）。 */
+    private static String radiusSaveConfig(Map<String, Object> m) throws Exception {
+        Map<String, String> updates = new LinkedHashMap<>();
+        int ap = radiusPortOf(str(m, "auth_port"), RadiusServer.DEFAULT_AUTH_PORT);
+        int cpt = radiusPortOf(str(m, "acct_port"), RadiusServer.DEFAULT_ACCT_PORT);
+        String key = str(m, "secret");
+        if (key == null || key.trim().isEmpty()) {
+            throw new IllegalArgumentException("共享密钥不能为空");
+        }
+        updates.put("RADIUSPORT", String.valueOf(ap));
+        updates.put("RADIUSACCT", String.valueOf(cpt));
+        updates.put("RADIUSKEY", key.trim());
+        updates.put("RADIUSAUTO", "on".equalsIgnoreCase(str(m, "auto")) ? "on" : "off");
+
+        Path f = Paths.get(baseDir, "PKI", "CONFIG.txt");
+        java.util.List<String> lines;
+        if (Files.exists(f)) {
+            lines = Files.readAllLines(f, StandardCharsets.UTF_8);
+        } else {
+            lines = new java.util.ArrayList<>();
+        }
+        StringBuilder sb = new StringBuilder();
+        java.util.Set<String> done = new java.util.HashSet<>();
+        for (String line : lines) {
+            String t = line.trim();
+            if (t.isEmpty() || t.startsWith("#")) {
+                sb.append(line).append("\r\n");
+                continue;
+            }
+            int idx = t.indexOf('=');
+            if (idx <= 0) {
+                sb.append(line).append("\r\n");
+                continue;
+            }
+            String k = t.substring(0, idx).trim();
+            if (updates.containsKey(k)) {
+                sb.append(k).append('=').append(updates.get(k)).append("\r\n");
+                done.add(k);
+            } else {
+                sb.append(line).append("\r\n");
+            }
+        }
+        for (Map.Entry<String, String> e : updates.entrySet()) {
+            if (!done.contains(e.getKey())) {
+                sb.append(e.getKey()).append('=').append(e.getValue()).append("\r\n");
+            }
+        }
+        Files.createDirectories(f.getParent());
+        Files.write(f, sb.toString().getBytes(StandardCharsets.UTF_8));
+        return "RADIUS 配置已保存到 CONFIG.txt（认证 " + ap + " / 计费 " + cpt
+                + "，自动启动=" + ("on".equalsIgnoreCase(str(m, "auto")) ? "开" : "关") + "）";
+    }
+
+    /** /api/radius/dial：客户端-调试专区，模拟 NAS 发起认证（PAP/CHAP/MS-CHAPv1/v2/EAP-MD5/EAP-TLS）。 */
+    private static String radiusDial(Map<String, Object> m) throws Exception {
+        String method = str(m, "method");
+        String user = str(m, "user");
+        String pass = str(m, "pass");
+        String secret = str(m, "secret");
+        if (secret == null || secret.trim().isEmpty()) {
+            secret = configGet("RADIUSKEY", "mytestkey");
+        }
+        int port = radiusPortOf(str(m, "port"), RadiusServer.DEFAULT_AUTH_PORT);
+        String certSerial = str(m, "cert");
+        Map<String, Object> r = RADIUS.clientDial(method, user, pass, secret, port, certSerial);
+        String msg = String.valueOf(r.get("message"));
+        MLog.append(baseDir, "Radius 客户端调试",
+                "认证方式=" + method + " 用户=" + user + " 目标=127.0.0.1:" + port
+                        + (certSerial != null && !certSerial.isEmpty() ? " 证书=" + certSerial : ""), msg);
+        @SuppressWarnings("unchecked")
+        java.util.List<String> logs = (java.util.List<String>) r.get("logs");
+        if (logs != null && !logs.isEmpty()) {
+            return String.join("\n", logs);
+        }
+        return msg;
+    }
+
+    // ============================================================
+    // PPPoE 服务管理（RFC 2516；服务器 + 客户端拨号模拟器）
+    // ============================================================
+    private static Map<String, Object> pppoeStatusJson() {
+        Map<String, Object> m = new LinkedHashMap<>(PPPOE.statusJson());
+        m.put("ok", true);
+        m.put("cfgDiscPort", pppoePortOf(configGet("PPPOEDISC", null), PPPoEServer.DEFAULT_DISC_PORT));
+        m.put("cfgSessPort", pppoePortOf(configGet("PPPOESESS", null), PPPoEServer.DEFAULT_SESS_PORT));
+        m.put("cfgAuto", "on".equalsIgnoreCase(configGet("PPPOEAUTO", "off")));
+        return m;
+    }
+
+    private static Map<String, Object> pppoeLogsJson(String lines) {
+        int n = 100;
+        if (lines != null) {
+            try {
+                n = Math.max(1, Math.min(Integer.parseInt(lines.trim()), PPPoEServer.MAX_LOG_ENTRIES));
+            } catch (NumberFormatException ignored) {
+            }
+        }
+        List<Map<String, Object>> list = new ArrayList<>();
+        for (PPPoEServer.LogEntry e : PPPOE.logs(n)) {
+            Map<String, Object> mm = new LinkedHashMap<>();
+            mm.put("id", e.id);
+            mm.put("time", e.time);
+            mm.put("message", e.message);
+            list.add(mm);
+        }
+        return Map.of("ok", true, "logs", list);
+    }
+
+    private static String pppoeStart(Map<String, Object> m) {
+        int disc = pppoePortOf(str(m, "disc_port"),
+                pppoePortOf(configGet("PPPOEDISC", null), PPPoEServer.DEFAULT_DISC_PORT));
+        int sess = pppoePortOf(str(m, "sess_port"),
+                pppoePortOf(configGet("PPPOESESS", null), PPPoEServer.DEFAULT_SESS_PORT));
+        try {
+            return PPPOE.start(disc, sess);
+        } catch (Exception e) {
+            throw new IllegalStateException("PPPoE 启动失败（端口可能被占用）: " + e.getMessage());
+        }
+    }
+
+    private static String pppoeStop() {
+        PPPOE.stop();
+        return "PPPoE 服务已停止";
+    }
+
+    private static String pppoeReset() {
+        PPPOE.reset();
+        return "统计已清零";
+    }
+
+    /** /api/pppoe/clearlogs：清空环形日志。 */
+    private static String pppoeClearLogs() {
+        PPPOE.clearLogs();
+        return "日志已清空";
+    }
+
+    /** /api/pppoe/dial：客户端拨号模拟，返回完整流程日志文本。 */
+    private static String pppoeDial(Map<String, Object> m) {
+        Map<String, Object> r = PPPOE.dial(str(m, "username"), str(m, "password"), str(m, "method"));
+        StringBuilder sb = new StringBuilder();
+        @SuppressWarnings("unchecked")
+        List<String> log = (List<String>) r.get("log");
+        if (log != null) {
+            for (String line : log) {
+                sb.append(line).append('\n');
+            }
+        }
+        sb.append("结果: ").append(r.get("message"));
+        return sb.toString();
+    }
+
+    /** /api/pppoe/config：参数化保存 CONFIG.txt（PPPOEDISC / PPPOESESS / PPPOEAUTO）。 */
+    private static String pppoeSaveConfig(Map<String, Object> m) throws Exception {
+        int disc = pppoePortOf(str(m, "disc_port"), PPPoEServer.DEFAULT_DISC_PORT);
+        int sess = pppoePortOf(str(m, "sess_port"), PPPoEServer.DEFAULT_SESS_PORT);
+        Map<String, String> updates = new LinkedHashMap<>();
+        updates.put("PPPOEDISC", String.valueOf(disc));
+        updates.put("PPPOESESS", String.valueOf(sess));
+        updates.put("PPPOEAUTO", "on".equalsIgnoreCase(str(m, "auto")) ? "on" : "off");
+        Path f = Paths.get(baseDir, "PKI", "CONFIG.txt");
+        java.util.List<String> lines = Files.exists(f)
+                ? Files.readAllLines(f, StandardCharsets.UTF_8) : new java.util.ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        java.util.Set<String> done = new java.util.HashSet<>();
+        for (String line : lines) {
+            String t = line.trim();
+            if (t.isEmpty() || t.startsWith("#")) {
+                sb.append(line).append("\r\n");
+                continue;
+            }
+            int idx = t.indexOf('=');
+            if (idx <= 0) {
+                sb.append(line).append("\r\n");
+                continue;
+            }
+            String k = t.substring(0, idx).trim();
+            if (updates.containsKey(k)) {
+                sb.append(k).append('=').append(updates.get(k)).append("\r\n");
+                done.add(k);
+            } else {
+                sb.append(line).append("\r\n");
+            }
+        }
+        for (Map.Entry<String, String> e : updates.entrySet()) {
+            if (!done.contains(e.getKey())) {
+                sb.append(e.getKey()).append('=').append(e.getValue()).append("\r\n");
+            }
+        }
+        Files.createDirectories(f.getParent());
+        Files.write(f, sb.toString().getBytes(StandardCharsets.UTF_8));
+        return "PPPoE 配置已保存到 CONFIG.txt（Discovery " + disc + " / Session " + sess
+                + "，自动启动=" + ("on".equalsIgnoreCase(str(m, "auto")) ? "开" : "关") + "）";
+    }
+
+    private static int pppoePortOf(String v, int def) {
+        if (v == null) {
+            return def;
+        }
+        try {
+            int n = Integer.parseInt(v.trim());
+            return n > 0 && n < 65536 ? n : def;
+        } catch (NumberFormatException e) {
+            return def;
+        }
+    }
+
+    // ============================================================
     // SCT 仪表盘（Merkle 树） + /ct/v1 调试代理（v1.28-r3 新增）
     // ============================================================
 
@@ -4602,16 +5132,16 @@ public final class WebAdmin {
             <a data-page="certs">证书库</a>
             <a data-page="makeroot">签发根证书</a>
             <a data-page="signcert">签发证书</a>
-            <a data-page="revoke">吊销证书</a>
-            <a data-page="crl">CRL 刷新</a>
-            <a data-page="ocsp">OCSP 签发</a>
-            <a data-page="timestamp">时间戳签发</a>
-            <a data-page="verify">证书验证</a>
+            <a data-page="ocsp">OCSP|TSA签发</a>
             <a data-page="template">模板管理</a>
-            <a data-page="debug">调试专区</a>
-            <a data-page="ctlog">SCT服务管理</a>
+            <a data-page="revoke">吊销证书</a>
+            <a data-page="verify">证书验证</a>
             <a data-page="sign">签名专区</a>
+            <a data-page="ctlog">SCT服务管理</a>
+            <a data-page="radius">Radius服务管理</a>
+            <a data-page="pppoe">PPPoE服务管理</a>
             <a data-page="init">初始化环境</a>
+            <a data-page="users">用户管理</a>
             <a data-page="config">系统配置</a>
             <a data-page="logs">操作日志</a>
           </nav>
@@ -4939,39 +5469,72 @@ public final class WebAdmin {
               </div>
             </div>
 
-            <!-- CRL -->
-            <div class="page" id="page-crl">
-              <div class="card">
-                <h2>签发吊销列表（RootGetCrl）</h2>
-                <p style="color:var(--dim);margin-bottom:14px">遍历全部根/中间 CA，为每个颁发者重新签发 CRL（PEM + DER），输出到 PKI/WebPublic/CRL/序列号.crl。</p>
-                <button onclick="postForm('/api/crl', {}, 'crlOut')">立即刷新全部 CRL</button>
-                <pre class="out" id="crlOut"></pre>
-              </div>
-            </div>
-
-            <!-- OCSP -->
+            <!-- OCSP|TSA签发（签发证书 + 模拟请求调试 合并页） -->
             <div class="page" id="page-ocsp">
               <div class="card">
-                <h2>签发 OCSP 签名证书（initOCSP）</h2>
-                <p style="color:var(--dim);margin-bottom:14px">为证书库中全部 R（根）/ C（中间CA）证书逐个生成 OCSP 签名证书，输出到 PKI/OCSP/序列号_ocsp.crt|.key。</p>
-                <div class="toolbar">
-                  <select id="ocAlgo"><option value="">全部证书（按各自算法）</option><option>RSA</option><option>ECC</option><option>SM2</option></select>
-                  <button onclick="postForm('/api/initocsp', {algo:v('ocAlgo')}, 'ocOut')">签发 OCSP 证书</button>
+                <div class="sig-tabs" id="ocspTabs">
+                  <button class="sig-tab active" data-tab="issue" onclick="ocspTab('issue')">OCSP签发</button>
+                  <button class="sig-tab" data-tab="tsaissue" onclick="ocspTab('tsaissue')">TSA签发</button>
+                  <button class="sig-tab" data-tab="debugocsp" onclick="ocspTab('debugocsp')">OCSP模拟请求调试</button>
+                  <button class="sig-tab" data-tab="debugtsa" onclick="ocspTab('debugtsa')">TSA模拟请求调试</button>
                 </div>
-                <pre class="out" id="ocOut"></pre>
-              </div>
-            </div>
-
-            <!-- 时间戳 -->
-            <div class="page" id="page-timestamp">
-              <div class="card">
-                <h2>签发时间戳证书（initTIMSTAMP）</h2>
-                <p style="color:var(--dim);margin-bottom:14px">为全部根证书生成时间戳证书：RSA/ECC → rsa/ecc_sha1 + rsa/ecc_sha256，SM2 → sm2_sm3，输出到 PKI/TIMSTAMP/。</p>
-                <div class="toolbar">
-                  <select id="tsHash"><option value="">全部根证书（按各自算法）</option><option>SHA1</option><option>SHA256</option><option>SM3</option></select>
-                  <button onclick="postForm('/api/inittimestamp', {hash:v('tsHash')}, 'tsOut')">签发时间戳证书</button>
+                <div id="ocspIssue">
+                  <h2>签发 OCSP 签名证书（initOCSP）</h2>
+                  <p style="color:var(--dim);margin-bottom:14px">为证书库中全部 R（根）/ C（中间CA）证书逐个生成 OCSP 签名证书，输出到 PKI/OCSP/序列号_ocsp.crt|.key。</p>
+                  <div class="toolbar">
+                    <select id="ocAlgo"><option value="">全部证书（按各自算法）</option><option>RSA</option><option>ECC</option><option>SM2</option></select>
+                    <button onclick="postForm('/api/initocsp', {algo:v('ocAlgo')}, 'ocOut')">签发 OCSP 证书</button>
+                  </div>
+                  <pre class="out" id="ocOut"></pre>
                 </div>
-                <pre class="out" id="tsOut"></pre>
+                <div id="tsaIssue" style="display:none">
+                  <h2>签发时间戳证书（initTIMSTAMP）</h2>
+                  <p style="color:var(--dim);margin-bottom:14px">为全部根证书生成时间戳证书：RSA/ECC → rsa/ecc_sha1 + rsa/ecc_sha256，SM2 → sm2_sm3，输出到 PKI/TIMSTAMP/。</p>
+                  <div class="toolbar">
+                    <select id="tsHash"><option value="">全部根证书（按各自算法）</option><option>SHA1</option><option>SHA256</option><option>SM3</option></select>
+                    <button onclick="postForm('/api/inittimestamp', {hash:v('tsHash')}, 'tsOut')">签发时间戳证书</button>
+                  </div>
+                  <pre class="out" id="tsOut"></pre>
+                </div>
+                <div id="dbgOcsp" style="display:none">
+                  <h2>模拟 OCSP 请求（RFC 6960）</h2>
+                  <div class="hint">按标准构造 CertID（issuerNameHash/issuerKeyHash 基于真正颁发者证书）+ Nonce 扩展，POST 本机 MAIN 的 /OCSP，解析响应并验证签名与 Nonce 回显。</div>
+                  <div class="row">
+                    <div><label>目标证书序列号（留空自动选第一个终端证书）</label><input id="dbgOcspSerial" placeholder="例如 1135228a2"></div>
+                    <div><label>CertID 哈希算法</label><select id="dbgOcspHash">
+                      <option value="sha256" selected>SHA256</option>
+                      <option value="sha1">SHA1</option>
+                      <option value="sha384">SHA384</option>
+                      <option value="sha512">SHA512</option>
+                      <option value="sha3-224">SHA3-224</option>
+                      <option value="sha3-256">SHA3-256</option>
+                      <option value="sha3-384">SHA3-384</option>
+                      <option value="sha3-512">SHA3-512</option>
+                      <option value="sm3">SM3</option>
+                    </select></div>
+                    <div style="align-self:end"><button onclick="sendDebugOcsp()">发送模拟请求</button></div>
+                  </div>
+                  <pre class="out" id="dbgOcspOut" style="max-height:56vh;overflow:auto;white-space:pre;font-family:var(--mono);font-size:12px;line-height:1.55"></pre>
+                </div>
+                <div id="dbgTsa" style="display:none">
+                  <h2>模拟时间戳请求（RFC 3161）</h2>
+                  <div class="hint">随机生成 32 字节数据 → 按所选摘要算法计算 messageImprint → 构造 TimeStampReq（含 Nonce、certReq=true）→ POST 本机 MAIN 的 /rfc3161 → 解析 TimeStampResp 并验证签名。</div>
+                  <div class="row">
+                    <div><label>摘要算法</label><select id="dbgTsaHash">
+                      <option value="sha256" selected>SHA256</option>
+                      <option value="sha1">SHA1</option>
+                      <option value="sha384">SHA384</option>
+                      <option value="sha512">SHA512</option>
+                      <option value="sha3-224">SHA3-224</option>
+                      <option value="sha3-256">SHA3-256</option>
+                      <option value="sha3-384">SHA3-384</option>
+                      <option value="sha3-512">SHA3-512</option>
+                      <option value="sm3">SM3</option>
+                    </select></div>
+                    <div style="align-self:end"><button onclick="sendDebugTsa()">对随机数据签名</button></div>
+                  </div>
+                  <pre class="out" id="dbgTsaOut" style="max-height:56vh;overflow:auto;white-space:pre;font-family:var(--mono);font-size:12px;line-height:1.55"></pre>
+                </div>
               </div>
             </div>
 
@@ -5003,49 +5566,6 @@ public final class WebAdmin {
                   <tbody></tbody>
                 </table>
                 <pre class="out" id="tplMsg"></pre>
-              </div>
-            </div>
-
-            <!-- 调试专区 -->
-            <div class="page" id="page-debug">
-              <div class="card">
-                <h2>模拟 OCSP 请求（RFC 6960）</h2>
-                <div class="hint">按标准构造 CertID（issuerNameHash/issuerKeyHash 基于真正颁发者证书）+ Nonce 扩展，POST 本机 MAIN 的 /OCSP，解析响应并验证签名与 Nonce 回显。</div>
-                <div class="row">
-                  <div><label>目标证书序列号（留空自动选第一个终端证书）</label><input id="dbgOcspSerial" placeholder="例如 1135228a2"></div>
-                  <div><label>CertID 哈希算法</label><select id="dbgOcspHash">
-                    <option value="sha256" selected>SHA256</option>
-                    <option value="sha1">SHA1</option>
-                    <option value="sha384">SHA384</option>
-                    <option value="sha512">SHA512</option>
-                    <option value="sha3-224">SHA3-224</option>
-                    <option value="sha3-256">SHA3-256</option>
-                    <option value="sha3-384">SHA3-384</option>
-                    <option value="sha3-512">SHA3-512</option>
-                    <option value="sm3">SM3</option>
-                  </select></div>
-                  <div style="align-self:end"><button onclick="sendDebugOcsp()">发送模拟请求</button></div>
-                </div>
-                <pre class="out" id="dbgOcspOut" style="max-height:56vh;overflow:auto;white-space:pre;font-family:var(--mono);font-size:12px;line-height:1.55"></pre>
-              </div>
-              <div class="card" style="margin-top:16px">
-                <h2>模拟时间戳请求（RFC 3161）</h2>
-                <div class="hint">随机生成 32 字节数据 → 按所选摘要算法计算 messageImprint → 构造 TimeStampReq（含 Nonce、certReq=true）→ POST 本机 MAIN 的 /rfc3161 → 解析 TimeStampResp 并验证签名。</div>
-                <div class="row">
-                  <div><label>摘要算法</label><select id="dbgTsaHash">
-                    <option value="sha256" selected>SHA256</option>
-                    <option value="sha1">SHA1</option>
-                    <option value="sha384">SHA384</option>
-                    <option value="sha512">SHA512</option>
-                    <option value="sha3-224">SHA3-224</option>
-                    <option value="sha3-256">SHA3-256</option>
-                    <option value="sha3-384">SHA3-384</option>
-                    <option value="sha3-512">SHA3-512</option>
-                    <option value="sm3">SM3</option>
-                  </select></div>
-                  <div style="align-self:end"><button onclick="sendDebugTsa()">对随机数据签名</button></div>
-                </div>
-                <pre class="out" id="dbgTsaOut" style="max-height:56vh;overflow:auto;white-space:pre;font-family:var(--mono);font-size:12px;line-height:1.55"></pre>
               </div>
             </div>
 
@@ -5276,6 +5796,184 @@ public final class WebAdmin {
                 </div>
                 <div style="margin-top:16px"><button class="danger" onclick="postForm('/api/init', {dn:v('inDn'),bits:extBitsVal('in'),hash:v('inHash'),algo:v('inAlgo')}, 'inOut')">执行初始化</button></div>
                 <pre class="out" id="inOut"></pre>
+              </div>
+            </div>
+
+            <!-- 用户管理（RADIUS 账号库） -->
+            <div class="page" id="page-users">
+              <div class="card">
+                <div class="toolbar">
+                  <h2 style="margin:0">用户管理</h2>
+                  <span style="color:var(--dim);font-size:12px">文件：PKI/USERS.txt（RADIUS 账号库）</span>
+                  <button onclick="openUserModal()">+ 添加用户</button>
+                  <button class="ghost" onclick="loadUsers()">刷新</button>
+                </div>
+                <div class="hint">RADIUS 认证账号（PAP / CHAP / MS-CHAPv2 / EAP 共用）。明文存储遵循项目约定；状态 E=启用、D=停用；删除 = 行首加 # 注释（保留原行，与 CERTS.txt 惯例一致）。</div>
+                <table class="tbl" id="userTable">
+                  <thead><tr><th style="width:50px">序号</th><th style="width:150px">用户名</th><th style="width:130px">密码</th><th style="width:70px">状态</th><th style="width:110px">组</th><th>备注</th><th style="width:220px">操作</th></tr></thead>
+                  <tbody></tbody>
+                </table>
+                <pre class="out" id="userOut"></pre>
+              </div>
+            </div>
+
+            <!-- 用户添加 / 编辑弹窗 -->
+            <div class="modal-mask" id="userModal" style="display:none" onclick="if(event.target===this)closeUserModal()">
+              <div class="modal" style="width:min(620px,92vw)">
+                <div class="modal-head"><h3 id="userModalTitle">添加用户</h3><button class="ghost" onclick="closeUserModal()">✕</button></div>
+                <div class="modal-body">
+                  <div class="row">
+                    <div><label>用户名</label><input id="uName" placeholder="例如 alice" spellcheck="false"></div>
+                    <div><label>密码</label><input id="uPass" placeholder="RADIUS 明文密码" spellcheck="false"></div>
+                    <div><label>状态</label><select id="uState"><option value="E">启用</option><option value="D">停用</option></select></div>
+                  </div>
+                  <div class="row">
+                    <div><label>组</label><input id="uGroup" placeholder="users / admin" spellcheck="false"></div>
+                    <div style="flex:2"><label>备注</label><input id="uNote" placeholder="例如 测试账号" spellcheck="false"></div>
+                  </div>
+                  <pre class="out" id="uOut" hidden></pre>
+                </div>
+                <div class="modal-foot">
+                  <button class="ghost" onclick="closeUserModal()">取消</button>
+                  <button onclick="saveUser()">确定</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 用户删除确认弹窗 -->
+            <div class="modal-mask" id="delUserModal" style="display:none" onclick="if(event.target===this)closeDelUserModal()">
+              <div class="modal" style="width:min(440px,92vw)">
+                <div class="modal-head"><h3>确认删除用户</h3><button class="ghost" onclick="closeDelUserModal()">✕</button></div>
+                <div class="modal-body" id="delUserMsg" style="color:var(--text)"></div>
+                <div class="modal-foot">
+                  <button class="ghost" onclick="closeDelUserModal()">取消</button>
+                  <button class="danger" onclick="doDelUser()">确定删除</button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Radius 服务管理 -->
+            <div class="page" id="page-radius">
+              <div class="card">
+                <div class="toolbar">
+                  <h2 style="margin:0">Radius 服务管理</h2>
+                  <span id="radState" class="badge err">● 未运行</span>
+                  <button onclick="radiusStart()">启动服务</button>
+                  <button class="ghost" onclick="radiusStop()">停止服务</button>
+                  <button class="ghost" onclick="radiusReset()">统计清零</button>
+                  <button class="ghost" onclick="loadRadius()">刷新</button>
+                </div>
+                <div class="hint">RADIUS 认证 / 计费服务（RFC 2138/2139/2284/2865/2866/2867/2868/2869）。认证端口 UDP/1812、计费端口 UDP/1813，共享密钥用于包 Authenticator 校验与属性加解密。认证方法：PAP / CHAP / MS-CHAPv2 与 EAP（Identity / MD5 / MSCHAPv2，TLS 预留）；适用于 PPP / PPPoE / PPTP / VPN / VoIP / ADSL / Cable Modem / CDMA / GSM / GPRS / WEB / WAP / WLAN 等 NAS 接入。账号管理在 <b>用户管理</b> 页面（PKI/USERS.txt）。</div>
+                <div class="sig-tabs" id="radTabs">
+                  <button class="sig-tab active" data-tab="server" onclick="radTab('server')">服务管理</button>
+                  <button class="sig-tab" data-tab="client" onclick="radTab('client')">客户端-调试专区</button>
+                </div>
+                <!-- 服务管理 -->
+                <div id="radServer">
+                  <div class="row" style="margin-top:4px">
+                    <div><label>认证端口（UDP）</label><input id="radAuthPort" placeholder="1812" spellcheck="false"></div>
+                    <div><label>计费端口（UDP）</label><input id="radAcctPort" placeholder="1813" spellcheck="false"></div>
+                    <div><label>共享密钥</label><input id="radSecret" placeholder="mytestkey" spellcheck="false"></div>
+                    <div style="align-self:end"><label style="display:flex;align-items:center;gap:6px;white-space:nowrap"><input type="checkbox" id="radAuto" style="width:auto"> MAIN 启动时自动开启</label></div>
+                    <div style="align-self:end"><button class="ghost" onclick="radiusSaveCfg()">保存配置</button></div>
+                  </div>
+                  <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px 18px">
+                    <span style="color:var(--dim);white-space:nowrap">账号数: <b id="radAccounts" style="color:var(--text)">0</b></span>
+                    <span style="color:var(--dim);white-space:nowrap">认证请求: <b id="radReq" style="color:var(--text)">0</b></span>
+                    <span style="color:var(--dim);white-space:nowrap">认证通过: <b id="radOk" style="color:var(--ok)">0</b></span>
+                    <span style="color:var(--dim);white-space:nowrap">认证拒绝: <b id="radFail" style="color:var(--err)">0</b></span>
+                    <span style="color:var(--dim);white-space:nowrap">计费请求: <b id="radAcct" style="color:var(--text)">0</b></span>
+                    <span style="color:var(--dim);white-space:nowrap">启动时间: <b id="radStart" style="color:var(--text)">-</b></span>
+                  </div>
+                  <pre class="out" id="radOut" style="margin-top:10px"></pre>
+                  <div class="card" style="margin-top:16px">
+                    <div class="toolbar">
+                      <h2 style="margin:0">服务日志</h2>
+                      <span style="color:var(--dim);font-size:12px">WinRadius 风格，最近 500 条</span>
+                      <button class="ghost" onclick="loadRadiusLogs()">刷新日志</button>
+                      <button class="ghost danger" onclick="radiusClearLogs()">清空日志</button>
+                      <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)"><input type="checkbox" id="radAutoRefresh" checked style="width:auto" onchange="radAutoRefreshToggle()"> 自动刷新</label>
+                    </div>
+                    <table class="tbl" id="radLogTable">
+                      <thead><tr><th style="width:60px">ID</th><th style="width:180px">时间</th><th>消息</th></tr></thead>
+                      <tbody></tbody>
+                    </table>
+                  </div>
+                </div>
+                <!-- 客户端-调试专区 -->
+                <div id="radClient" style="display:none">
+                  <div class="hint" style="margin-top:12px">RADIUS 客户端认证模拟：按 RFC 2865/2759/3748 构造 Access-Request 并解析响应（响应 Authenticator 独立核验）。账号必须已存在于用户管理（PKI/USERS.txt），例如 admin666 / admin666；共享密钥必须与服务端一致。</div>
+                  <div class="row" style="margin-top:10px">
+                    <div><label>认证方式</label><select id="radMethod"><option>PAP</option><option>CHAP</option><option>MS-CHAPv1</option><option>MS-CHAPv2</option><option>EAP-MD5</option><option>EAP-GTC</option><option>EAP-MSCHAPv2</option><option>EAP-TLS</option><option>EAP-TTLS</option><option>PEAP-MD5</option><option>PEAP-MSCHAPv2</option><option>PEAP-GTC</option><option>EAP-pwd</option></select></div>
+                    <div><label>客户端证书（TLS族可选）</label><select id="radCert"><option value="">（默认·匿名）</option></select></div>
+                    <div><label>用户名</label><input id="radUser" placeholder="admin666" spellcheck="false"></div>
+                    <div><label>密码</label><input id="radPass" type="password" placeholder="admin666" spellcheck="false"></div>
+                    <div><label>共享密钥</label><input id="radDialSecret" placeholder="mytestkey" spellcheck="false"></div>
+                    <div><label>认证端口（UDP）</label><input id="radDialPort" placeholder="1812" spellcheck="false"></div>
+                    <div style="align-self:end"><button onclick="radClientDial()">发起调试</button></div>
+                  </div>
+                  <pre class="out" id="radDialOut" style="margin-top:10px"></pre>
+                </div>
+              </div>
+            </div>
+
+            <!-- PPPoE 服务管理 -->
+            <div class="page" id="page-pppoe">
+              <div class="card">
+                <div class="toolbar">
+                  <h2 style="margin:0">PPPoE 服务管理</h2>
+                  <span id="pppoeState" class="badge err">● 未运行</span>
+                  <button onclick="pppoeStart()">启动服务</button>
+                  <button class="ghost" onclick="pppoeStop()">停止服务</button>
+                  <button class="ghost" onclick="pppoeReset()">统计清零</button>
+                  <button class="ghost" onclick="loadPppoe()">刷新</button>
+                </div>
+                <div class="hint">PPPoE（RFC 2516）以太网承载点对点协议。本实现为 UDP 封装模拟标准报文结构（Discovery/UDP 512，Session/UDP 513），覆盖 Discovery 阶段 PADI→PADO→PADR→PADS→PADT 与 Session 阶段 PPP LCP 协商及 PAP / CHAP 认证。认证账号复用 <b>用户管理</b>（PKI/USERS.txt），与 RADIUS 同库。客户端-调试专区提供完整拨号流程模拟，可自测闭环。</div>
+                <div class="sig-tabs" id="pppoeTabs">
+                  <button class="sig-tab active" data-tab="server" onclick="pppoeTab('server')">服务器管理</button>
+                  <button class="sig-tab" data-tab="client" onclick="pppoeTab('client')">客户端-调试专区</button>
+                </div>
+                <div id="pppoeServer" class="tab-body">
+                  <div class="row">
+                    <div><label>Discovery 端口（UDP）</label><input id="pppoeDiscPort" placeholder="512" spellcheck="false"></div>
+                    <div><label>Session 端口（UDP）</label><input id="pppoeSessPort" placeholder="513" spellcheck="false"></div>
+                    <div style="align-self:end;display:flex;align-items:center;gap:6px;white-space:nowrap"><label style="display:flex;align-items:center;gap:6px"><input type="checkbox" id="pppoeAuto" style="width:auto"> MAIN 启动时自动开启</label></div>
+                    <div style="align-self:end"><button class="ghost" onclick="pppoeSaveCfg()">保存配置</button></div>
+                  </div>
+                  <div class="row" style="margin-top:10px;flex-wrap:wrap;gap:8px 18px">
+                    <span style="color:var(--dim);white-space:nowrap">账号数: <b id="pppoeAccounts" style="color:var(--text)">0</b></span>
+                    <span style="color:var(--dim);white-space:nowrap">认证请求: <b id="pppoeReq" style="color:var(--text)">0</b></span>
+                    <span style="color:var(--dim);white-space:nowrap">认证通过: <b id="pppoeOk" style="color:var(--ok)">0</b></span>
+                    <span style="color:var(--dim);white-space:nowrap">认证拒绝: <b id="pppoeFail" style="color:var(--err)">0</b></span>
+                    <span style="color:var(--dim);white-space:nowrap">活动会话: <b id="pppoeSess" style="color:var(--text)">0</b></span>
+                    <span style="color:var(--dim);white-space:nowrap">AC 名称: <b id="pppoeAcName" style="color:var(--text)">-</b></span>
+                    <span style="color:var(--dim);white-space:nowrap">启动时间: <b id="pppoeStart" style="color:var(--text)">-</b></span>
+                  </div>
+                  <pre class="out" id="pppoeOut" style="margin-top:10px"></pre>
+                </div>
+                <div id="pppoeClient" class="tab-body" style="display:none">
+                  <div class="row">
+                    <div><label>用户名</label><input id="pppoeUser" placeholder="admin666" spellcheck="false"></div>
+                    <div><label>密码</label><input id="pppoePass" type="password" placeholder="输入密码" spellcheck="false"></div>
+                    <div><label>认证方式</label><select id="pppoeMethod"><option value="PAP">PAP</option><option value="CHAP">CHAP</option></select></div>
+                    <div style="align-self:end"><button onclick="pppoeDial()">发起拨号</button></div>
+                  </div>
+                  <div class="hint">模拟 PPPoE 客户端完整拨号流程：PADI → PADO → PADR → PADS → PPP LCP 协商 → PAP/CHAP 认证 → PADT 断开。认证账号必须已存在于用户管理（PKI/USERS.txt），例如 admin666 / admin666。</div>
+                  <pre class="out" id="pppoeDialOut" style="margin-top:10px;height:340px"></pre>
+                </div>
+              </div>
+              <div class="card" style="margin-top:16px">
+                <div class="toolbar">
+                  <h2 style="margin:0">服务器日志</h2>
+                  <span style="color:var(--dim);font-size:12px">WinRadius 风格，最近 500 条</span>
+                  <button class="ghost" onclick="loadPppoeLogs()">刷新日志</button>
+                  <button class="ghost danger" onclick="pppoeClearLogs()">清空日志</button>
+                  <label style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--dim)"><input type="checkbox" id="pppoeAutoRefresh" checked style="width:auto" onchange="pppoeAutoRefreshToggle()"> 自动刷新</label>
+                </div>
+                <table class="tbl" id="pppoeLogTable">
+                  <thead><tr><th style="width:60px">ID</th><th style="width:180px">时间</th><th>消息</th></tr></thead>
+                  <tbody></tbody>
+                </table>
               </div>
             </div>
 
@@ -5854,7 +6552,7 @@ public final class WebAdmin {
                 window.addEventListener('error', function(e){ var d=document.getElementById('jsErr'); if(!d){ d=document.createElement('div'); d.id='jsErr'; d.style.cssText='position:fixed;bottom:10px;right:10px;background:#7f1d1d;color:#fecaca;padding:8px 12px;border-radius:8px;font-size:12px;z-index:99999;max-width:60vw;white-space:pre-wrap'; document.body.appendChild(d); } d.textContent='JS Error: '+(e.message||e); setTimeout(function(){d.remove()},8000); });
 const $ = id => document.getElementById(id);
         const v = id => $(id).value.trim();
-        const TITLES = { dashboard:'仪表盘', certs:'证书库', makeroot:'签发根证书', signcert:'签发证书', revoke:'吊销证书', crl:'CRL 刷新', ocsp:'OCSP 签发', timestamp:'时间戳签发', verify:'证书验证', template:'模板管理', debug:'调试专区', ctlog:'SCT服务管理', sign:'签名专区', init:'初始化环境', config:'系统配置', logs:'操作日志' };
+        const TITLES = { dashboard:'仪表盘', certs:'证书库', makeroot:'签发根证书', signcert:'签发证书', revoke:'吊销证书', ocsp:'OCSP|TSA签发', verify:'证书验证', template:'模板管理', ctlog:'SCT服务管理', sign:'签名专区', init:'初始化环境', users:'用户管理', radius:'Radius服务管理', config:'系统配置', logs:'操作日志' };
 
         async function api(path, body) {
           const opt = { method: body ? 'POST' : 'GET', headers: {} };
@@ -6169,6 +6867,15 @@ const $ = id => document.getElementById(id);
           });
         }
 
+        // ===== OCSP|TSA签发：分类夹切换（OCSP签发 / TSA签发 / 模拟请求调试） =====
+        function ocspTab(t) {
+          document.querySelectorAll('#ocspTabs .sig-tab').forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === t));
+          $('ocspIssue').style.display = t === 'issue' ? '' : 'none';
+          $('tsaIssue').style.display = t === 'tsaissue' ? '' : 'none';
+          $('dbgOcsp').style.display = t === 'debugocsp' ? '' : 'none';
+          $('dbgTsa').style.display = t === 'debugtsa' ? '' : 'none';
+        }
+
         // ===== PDF 批量待签名队列（多选 + 拖拽） =====
         const pdfJobs = [];
         function addPdfFiles(files) {
@@ -6345,7 +7052,11 @@ const $ = id => document.getElementById(id);
             if (p === 'logs') loadLogs();
             if (p === 'sign') loadSignCerts();
             if (p === 'template') { loadTemplates(); loadCerts(); loadIssuers(); }
-            if (p === 'ctlog') loadCtLog();          };
+            if (p === 'ctlog') loadCtLog();
+            if (p === 'users') loadUsers();
+            if (p === 'radius') { loadRadius(); }
+            if (p === 'pppoe') { loadPppoe(); loadPppoeLogs(); }
+          };
         });
 
         // ===== 仪表盘 =====
@@ -7771,6 +8482,330 @@ const $ = id => document.getElementById(id);
         }
 
         // ===== SCT 服务管理 =====
+        // ===== 用户管理（PKI/USERS.txt） =====
+        let userData = [];
+        async function loadUsers() {
+          try {
+            const r = await api('/api/users/list');
+            const tb = $('userTable').querySelector('tbody');
+            if (!r.ok) { tb.innerHTML = '<tr><td colspan="7">加载失败</td></tr>'; return; }
+            userData = r.users || [];
+            tb.innerHTML = userData.map(u => `
+              <tr>
+                <td>${u.index}</td>
+                <td style="color:var(--accent)">${esc(u.username)}</td>
+                <td style="font-family:var(--mono)">${esc(u.password)}</td>
+                <td><span class="badge ${u.enabled ? 'ok' : 'err'}">${u.enabled ? 'E.启用' : 'D.停用'}</span></td>
+                <td>${esc(u.group)}</td>
+                <td>${esc(u.note)}</td>
+                <td>
+                  <button class="ghost" onclick="editUser('${esc(u.username)}')">编辑</button>
+                  <button class="ghost" onclick="toggleUserState('${esc(u.username)}',${u.enabled})">${u.enabled ? '停用' : '启用'}</button>
+                  <button class="danger" onclick="delUser('${esc(u.username)}')">删除</button>
+                </td>
+              </tr>`).join('') || '<tr><td colspan="7" style="color:var(--dim)">暂无用户，点击“+ 添加用户”创建</td></tr>';
+          } catch (e) { showOut('userOut', '加载用户失败: ' + e, false); }
+        }
+        let userEditName = null;
+        function openUserModal() {
+          userEditName = null;
+          $('userModalTitle').textContent = '添加用户';
+          $('uName').value = ''; $('uPass').value = ''; $('uState').value = 'E';
+          $('uGroup').value = ''; $('uNote').value = '';
+          $('uOut').hidden = true;
+          $('userModal').style.display = 'flex';
+        }
+        function editUser(name) {
+          const u = userData.find(x => x.username === name);
+          if (!u) return;
+          userEditName = name;
+          $('userModalTitle').textContent = '编辑用户';
+          $('uName').value = u.username; $('uPass').value = u.password;
+          $('uState').value = u.state || 'E'; $('uGroup').value = u.group || ''; $('uNote').value = u.note || '';
+          $('uOut').hidden = true;
+          $('userModal').style.display = 'flex';
+        }
+        function closeUserModal() { $('userModal').style.display = 'none'; }
+        async function saveUser() {
+          const name = $('uName').value.trim();
+          if (!name) { showOut('uOut', '用户名不能为空', false); return; }
+          const body = { username: name, password: $('uPass').value, state: $('uState').value, group: $('uGroup').value.trim(), note: $('uNote').value.trim() };
+          try {
+            const r = await api(userEditName ? '/api/users/update' : '/api/users/add', userEditName ? Object.assign({ old_username: userEditName }, body) : body);
+            showOut('uOut', r.message || '操作完成', r.ok);
+            if (r.ok) { closeUserModal(); loadUsers(); }
+          } catch (e) { showOut('uOut', '操作失败: ' + e, false); }
+        }
+        async function toggleUserState(name, enabled) {
+          try {
+            const r = await api('/api/users/status', { username: name, state: enabled ? 'D' : 'E' });
+            showOut('userOut', r.message || '操作完成', r.ok);
+            loadUsers();
+          } catch (e) { showOut('userOut', '操作失败: ' + e, false); }
+        }
+        let delUserName = null;
+        function delUser(name) {
+          delUserName = name;
+          $('delUserMsg').textContent = '是否删除 用户 ' + name + ' ？（USERS.txt 中该行将加 # 注释，保留原行）';
+          $('delUserModal').style.display = 'flex';
+        }
+        function closeDelUserModal() { $('delUserModal').style.display = 'none'; }
+        async function doDelUser() {
+          try {
+            const r = await api('/api/users/delete', { username: delUserName });
+            showOut('userOut', r.message || '操作完成', r.ok);
+            if (r.ok) { closeDelUserModal(); loadUsers(); }
+          } catch (e) { showOut('userOut', '删除失败: ' + e, false); }
+        }
+
+        // ===== Radius 服务管理 =====
+        let radTimer = null;
+        async function loadRadius() {
+          try {
+            loadRadCerts();
+            const r = await api('/api/radius/status');
+            if (!r.ok) return;
+            const st = $('radState');
+            st.textContent = r.running ? '● 运行中' : '○ 未运行';
+            st.className = 'badge ' + (r.running ? 'ok' : 'err');
+            $('radAuthPort').value = r.cfgAuthPort || 1812;
+            $('radAcctPort').value = r.cfgAcctPort || 1813;
+            $('radSecret').value = r.cfgSecret || '';
+            $('radAuto').checked = !!r.cfgAuto;
+            $('radAccounts').textContent = r.accounts;
+            $('radReq').textContent = r.totalAuthRequests;
+            $('radOk').textContent = r.authOk;
+            $('radFail').textContent = r.authFail;
+            $('radAcct').textContent = r.totalAcct;
+            $('radStart').textContent = r.startTimeText || '-';
+            if (r.running) { loadRadiusLogs(); startRadAutoRefresh(); }
+          } catch (e) { showOut('radOut', '加载状态失败: ' + e, false); }
+        }
+        let radCertLoaded = false;
+        async function loadRadCerts() {
+          if (radCertLoaded) return;
+          try {
+            const r = await api('/api/certs');
+            const sel = $('radCert');
+            if (!sel || !r.ok || !r.data) { return; }
+            const cur = sel.value;
+            sel.innerHTML = '<option value="">（默认·匿名）</option>';
+            (r.data || []).forEach(function (c) {
+              if (!c.serial) return;
+              const o = document.createElement('option');
+              o.value = c.serial;
+              o.textContent = c.serial + ' · ' + (c.algo || '') + ' · ' + (c.type || '');
+              sel.appendChild(o);
+            });
+            radCertLoaded = true;
+            if (cur) sel.value = cur;
+          } catch (e) { /* 证书列表加载失败不影响调试 */ }
+        }
+        async function radiusStart() {
+          try {
+            const body = { auth_port: $('radAuthPort').value.trim(), acct_port: $('radAcctPort').value.trim(), secret: $('radSecret').value.trim() };
+            const r = await api('/api/radius/start', body);
+            showOut('radOut', r.message || '启动完成', r.ok);
+            loadRadius();
+          } catch (e) { showOut('radOut', '启动失败: ' + e, false); }
+        }
+        async function radiusStop() {
+          try {
+            const r = await api('/api/radius/stop', {});
+            showOut('radOut', r.message || '停止完成', r.ok);
+            loadRadius();
+          } catch (e) { showOut('radOut', '停止失败: ' + e, false); }
+        }
+        async function radiusReset() {
+          try {
+            const r = await api('/api/radius/reset', {});
+            showOut('radOut', r.message || '清零完成', r.ok);
+            loadRadius();
+          } catch (e) { showOut('radOut', '清零失败: ' + e, false); }
+        }
+        async function radiusSaveCfg() {
+          try {
+            const body = { auth_port: $('radAuthPort').value.trim(), acct_port: $('radAcctPort').value.trim(), secret: $('radSecret').value.trim(), auto: $('radAuto').checked ? 'on' : 'off' };
+            const r = await api('/api/radius/config', body);
+            showOut('radOut', r.message || '保存完成', r.ok);
+            loadRadius();
+          } catch (e) { showOut('radOut', '保存失败: ' + e, false); }
+        }
+        // 自动刷新专用：只更新状态徽章 / 统计数字 / 服务日志，
+        // 绝不回填端口、共享密钥、自动启动等表单控件（用户编辑中不被 3 秒定时覆盖）
+        async function refreshRadiusStatus() {
+          try {
+            const r = await api('/api/radius/status');
+            if (!r.ok) return;
+            const st = $('radState');
+            st.textContent = r.running ? '● 运行中' : '○ 未运行';
+            st.className = 'badge ' + (r.running ? 'ok' : 'err');
+            $('radAccounts').textContent = r.accounts;
+            $('radReq').textContent = r.totalAuthRequests;
+            $('radOk').textContent = r.authOk;
+            $('radFail').textContent = r.authFail;
+            $('radAcct').textContent = r.totalAcct;
+            $('radStart').textContent = r.startTimeText || '-';
+            if (r.running) loadRadiusLogs();
+          } catch (e) { }
+        }
+        async function loadRadiusLogs() {
+          try {
+            const r = await api('/api/radius/logs?lines=200');
+            const tb = $('radLogTable').querySelector('tbody');
+            if (!r.ok) { tb.innerHTML = '<tr><td colspan="3">加载失败</td></tr>'; return; }
+            tb.innerHTML = (r.logs || []).map(l => '<tr><td>' + l.id + '</td><td style="color:var(--dim)">' + esc(l.time) + '</td><td>' + esc(l.message) + '</td></tr>').join('')
+              || '<tr><td colspan="3" style="color:var(--dim)">暂无日志</td></tr>';
+          } catch (e) { }
+        }
+        async function radiusClearLogs() {
+          try {
+            const r = await api('/api/radius/clearlogs', {});
+            ctxToast(r.ok !== false ? (r.message || '日志已清空') : '清空失败', r.ok === false);
+            loadRadiusLogs();
+            loadRadius();
+          } catch (e) { ctxToast('清空失败: ' + e, false); }
+        }
+        function startRadAutoRefresh() {
+          stopRadAutoRefresh();
+          radTimer = setInterval(() => {
+            if ($('radAutoRefresh') && $('radAutoRefresh').checked && document.getElementById('page-radius').classList.contains('active')) refreshRadiusStatus();
+          }, 3000);
+        }
+        function stopRadAutoRefresh() { if (radTimer) { clearInterval(radTimer); radTimer = null; } }
+        function radAutoRefreshToggle() { if ($('radAutoRefresh').checked) startRadAutoRefresh(); else stopRadAutoRefresh(); }
+        function radTab(t) {
+          document.querySelectorAll('#radTabs .sig-tab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab')===t); });
+          $('radServer').style.display = t === 'server' ? 'block' : 'none';
+          $('radClient').style.display = t === 'client' ? 'block' : 'none';
+          if (t === 'client') {
+            if (!$('radDialSecret').value) $('radDialSecret').value = $('radSecret').value || 'mytestkey';
+            if (!$('radDialPort').value) $('radDialPort').value = $('radAuthPort').value || '1812';
+          }
+        }
+        async function radClientDial() {
+          try {
+            const body = { method: $('radMethod').value, user: $('radUser').value.trim(), pass: $('radPass').value, secret: $('radDialSecret').value.trim(), port: $('radDialPort').value.trim(), cert: $('radCert').value };
+            if (!body.user || !body.pass) { showOut('radDialOut', '请填写用户名与密码', false); return; }
+            const r = await api('/api/radius/dial', body);
+            showOut('radDialOut', r.message || '无输出', r.ok);
+            loadRadius();
+          } catch (e) { showOut('radDialOut', '调试失败: ' + e, false); }
+        }
+
+        // ===== PPPoE 服务管理（RFC 2516） =====
+        let pppoeTimer = null;
+        function pppoeTab(t) {
+          document.querySelectorAll('#pppoeTabs .sig-tab').forEach(function(b){ b.classList.toggle('active', b.getAttribute('data-tab')===t); });
+          $('pppoeServer').style.display = t === 'server' ? 'block' : 'none';
+          $('pppoeClient').style.display = t === 'client' ? 'block' : 'none';
+        }
+        async function loadPppoe() {
+          try {
+            const r = await api('/api/pppoe/status');
+            if (!r.ok) return;
+            const st = $('pppoeState');
+            st.textContent = r.running ? '● 运行中' : '○ 未运行';
+            st.className = 'badge ' + (r.running ? 'ok' : 'err');
+            $('pppoeDiscPort').value = r.discPort || 512;
+            $('pppoeSessPort').value = r.sessPort || 513;
+            $('pppoeAuto').checked = !!r.cfgAuto;
+            $('pppoeAccounts').textContent = r.accounts;
+            $('pppoeReq').textContent = r.totalAuth;
+            $('pppoeOk').textContent = r.authOk;
+            $('pppoeFail').textContent = r.authFail;
+            $('pppoeSess').textContent = r.activeSessions;
+            $('pppoeAcName').textContent = r.acName || '-';
+            $('pppoeStart').textContent = r.startTimeText || '-';
+            if (r.running) { loadPppoeLogs(); startPppoeAutoRefresh(); }
+          } catch (e) { showOut('pppoeOut', '加载状态失败: ' + e, false); }
+        }
+        async function pppoeStart() {
+          try {
+            const body = { disc_port: $('pppoeDiscPort').value.trim(), sess_port: $('pppoeSessPort').value.trim() };
+            const r = await api('/api/pppoe/start', body);
+            showOut('pppoeOut', r.message || '启动完成', r.ok);
+            loadPppoe();
+          } catch (e) { showOut('pppoeOut', '启动失败: ' + e, false); }
+        }
+        async function pppoeStop() {
+          try {
+            const r = await api('/api/pppoe/stop', {});
+            showOut('pppoeOut', r.message || '停止完成', r.ok);
+            loadPppoe();
+          } catch (e) { showOut('pppoeOut', '停止失败: ' + e, false); }
+        }
+        async function pppoeReset() {
+          try {
+            const r = await api('/api/pppoe/reset', {});
+            showOut('pppoeOut', r.message || '清零完成', r.ok);
+            loadPppoe();
+          } catch (e) { showOut('pppoeOut', '清零失败: ' + e, false); }
+        }
+        async function pppoeSaveCfg() {
+          try {
+            const body = { disc_port: $('pppoeDiscPort').value.trim(), sess_port: $('pppoeSessPort').value.trim(), auto: $('pppoeAuto').checked ? 'on' : 'off' };
+            const r = await api('/api/pppoe/config', body);
+            showOut('pppoeOut', r.message || '保存完成', r.ok);
+            loadPppoe();
+          } catch (e) { showOut('pppoeOut', '保存失败: ' + e, false); }
+        }
+        // 自动刷新专用：只更新状态徽章 / 统计数字 / 服务日志，不回填表单控件
+        async function refreshPppoeStatus() {
+          try {
+            const r = await api('/api/pppoe/status');
+            if (!r.ok) return;
+            const st = $('pppoeState');
+            st.textContent = r.running ? '● 运行中' : '○ 未运行';
+            st.className = 'badge ' + (r.running ? 'ok' : 'err');
+            $('pppoeAccounts').textContent = r.accounts;
+            $('pppoeReq').textContent = r.totalAuth;
+            $('pppoeOk').textContent = r.authOk;
+            $('pppoeFail').textContent = r.authFail;
+            $('pppoeSess').textContent = r.activeSessions;
+            $('pppoeAcName').textContent = r.acName || '-';
+            $('pppoeStart').textContent = r.startTimeText || '-';
+            if (r.running) loadPppoeLogs();
+          } catch (e) { }
+        }
+        async function loadPppoeLogs() {
+          try {
+            const r = await api('/api/pppoe/logs?lines=200');
+            const tb = $('pppoeLogTable').querySelector('tbody');
+            if (!r.ok) { tb.innerHTML = '<tr><td colspan="3">加载失败</td></tr>'; return; }
+            tb.innerHTML = (r.logs || []).map(l => '<tr><td>' + l.id + '</td><td style="color:var(--dim)">' + esc(l.time) + '</td><td>' + esc(l.message) + '</td></tr>').join('')
+              || '<tr><td colspan="3" style="color:var(--dim)">暂无日志</td></tr>';
+          } catch (e) { }
+        }
+        async function pppoeClearLogs() {
+          try {
+            const r = await api('/api/pppoe/clearlogs', {});
+            ctxToast(r.ok !== false ? (r.message || '日志已清空') : '清空失败', r.ok === false);
+            loadPppoeLogs();
+            loadPppoe();
+          } catch (e) { ctxToast('清空失败: ' + e, false); }
+        }
+        function startPppoeAutoRefresh() {
+          stopPppoeAutoRefresh();
+          pppoeTimer = setInterval(() => {
+            if ($('pppoeAutoRefresh') && $('pppoeAutoRefresh').checked && document.getElementById('page-pppoe').classList.contains('active')) refreshPppoeStatus();
+          }, 3000);
+        }
+        function stopPppoeAutoRefresh() { if (pppoeTimer) { clearInterval(pppoeTimer); pppoeTimer = null; } }
+        function pppoeAutoRefreshToggle() { if ($('pppoeAutoRefresh').checked) startPppoeAutoRefresh(); else stopPppoeAutoRefresh(); }
+        async function pppoeDial() {
+          const u = $('pppoeUser').value.trim();
+          const p = $('pppoePass').value;
+          const m = $('pppoeMethod').value;
+          if (!u || !p) { showOut('pppoeDialOut', '用户名和密码不能为空', false); return; }
+          showOut('pppoeDialOut', '正在拨号...\\n', true);
+          try {
+            const r = await api('/api/pppoe/dial', { username: u, password: p, method: m });
+            showOut('pppoeDialOut', r.message || '拨号完成', r.ok);
+            if (r.ok) { loadPppoe(); loadPppoeLogs(); }
+          } catch (e) { showOut('pppoeDialOut', '拨号异常: ' + e, false); }
+        }
+
         async function loadCtLog() { loadCtKeys(); loadCtLogs(); loadCtPub(); }
         function ctSwitchTab(t) {
           document.getElementById('ctTabBtnKeys').className = 'ct-tab' + (t==='keys' ? ' active' : '');
@@ -7805,8 +8840,8 @@ const $ = id => document.getElementById(id);
                 '<td><div style="font-family:var(--mono);font-size:12px">' + esc(k.logId) + '</div></td>' +
                 '<td><div style="' + stCls + '">' + esc(stTxt) + '</div></td>' +
                 '<td><div>' + esc(k.created) + '</div></td>' +
-                '<td><div><button class="ghost" onclick="setCtState(\\'' + esc(k.logId) + '\\',\\'' + (k.state === 'usable' ? 'disable' : 'usable') + '\\')">' + (k.state === 'usable' ? '暂停' : '启用') + '</button> ' +
-                '<button class="ghost" onclick="delCtKey(\\'' + esc(k.logId) + '\\')">删除</button></div></td>';
+                '<td><div><button class="ghost" data-logid="' + esc(k.logId) + '" onclick="setCtState(this)">' + (k.state === 'usable' ? '暂停' : '启用') + '</button> ' +
+                '<button class="ghost" data-logid="' + esc(k.logId) + '" onclick="delCtKey(this)">删除</button></div></td>';
               tb.appendChild(tr);
             });
           } catch (e) { const tb = $('ctKeysTable'); if (tb) tb.innerHTML = '<tr><td colspan="7" style="color:#dc2626;padding:8px">加载失败: ' + (e && e.message ? e.message : e) + '</td></tr>'; }
@@ -7861,13 +8896,16 @@ const $ = id => document.getElementById(id);
           const r = await api('/api/ctlog/gen', { desc: desc, type: type || 'ECDSA' });
           if (r.ok) { loadCtKeys(); ctTip('密钥对生成成功'); } else { ctTip('生成失败: ' + (r.message || ''), false); }
         }
-        async function delCtKey(id) {
+        async function delCtKey(btn) {
+          const id = btn.getAttribute('data-logid') || '';
           const r = await api('/api/ctlog/delete', { log_id: id });
           if (r.ok) { loadCtKeys(); ctTip('密钥对已删除'); } else { ctTip('删除失败: ' + (r.message || ''), false); }
         }
-        async function setCtState(id, state) {
-          const r = await api(state === 'usable' ? '/api/ctlog/enable' : '/api/ctlog/pause', { log_id: id });
-          if (r.ok) { loadCtKeys(); ctTip(state === 'usable' ? '密钥已启用' : '密钥已暂停'); } else { ctTip('操作失败: ' + (r.message || ''), false); }
+        async function setCtState(btn) {
+          const id = btn.getAttribute('data-logid') || '';
+          const pause = btn.textContent.trim() === '暂停';
+          const r = await api(pause ? '/api/ctlog/pause' : '/api/ctlog/enable', { log_id: id });
+          if (r.ok) { loadCtKeys(); ctTip(pause ? '密钥已暂停' : '密钥已启用'); } else { ctTip('操作失败: ' + (r.message || ''), false); }
         }
         function ctTip(msg, ok) {
           const el = $('ctMsg');

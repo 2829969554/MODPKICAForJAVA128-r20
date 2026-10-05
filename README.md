@@ -1,4 +1,4 @@
-# MODPKICA Java 复刻版 v1.28-r4（BC 1.85 离线）
+# MODPKICA Java 复刻版 v1.28-r13（BC 1.85 离线）
 
 > 使用 **Java + BouncyCastle 1.85** 离线复刻 Go 版 MODPKICA 全套 PKI 功能：X.509 证书签发、CRL 吊销列表、OCSP 在线状态、RFC3161 / Authenticode 时间戳、RFC 6962 CT 日志服务（SCT 服务管理）、WebAdmin 浏览器管理面板。
 >
@@ -18,6 +18,7 @@
 - [一键编译](#一键编译)
 - [运行方式](#运行方式)
 - [命令行用法（7 个主程序）](#命令行用法7-个主程序)
+- [RADIUS / PPPoE 接入服务](#8-radiusserver--pppoeserver--radius-与-pppoe-接入服务)
 - [WebAdmin 管理面板](#webadmin-管理面板)
 - [PKI 目录与文件说明](#pki-目录与文件说明)
 - [证书类型与命名规则](#证书类型与命名规则)
@@ -165,6 +166,48 @@
 ### 7. Auto —— 自动化命令
 
 `init` 初始化环境、`revoke 序列号 原因` 吊销证书、`newcert 序列号 类型 状态 原因 时间 颁发者ID 算法` 手工登记。
+
+### 8. RadiusServer / PPPoEServer —— RADIUS 与 PPPoE 接入服务
+
+#### RADIUS 服务（`RadiusServer.java`，RFC 2865 / 2866 / 2869 / 3579）
+
+UDP 认证端口（默认 1812）+ 计费端口（默认 1813）双线程；账号复用用户管理库（`PKI/USERS.txt`）；认证与计费请求/响应全部写入 `logs.log` 与内存环形日志（最近 500 条）。
+
+**12 种认证方式（全部按 RFC 标准实现，服务端 + 客户端调试双端）**：
+
+| # | 认证方式 | 标准依据 | 说明 |
+|---|---|---|---|
+| 1 | PAP | RFC 2865 §5.2 | 明文口令，`MD5(Secret+Authenticator)` 混淆 |
+| 2 | CHAP | RFC 2865 §5.3 | 16B 挑战 + `MD5(ChapId‖密码‖挑战)` |
+| 3 | MS-CHAPv1 | RFC 2433 | Vendor-Specific(微软, Type=24)，MD4 NT-Hash 2×DES 加密挑战比对 |
+| 4 | MS-CHAPv2 | RFC 2759 | 8B 挑战 + 50B 响应（Ident+Pad+PeerChallenge16+Reserved8+NT-Response24），服务端单包携带挑战+响应 |
+| 5 | EAP-MD5 | RFC 3748 §5.4 | 16B 挑战，`MD5(InnerId‖密码‖挑战)` |
+| 6 | EAP-GTC | RFC 3748 §5.6 | 明文令牌挑战（"Enter Password:" 提示），常数时间比对 |
+| 7 | EAP-TLS | RFC 5216 | BC 1.85 `bctls` TLS 1.2 完整握手；RFC 5216 §2.1 240B 分片每片一个 EAP 包；RFC 3579 §2.1 EAP-Message 属性切分拼接；TLS 1.2 RSA 签名 PKCS#1 v1.5 填充 |
+| 8 | EAP-TTLS | RFC 5281 | 外层 TLS 隧道 + **内层 PAP AVP 交换**（RFC 5281 §8.5：Type(1)+Length(1)+Value，User-Name/User-Password） |
+| 9 | PEAP-MD5 | RFC 5216 隧道 + 内层 EAP-MD5 | 外层 PEAP Start→TLS 隧道→内层 MD5 挑战/响应 |
+| 10 | PEAP-MSCHAPv2 | RFC 5216 + RFC 2759 | 内层 MS-CHAPv2 两轮隧道交换（Challenge→NT-Response 50B） |
+| 11 | PEAP-GTC | RFC 5216 隧道 + RFC 3748 §5.6 | 内层 GTC 明文令牌 |
+| 12 | EAP-pwd | RFC 5931（P-256） | 四轮密钥交换：ID(Group=6)→Commit(标量32B+SEC1 压缩点33B)→双向 Confirm(HMAC-SHA256)→Success；猎取-啄食法 PWE 派生（HKDF-SHA256，p≡3 mod 4 开根） |
+
+**属性支持**：`User-Name` / `User-Password` / `CHAP-Password`+`CHAP-Challenge` / `NAS-*`；**Vendor-Specific（微软，RFC 2548）**：MS-CHAP-Challenge / MS-CHAP-Response / MS-CHAP2-Response（按 Vendor-Type 自动分流 v1/v2）；**隧道属性（RFC 2867/2868）**：Tunnel-Type / Tunnel-Medium-Type / Tunnel-Client-Server-Endpoint / Tunnel-Password 自动解析成文字记录（PPTP/L2TP/IPsec/GRE 场景可见）；`Message-Authenticator`（RFC 2869 §5.3，HMAC-MD5）；`EAP-Message`（RFC 3579 §2.1，>253B 自动切分、响应端按出现顺序拼接还原）。
+
+**Identity 用户名前缀分流**（大小写不敏感，顺序固定）：`ttls:`/`eap-ttls:`→TTLS；`pwd:`/`eap-pwd:`→EAP-pwd；`gtc:`/`eap-gtc:`→EAP-GTC；`peap-gtc:`/`eap-peap-gtc:`→PEAP-GTC；`peap-mschapv2:`/`eap-peap-mschapv2:`→PEAP-MSCHAPv2；`peap:`/`eap-peap:`→PEAP-MD5；`tls:`/`eap-tls:`→EAP-TLS；无前缀→PAP/CHAP/MS-CHAPv1/MS-CHAPv2。
+
+**配置项（`PKI/CONFIG.txt`）**：`RADIUSPORT=1812`（认证端口）、`RADIUSACCT=1813`（计费端口）、`RADIUSKEY=mytestkey`（共享密钥）、`RADIUSAUTO=on/off`（MAIN 启动时自动开启，默认 off）。
+
+#### PPPoE 服务（`PPPoEServer.java`，RFC 2516 + RFC 1661 + RFC 1334 + RFC 1994）
+
+UDP 封装标准报文：Discovery `0x8863`（默认 512）+ Session `0x8864`（默认 513）。
+
+- **Discovery 阶段（RFC 2516）**：PADI(0x09)→PADO(0x07)/PADR(0x19)→PADS(0x65)/PADT(0xa7)；标签 Service-Name(0x0101)/AC-Name(0x0102)/Host-Uniq(0x0103)
+- **Session 阶段（RFC 1661 PPP LCP）**：Conf-Req/ACK/NAK/REJ/Term-Req/Ack；选项 MRU / Auth-Protocol / Magic-Number
+- **PPP 认证**：PAP（RFC 1334）+ CHAP（RFC 1994，`MD5(Id‖密码‖挑战)`）
+- 认证复用用户管理库；配置项 `PPPOEDISC=512`、`PPPOESESS=513`、`PPPOEAUTO=on/off`
+
+#### 客户端-调试专区（WebAdmin）
+
+「Radius服务管理 / PPPoE服务管理」页面均含「服务管理 / 客户端-调试专区」双分类夹：调试专区可选任意一种认证方式（12 项下拉）+ 账号/密码/共享密钥/端口，`发起调试` 后逐步打印完整握手过程（含每步 EAP 报文、TLS 分片、AVP 帧、EAP-pwd 标量/元素/Confirm 值）；PPPoE 专区提供完整拨号流程模拟（PADI→PADO→PADR→PADS→LCP→PAP/CHAP→PADT）。调试请求与结果全部写入 `logs.log`。
 
 ### WebAdmin —— 浏览器管理面板
 
@@ -525,6 +568,87 @@ A：离线 / 无外网环境会请求失败，但签名**不中断**——时间
 ---
 
 ## 更新记录
+- **v1.28-r13（2026-10-05）——补齐独立 EAP-MSCHAPv2（IKEv2 用户名密码认证的核心链路）**
+  - **背景**：方案 4 确认手机 VPN 认证链路时发现——服务端已有 `case EAP_TYPE_MSCHAPV2` 响应校验（NT-Response 验证复用 `verifyMsChapV2`），但 **Identity 分流缺 `mschapv2:` 前缀启动**，客户端 `clientDial` 缺 `EAP-MSCHAPV2` 方法名，导致"独立 EAP-MSCHAPv2"无法从调试专区发起
+  - **服务端**：Identity 分流新增 `mschapv2:` / `eap-mschapv2:` 前缀 → `startEapMsChapV2` 逻辑（查用户存在/启用 → 建 `EapState{method="MSCHAPV2", challenge=16B 随机}` → 回 `EAP-Request/MSCHAPV2 Challenge`：OpCode(1)=1、MS-CHAPv2-ID、MS-Length、Value-Size=16、Value(16B 认证挑战)、Name=MODPKICA-MSCHAPV2）；`case EAP_TYPE_MSCHAPV2` 响应校验补 `"MSCHAPV2".equals(st.method)` 检查（防状态串用）
+  - **客户端**：`clientDial` 新增 `EAP-MSCHAPV2` / `EAP-MSCHAP-V2` / `EAPMSCHAPV2` 分支 → `eapMsChapV2ClientDial()`（Identity 带 `mschapv2:` 前缀 → 解析 Challenge（OpCode=1，Value-Size=16）→ 随机 PeerChallenge + `computeNtResponse`（50B Value：Ident+Pad+PeerChallenge16+Reserved8+NT-Response24）→ 回 `EAP-Response/MSCHAPV2`（OpCode=2）→ Access-Accept/EAP-Success）
+  - **WebAdmin**：客户端-调试专区认证方式下拉扩为 **13 项**（新增 EAP-MSCHAPv2，位于 EAP-GTC 与 EAP-TLS 之间）
+  - **回归（方案 4 手机 VPN 认证链路全量确认）**：PAP / CHAP / MS-CHAPv2 / **EAP-MSCHAPv2**（新）全部 Access-Accept；EAP-TLS 匿名与带证书（25cef1995955a535fa2ab03204648f81）全部 EAP-Success；叠加 r12 已回归的 EAP-TTLS/PEAP 族——**IKEv2（EAP-MSCHAPv2 用户名密码 / EAP-TLS 证书）、Cisco XAUTH 转发（PAP/MS-CHAPv2）、L2TP PPP（PAP/CHAP/MS-CHAPv2）三条手机 VPN 认证链路全部确认支持**；`javac -Xlint:all` **零警告**；README 升 v1.28-r13
+
+- **v1.28-r12（2026-10-05）——RADIUS 客户端调试专区：TLS 族可选证书（信任锚验证 + 客户端凭据）**
+  - **RadiusServer**：`clientDial` 新增 6 参重载（`+certSerial`，旧 5 参委托传 null 保持兼容）；`AnonTlsClient` 升级为 **`TrustedTlsClient`**——可选「信任锚证书链」`notifyServerCertificate` 用 `verifyServerChain()` 逐级验签、链顶须等于某信任锚或被其签发（锚为空则保持原匿名不校验行为），可选「客户端证书/私钥」`getClientCredentials()` 用 `ModpkicaTlsSigner` + `DefaultTlsCredentialedSigner` 出示凭据（RSA→sha256+rsa，ECC→sha256+ecdsa）；新常量 `EAP_TLS_CIPHERS`（原六套件提取复用）；新增 `loadClientTlsCred(certSerial)`——按序列号查 `CertsDB`，R→`PKI/ROOT`、C→`PKI/CA`、E→`PKI/CERT`（缺失回退 `WebPublic/CRT`），组装本证书+颁发者链（C/E 追到 ROOT），私钥按 ROOT/CA/KEY 顺序探测（可缺省，仅作信任锚）；`eapTlsClientDial` / `eapTtlsClientDial` / `eapPeapClientDial` 三方法加 `certSerial` 参数，内部加载凭据后建 `TrustedTlsClient`
+  - **WebAdmin**：客户端-调试专区表单在认证方式后新增「客户端证书（TLS族可选）」下拉 `#radCert`（默认「（默认·匿名）」+ `/api/certs` 全部证书记录：序列号·算法·类型）；`loadRadCerts()` 首次填充（`radCertLoaded` 标志防重复重建、保留已选值）；`radClientDial()` body 增 `cert` 字段；后端 `radiusDial` 透传至 6 参 `clientDial` 并写 MLog（含证书序列号）
+  - **回归**：无证书路径（匿名）EAP-TLS/EAP-TTLS/PEAP-MD5/PEAP-MSCHAPv2/PEAP-GTC 全部 EAP-Success；带证书路径（cert=`25cef1995955a535fa2ab03204648f81`，CA RSA，链 3 级含私钥）**5 种 TLS 族方法全部通过**（服务器证书链验证成功——锚不匹配将抛 IOException 握手失败）；`javac -Xlint:all` **零警告**；README 升 v1.28-r12
+
+- **v1.28-r11（2026-10-05）——RADIUS 认证方式扩展至 12 种：EAP-GTC / PEAP-GTC / EAP-TTLS / EAP-pwd**
+  - **EAP-GTC（RFC 3748 §5.6，明文令牌）**：服务端常量 `EAP_TYPE_GTC=6`；Identity 用户名带 `gtc:` / `eap-gtc:` 前缀分流（剥前缀查真实用户 → 建立 EapState(method="GTC") → 回 `EAP-Request/GTC` 提示 "Enter Password: "）；`handleEapGtc` 用 `constantTimeEquals` 验证明文令牌；客户端 `eapGtcClientDial()`（`gtc:` 前缀 Identity → 提示 → 令牌响应），`clientDial` 路由 `EAP-GTC`/`EAPGTC`
+  - **PEAP-GTC（内层 GTC）**：前缀 `peap-gtc:` / `eap-peap-gtc:`（**分流检查排在 `peap-mschapv2:` 之前**，避免被 `peap:` 吞掉）；`startEapPeap(...,innerMethod)` 内层 switch 支持 MD5 / GTC / MSCHAPV2；内层 `peapInnerGtc()`（隧道内 Identity → GTC 提示 → 令牌比对）；客户端 `eapPeapClientDial()` 增加 innerGtc 分支（两轮隧道交换与 MSCHAPV2 同构）
+  - **EAP-TTLS（RFC 5281，内层 PAP AVP 交换）**：常量 `EAP_TYPE_TTLS=21`；前缀 `ttls:` / `eap-ttls:`；`startEapTtls()` 复用 EAP-TLS 凭据/会话基础设施，握手线程 `ttlsInnerPap()` 隧道内 AVP 帧交换（Type(1)+Length(1)+Value；先发 User-Name 空 AVP 请求 Type=1 Len=2，循环读直到 Type=2 明文 User-Password，RFC 5281 §8.5）；`handleEapTtls` 状态机整段同构于 handleEapPeap（仅 EAP Type=21）；客户端 `eapTtlsClientDial()`（握手复制 PEAP、隧道建后读 AVP 请求 → 回 User-Name+User-Password AVP → 回传 TLS 分片 → 收尾空响应）
+  - **EAP-pwd（RFC 5931，P-256）**：常量 `EAP_TYPE_PWD=52`；前缀 `pwd:` / `eap-pwd:`；新增 `EapPwdState{pwe,scalarS,elementS,scalarP,elementP,kx,confirmC,phase,expires}` + `pwdStates` 队列 + `evictPwdStates()` 超时回收；`pwdCurve()`（secp256r1）；`eapPwdDerivePwe()`（§2.8 猎取-啄食法：HKDF-SHA256 "EAP-pwd Hunting And Pecking"，p≡3 mod 4 开根，counter 循环 255 次）；元素 SEC1 压缩点 33B / 标量 32B 编解码（1<标量<N）；`eapPwdKx()`（elementP·scalarS + elementS·scalarP 取 x 坐标）；`eapPwdConfirm()`（HMAC-SHA256(kx, S‖scalarS‖elementS‖scalarP‖elementP‖tag)，tag="client"/"server"）；`handleEapPwd` 四轮状态机：phase0 ID/Response（2B Group=6 回显）→ phase1 Commit/Request（标量 32B + 元素 33B）→ phase2 Confirm/Request（32B）→ ACC/REJ；客户端 `eapPwdClientDial()` 四轮镜像（S=Request组‖Response组=0006；Confirm 双向校验）
+  - **WebAdmin**：`#radMethod` 下拉扩为 12 项——PAP / CHAP / MS-CHAPv1 / MS-CHAPv2 / EAP-MD5 / EAP-GTC / EAP-TLS / EAP-TTLS / PEAP-MD5 / PEAP-MSCHAPv2 / PEAP-GTC / EAP-pwd
+  - **修复**：`handleEapPeap` 成功日志硬编码 "PEAP-MD5" → 动态 `"PEAP-" + innerMethod`（PEAP-GTC 成功正确显示）；EAP-pwd ID/Response 校验按 RFC 5931 用 2B Group 回显（修复误判 4B）
+  - **全量回归**：12 种认证用测试账号 `admin666` 逐一拨号 **全部认证通过**（PAP/CHAP/MS-CHAPv1/MS-CHAPv2 直接响应；EAP-MD5/GTC 明文挑战；EAP-TLS/TTLS/PEAP 族完整 TLS 隧道；EAP-pwd 四轮密钥交换+双向 Confirm）；`javac -Xlint:all` **零警告**；README 升 v1.28-r11
+
+- **v1.28-r10（2026-10-05）——RADIUS PEAP 扩展：内层 MS-CHAPv2（RFC 5216 + RFC 2759 / EAP-MSCHAPv2）**
+  - **服务端**（`RadiusServer.java`）：认证方式下拉新增 **PEAP-MSCHAPv2**（第 8 项）；Identity 用户名带 `peap-mschapv2:` / `eap-peap-mschapv2:` 前缀自动分流至 `startEapPeap(...,"MSCHAPV2")`；`EapTlsSession` 新增 `innerMethod` 字段，`startEapPeap()` 参数化内层方法（MD5 / MSCHAPV2），握手线程按内层方法分派 `peapInnerMd5` / `peapInnerMsChapV2`
+  - **内层 MS-CHAPv2 实现**（`peapInnerMsChapV2()`，RFC 5216 §3.2 隧道 + RFC 2759 / EAP-MSCHAPv2 报文）：隧道内 EAP-Request/Identity → EAP-Request/MSCHAPv2 **Challenge**（OpCode=1、MS-CHAPv2-ID、MS-Length、Value-Size=16、16B 认证挑战、Name=MODPKICA-PEAP）→ 校验 EAP-Response/MSCHAPv2（OpCode=2）的 NT-Response（`verifyMsChapV2` = MD4 口令哈希 + 3×DES 挑战哈希，RFC 2759 §8.5）；内层报文偏移：Data = OpCode[5] + MS-CHAPv2-ID[6] + MS-Length[7..8] + Value-Size[9] + Value[10..]
+  - **客户端调试**（`eapPeapClientDial(...,innerMethod,...)`）：PEAP-MSCHAPv2 分支完整模拟内层 **两轮隧道交换**——Identity 响应写隧道 → `tunnelExchange()` 把 TLS 密文逐片回传服务器并拉取服务器 TLS 输出（重组 → feed 客户端 TLS → 解密读 Challenge）→ 算 NT-Response（`computeNtResponse`，50B 响应 Value：Ident+Pad+PeerChallenge16+Reserved8+NT-Response24）→ 再次回传 → 外层 EAP-Success；`/api/radius/dial` 支持 `method=PEAP-MSCHAPv2`
+  - **关键修复**：内层每写一个 EAP 包必须 `pollOutput()` 取 TLS 密文经外层 EAP-PEAP 分片回传（此前缺此步导致服务器 `readEapPacket` 等不到 Identity 响应、客户端等 Challenge 死锁超时）；响应 Value 为 **50B**（非 49B，修复 `arraycopy` 越界）
+  - **实测**：`admin666` 拨号 PEAP-MSCHAPv2——Start 交换 → 外层 TLS 握手 → 内层 Identity/Challenge/NT-Response 两轮隧道交换 → **EAP-Success 认证通过**；**PAP/CHAP/MS-CHAPv1/MS-CHAPv2/EAP-MD5/EAP-TLS/PEAP-MD5 七种旧认证全部回归通过**（8 种全量 PASS）；`javac -Xlint:all` **零警告**
+
+- **v1.28-r9（2026-10-05）——RADIUS PEAP 认证（RFC 5216 外层 TLS 隧道 + 内层 EAP）**
+  - **PEAP-MD5 服务端实现**（`RadiusServer.java`）：认证方式下拉新增 **PEAP-MD5**（第 7 项），Identity 用户名带 `peap:` / `eap-peap:` 前缀自动分流至 `startEapPeap()`
+  - **协议流程（RFC 5216）**：服务器发 `EAP-Request/PEAP/Start`（S 位=0x10）→ 客户端确认 Start → 外层 TLS 1.2 握手（BC `TlsServerProtocol`/`TlsClientProtocol`，分片/重组/拉取复用 EAP-TLS 全套基础设施，每片一个 EAP 包）→ TLS 隧道建立后进入**内层 EAP-MD5**（RFC 3748 §5.4）：隧道内发 `EAP-Request/MD5`（16B 挑战 + 名称 MODPKICA-PEAP）→ 客户端算 `MD5(内层Id || 密码 || 挑战)` 写回 → 验证通过发外层 `EAP-Success` → Access-Accept
+  - **内层实现**：`peapInnerMd5()` 经 `TlsServerProtocol` 应用数据通道交换（`readEapPacket()` 读 TLS 流中的完整 EAP 包）；`EapTlsSession` 扩展 `innerEap` 标志 + `tlsProto`/`clientTlsProto` 引用，握手线程 `accept()` 返回后继续内层认证，`ok` 反映内层结果
+  - **用户名前缀剥离**：`startEapPeap` 剥掉 `peap:`/`eap-peap:` 前缀用于内层密码查询（修复 `UsersDB.find("peap:admin666")` 查不到用户导致内层失败的根因）；`handleEapPeap` 日志/记账统一显示真实用户名
+  - **客户端调试**：`eapPeapClientDial()` 完整模拟 Identity(peap:前缀)→Start 交换→外层 TLS 多轮分片→内层 MD5 响应（TLS 加密输出逐片回传）→EAP-Success；`/api/radius/dial` 支持 `method=PEAP-MD5`
+  - **实测**：`admin666` 拨号 PEAP-MD5——Start 交换 → ClientHello → 服务器证书 6 片拉取 → Finished → 隧道内 MD5 挑战/响应 → **EAP-Success 认证通过**；PAP/CHAP/MS-CHAPv1/MS-CHAPv2/EAP-MD5/EAP-TLS 六种旧认证全部回归通过；`javac -Xlint:all` **零警告**
+
+- **v1.28-r8（2026-10-05）——RADIUS EAP-TLS 认证（BC 1.85 TLS 协议层，RFC 5216）**
+  - **EAP-TLS 服务端完整实现**（`RadiusServer.java`，基于 BouncyCastle 1.85 `bctls-jdk18on`）：认证方式下拉新增 **EAP-TLS**（第 6 项），Identity 用户名带 `tls:` / `eap-tls:` 前缀自动分流
+  - **服务端证书自动加载**：从 PKI 证书库自动挑选（CA 目录优先、回退 ROOT 目录；仅 RSA/ECC，排除 SM2/PQC），证书 + 私钥 + 链一并装入 BC TLS 凭据
+  - **TLS 会话状态机**：`EapTlsSession` 会话队列 + 8 秒超时 + 并发锁；`ModpkicaTlsServer` 仅协商 TLS 1.2（RFC 5216 基于 TLS≤1.2），6 个套件（ECDHE_RSA/ECDHE_ECDSA × GCM/CBC + TLS_RSA × CBC/GCM），不强制客户端证书（RFC 5216 可选）
+  - **RFC 5216 §2.1 分片**：服务端输出按 240B 分片**每片一个 EAP 包**（首片带 L|总长、未发完带 M）；客户端空 `EAP-Response/TLS`（flags=0）逐片拉取；`EapTlsSession.nextOutFrag()` 游标管理发送进度；客户端 `splitTlsFragments()` 逐片发送；接收侧 `reassemble()` 按 flags/L/M 重组
+  - **RFC 3579 §2.1 属性切分**：EAP 包 >253B 拆多个 `EAP-Message` 属性（服务端 `getEapMessageConcat()` 按出现顺序拼接还原，修复此前只取第一个属性导致超长 EAP 截断）
+  - **TLS 1.2 RSA 签名修复（关键）**：自建 `TlsSigner` RSA 分支补全 **PKCS#1 v1.5 填充**（EM=0x00 01 FF…FF 00 || DigestInfo 模幂），此前仅裸 RSA(DigestInfo) 导致客户端 `verifyServerKeyExchangeSignature` 报 `decrypt_error(51)`；ECDSA 分支用 HMacDSAKCalculator(SHA256) 确定性签名 + DER(r||s)（RFC 3279）
+  - **客户端调试**：`eapTlsClientDial()` 完整模拟 Identity→Start→多轮分片→Success（自动处理空挑战拉取、M=1 续片、分片重组），`/api/radius/dial` 支持 `method=EAP-TLS`
+  - **实测**：重启服务后用测试账号 `admin666` 拨号 EAP-TLS——Identity 收 Start → ClientHello → 服务器证书输出 6 片拉取 → ClientKeyExchange+CCS+Finished → **EAP-Success 认证通过**；独立 `TlsSelfTest` TCP 直连握手（应用数据 ping/pong 回显）确认 TLS 层完好；原有 PAP/CHAP/MS-CHAPv1/MS-CHAPv2/EAP-MD5 五种认证全部回归通过；`javac -Xlint:all` **零警告**
+
+- **v1.28-r7（2026-10-05）——左侧菜单精简 + OCSP|TSA签发合并页 + 取消 OCSP/时间戳请求体上限**
+  - **取消 OCSP / 时间戳服务端请求体大小限制**：原 `readAll()` 对全部接口统一施加 8MB 上限（`MAX_BODY_BYTES`，防内存 DoS）；新增 `readAllUnlimited(InputStream)` 无上限读取，`/OCSP`、`/ocsp`、`/timestamp`、`/timestamp/sha1`、`/rfc3161` 五个接口全部改用——请求体不再有任何大小/长度限制（超大签名内容也可接收）；CT 日志接口（`/ct/add` 与 `/ct/v1/*`）保留 8MB 上限不动。实测：9MB 随机请求体发往三个接口均正常进入解析阶段（OCSP 报 DER 长度异常、RFC3161 报序列构造失败、Authenticode 报 Base64 结尾错误，均系无效数据解析失败，**不再出现 "request body too large"**）；浏览器模拟 OCSP / RFC3161 正常请求端到端通过
+  - **菜单精简**：隐藏「CRL 刷新」「OCSP 签发」「时间戳签发」「调试专区」四个菜单项——CRL 刷新入口仅保留仪表盘「刷新全部 CRL」快捷按钮；原 OCSP 签发、时间戳签发、调试专区三个页面合并为一个新菜单 **「OCSP|TSA签发」**
+  - **合并页分类夹**（复用 `.sig-tabs` 样式，新增 `ocspTab(t)` 切换函数，默认显示「OCSP签发」）：四个页内 Tab——**OCSP签发**（原 initOCSP 页面：算法下拉 RSA/ECC/SM2 + 一键签发）、**TSA签发**（原 initTIMSTAMP 页面：SHA1/SHA256/SM3 下拉 + 一键签发）、**OCSP模拟请求调试**（原调试专区「模拟 OCSP 请求（RFC 6960）」：CertID 哈希九种算法 + Nonce 回显验证 + DER 长度展示）、**TSA模拟请求调试**（原「模拟时间戳请求（RFC 3161）」：九种摘要算法 + 随机数据签名 + TimeStampResp 验证）
+  - **实现细节**：删除 `page-crl`、`page-timestamp`、`page-debug` 三个页面 div 与对应菜单、TITLES 条目；`page-ocsp` 重构为含分类夹的合并页，原 OCSP 签发 / 时间戳签发 / 调试专区全部表单控件（`ocAlgo`/`tsHash`/`dbgOcspSerial`/`dbgOcspHash`/`dbgTsaHash` 及各输出框）原样保留，`sendDebugOcsp()`/`sendDebugTsa()` 函数不动，功能零损失；仪表盘三个快捷按钮（刷新全部 CRL / 签发全部 OCSP / 签发全部时间戳）保留
+  - **菜单排序**（用户指定）：仪表盘 → 证书库 → 签发根证书 → 签发证书 → OCSP|TSA签发 → 模板管理 → 吊销证书 → 证书验证 → 签名专区 → SCT服务管理 → Radius服务管理 → PPPoE服务管理 → 初始化环境 → 用户管理 → 系统配置 → 操作日志
+  - **Radius / PPPoE 服务管理页新增「清空日志」按钮**（位于「刷新日志」旁）：后端新增 `/api/radius/clearlogs`、`/api/pppoe/clearlogs` 两个接口（RadiusServer/PPPoEServer 各加 `clearLogs()` 清空内存环形日志，`ConcurrentLinkedDeque.clear()` / `ArrayDeque.clear()`）；前端 `radiusClearLogs()`/`pppoeClearLogs()` 调用后刷新表格与统计，并用 `ctxToast` 顶部悬浮提示「日志已清空」
+  - **RADIUS 服务端新增 MS-CHAPv1 认证与隧道属性解析（对齐 WinRADIUS 协议集）**：新增 **MS-CHAPv1**（RFC 2433，Vendor-Specific Microsoft Vendor-Type=24：8 字节挑战 + 49 字节响应，`verifyMsChapV1()` = MD4 NT-Password-Hash 2×DES 加密挑战比对，`hasMsChapVsa()` 自动分流 v1/v2），PPTP/拨号场景直接可用；新增**隧道属性解析**（RFC 2867/2868：Tunnel-Type / Tunnel-Medium-Type / Tunnel-Client/Server-Endpoint / Tunnel-Password 自动解析成文字记录，`logTunnelAttrs()` 认证与计费均记录，PPTP/L2TP/IPsec/GRE 等 VPN 场景可见）；客户端-调试专区下拉新增 **MS-CHAPv1** 模拟（`msChapV1ClientDial()` 构造完整 v1 请求验证）；顺手修复历史遗留 `dangling-doc-comments` 警告
+  - **验证**：`javac -Xlint:all` **零警告**；内置浏览器实测——「客户端-调试专区」认证方式下拉为 PAP|CHAP|MS-CHAPv1|MS-CHAPv2|EAP-MD5 五项，五种方法用测试账号 `admin666` 逐一拨号**全部认证通过**（Access-Accept、响应 Authenticator 校验通过）；铁律遵守（未运行任何 ResetData/ResetExe 类脚本、不改监听方式、明文不加密、不加 API 鉴权、全中文 UI）
+
+- **v1.28-r6（2026-10-05）——RADIUS 客户端-调试专区 + 自动启动 on/off 统一 + 三个协议修复**
+  - **自动刷新不再覆盖编辑框（修复「3 秒后端口/共享密钥/自动开启被旧数据替换」）**：原 3 秒自动刷新定时器直接调用 `loadRadius()/loadPppoe()`，会整体回填端口、共享密钥、「MAIN 启动时自动开启」等表单控件，用户编辑中未在 3 秒内保存即被旧值覆盖；拆出自动刷新专用函数 `refreshRadiusStatus()/refreshPppoeStatus()`——**只更新状态徽章 / 统计数字 / 页面下方「服务器日志」**，绝不写任何编辑框；表单控件仅页面刷新、导航进入、启停/保存等操作后由 `loadRadius()/loadPppoe()` 回填。实测：RADIUS 认证端口 1812→9999、共享密钥改值后等 4.5 秒仍保持，PPPoE 端口 512/513→9998/9999 同样保持，日志仍按 3 秒刷新
+  - **RADIUS 页面新增双分类夹「服务管理 / 客户端-调试专区」**：现有状态徽章 / 启停 / 配置 / 统计 / 服务日志迁入「服务管理」；新增「客户端-调试专区」——认证方式下拉（PAP / CHAP / MS-CHAPv2 / EAP-MD5）+ 账号 / 密码 / 密钥 / 端口 + 「发起调试」按钮，`#radDialOut` 逐步日志展示完整握手过程；后端新增 `RadiusServer.clientDial(method,username,password,secret,authPort)`（返回 ok/message/logs[]）与 API `POST /api/radius/dial`，操作写入 logs.log
+  - **四种认证模拟客户端全部按 RFC 标准实现并实测通过**：
+    - **PAP（RFC 2865 §5.2）**：`encodeUserPassword` 每 16B 块 XOR `MD5(secret + 前块)`，首块用 Request Authenticator；实测 Access-Accept、响应 Authenticator 校验通过
+    - **CHAP（RFC 1994）**：MD5(challenge + password + id) 响应；实测 Access-Accept
+    - **MS-CHAPv2（RFC 2759）**：客户端自生成 Peer Challenge + `computeNtResponse`（MD4 口令哈希 + 3×DES 挑战加密）→ MS-CHAP2-Response VSA（Vendor `0x137`，Type 25）；实测 Access-Accept
+    - **EAP-MD5（RFC 3748）**：两阶段——Identity → 服务器回 Access-Challenge + EAP-Request/MD5（Type=4，Value-Size + 16B 挑战 + 名称）→ 客户端 `MD5(eapId + 密码 + 挑战)` 回 EAP-Response/MD5 → Access-Accept；全程 Message-Authenticator（HMAC-MD5）随包
+    - **错误密码拒绝**：PAP 错误密码实测 Access-Reject、响应 Authenticator 校验通过
+  - **协议修复（三处，均以「实践出真知」实测定位）**：
+    - **MS-CHAPv2 NT-Response 第 3 次 DES 错位**：`computeNtResponse` 三次 DES 中第 3 次错误复用 `challengeHash[16..24)` 导致 `input buffer too short`，按 RFC 2759 §8.5 改为第 3 次仍用 `challengeHash[0..7]`（`i==2 ? 0 : i*8`）；修复后 Access-Accept
+    - **MS-CHAPv2 VSA Vendor-Length 语义**：RFC 2548 VSA 的 Length 字段含 Vendor-Type + Vendor-Length 头（=8），数据实际长度应为 `vlen - 2`；原实现按整段截取导致挑战/响应解析错位（Data 内残留 2 字节）→ 修复后挑战响应逐字节对齐
+    - **EAP-MD5 挑战包双重封装**：旧 `buildEapRequestMd5` 自带完整 EAP 头（Code/Id/Length/Type），又被 `buildEapResponse` 再套一层 EAP 头 → 属性 79 内容错乱（Type 缺失、Length 差 1）；修复为 `buildEapResponse` 新增带 `eapType` 参数的重载（旧 7 参签名委托新签名 eapType=-1），Identity 分支只传裸 Data（Value-Size + 挑战 + 名称）由统一逻辑写 Type/Length；并删除无引用的 `buildEapRequestMd5`
+  - **自动启动配置统一（RADIUS 与 PPPoE 同规则）**：面板勾选「MAIN 启动时自动开启」→ 保存写 CONFIG.txt `RADIUSAUTO=on` / `PPPOEAUTO=on`，取消勾选 → 写 `off`；`startRadiusIfConfigured()` / `startPppoeIfConfigured()` 缺省统一 `"off"`（仅用户勾选后才自动拉起）；实测闭环：勾选 on → 重启 MAIN 自动启动；取消 → CONFIG 写 off → 重启后服务不自动拉起（service.log 仅打印 PPPoE 自动启动、RADIUS 无）
+  - **验证**：`javac -Xlint:all` **零警告**；内置浏览器实测 PAP / CHAP / MS-CHAPv2 / EAP-MD5 四方法通过 + 错误密码拒绝通过 + on/off 配置持久化与重启行为闭环 + 3 秒自动刷新不覆盖编辑框；临时编译日志已清理；铁律遵守（未运行任何 ResetData/ResetExe 类脚本、不改监听方式、明文不加密、不加 API 鉴权、全中文 UI）
+
+- **v1.28-r5（2026-10-05）——用户管理 + RADIUS 服务管理 + PPPoE 服务管理**
+  - **用户管理（PKI/USERS.txt）**：新增 `UsersDB.java`——明文行式存储 `用户名 密码 状态 组 备注`，删除 = 行首 `#` 注释不真删；`User.enabled()` / `load(baseDir)` / `find(baseDir,user)`；WebAdmin 新增「用户管理」页面（增删改查、启用/停用）
+  - **RADIUS 服务管理（RFC 2865/2866 + EAP）**：新增 `RadiusServer.java`——UDP 1812 认证 / 1813 计账双线程，PAP / CHAP / MS-CHAPv2 / EAP 认证框架，环形日志（最近 500 条）、`statusJson()`（运行状态/账户数/认证请求/通过/拒绝/启动时间）；账号与用户管理同库；WebAdmin 新增「Radius服务管理」页面（启动/停止/统计清零/刷新/自动刷新/日志实时显示）；CONFIG.txt 支持 `RADIUSPORT`、`RADIUSAUTO` 键
+  - **PPPoE 服务管理（RFC 2516 + PPP）**：新增 `PPPoEServer.java`——UDP 封装模拟标准报文（Discovery `0x8863`/UDP 512，Session `0x8864`/UDP 513），Discovery 阶段完整处理 PADI(0x09)→PADO(0x07)/PADR(0x19)→PADS(0x65)/PADT(0xa7)，标签 Service-Name(0x0101)/AC-Name(0x0102)/Host-Uniq(0x0103)；Session 阶段 PPP LCP（Conf-Req/ACK/NAK/REJ/Term-Req/Ack，选项 MRU/Auth-Protocol/Magic）+ **PAP（RFC 1334）** + **CHAP（RFC 1994，MD5(id+secret+challenge)）**；认证复用用户管理同库；客户端-调试专区提供完整拨号流程模拟（PADI→PADO→PADR→PADS→LCP→PAP/CHAP→PADT），自测闭环；CONFIG.txt 支持 `PPPEO_DISC_PORT`、`PPPEO_SESS_PORT`、`PPPEOAUTO` 键
+  - **关键修复（PPPoE CHAP 认证失效）**：`hasAuthProto()` 遍历 LCP 选项时误用 `p += 2 + len`——RFC 1661 选项的 Length 字段已含 Type+Length 头，选项步长应为 `p += len`；修复后 CHAP Challenge/Response/Success 全流程可用，PAP/CHAP 双认证与错误密码拒绝均实测通过
+  - **关键修复（「MAIN 启动时自动开启」不生效）**：`pppoeSaveConfig` 会正常写入 `PPPOEAUTO=on` 到 CONFIG.txt，但 MAIN 启动时缺少读取并拉起 PPPoE 的代码（RADIUS 有 `startRadiusIfConfigured()`，PPPoE 没有）——每次 MAIN 重启后 PPPoE 都处于未运行，看起来像"自动关闭"；新增 `WebAdmin.startPppoeIfConfigured()`（读取 PPPOEAUTO/PPPOEDISC/PPPOESESS，缺省 off 仅用户勾选后开启，与面板共用同一实例），MAIN.java 启动时调用并打印「MOD PKI CA PPPoE服务已自动启动」；实测：面板勾选→保存（CONFIG.txt 出现 `PPPOEAUTO=on`）→重启 MAIN→PPPoE 自动运行中、复选框保持勾选，全链路通过
+  - **验证**：`javac -Xlint:all` **零警告**；内置浏览器实测：PPPoE 启动/停止/状态徽章、PAP 认证成功（admin666）、CHAP 认证成功（admin666）、错误密码 CHAP 拒绝（日志「账号不存在、停用或响应不匹配」）、服务器日志实时联动全部通过
+  - **铁律遵守**：未运行任何 ResetData / ResetExe 类脚本；不改监听方式（默认 127.0.0.1:8080 管理界面）、不改文件存储格式（USERS.txt 明文）、不加 API 鉴权；全中文 UI
+
 - **v1.28-r4（2026-10-03）——证书库列表验证 SCT 原始类型标注 + CertVerify KeyUsage NPE 修复**
   - **SCT 原始类型标注（RFC 6962 §3.2）**：证书库列表「验证」弹窗与 CLI `CertVerify` 中，若证书含 SCT 列表扩展（`1.3.6.1.4.1.11129.2.4.2`），验证每条 SCT 记录时标注其签名的原始数据模式——按 RFC 6962 §3.2 先构造「预证书模式（precert_entry：`entry_type=1 + issuer_key_hash(32B) + u24(len)+去 SCT 扩展的 PreCert TBS` + `u16(extensions)`）」输入验签，失败再回退「正式证书模式（x509_entry：`entry_type=0 + 剥离 SCT 扩展后的 TBSCertificate` + `u16(extensions)`）」；`sctStatus` 返回值由 `String` 改为内部类 `SctVerifyOutcome{status, mode}`，`printSctList` 在「签名类型 / 签名」之后新增 `原始类型:  预证书模式(precert_entry) / 正式证书模式(x509_entry) / 无法判定` 行，再接原「状态:」行（冒号与「签名」保持对齐）
   - **端到端实测（两条路径均真实签发验证）**：`CTLOGapi=/ct/v1/add-pre-chain` 签发终端证书 → 3 条 SCT 全部标注「预证书模式(precert_entry)」且验签「签名有效」；`CTLOGapi=/ct/v1/add-chain` 签发 → 全部标注「正式证书模式(x509_entry)」且验签「签名有效」；冒烟测试证书与 crtRAW 提交记录已清理，`PKI/CONFIG.txt` 恢复用户原配置

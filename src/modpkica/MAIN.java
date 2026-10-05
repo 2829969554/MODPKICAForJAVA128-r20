@@ -106,6 +106,28 @@ public final class MAIN {
                     + WebAdmin.port());
         }
 
+        // RADIUS 服务自动启动（PKI/CONFIG.txt 中 RADIUSAUTO=on 时，缺省 off，面板勾选后才开启；用户库 PKI/USERS.txt）。
+        // 使用 WebAdmin 的共享实例，面板状态/统计/日志与实际服务一致。
+        try {
+            if (WebAdmin.startRadiusIfConfigured()) {
+                System.out.println("MOD PKI CA RADIUS服务已自动启动: 认证UDP/1812 计费UDP/1813"
+                        + "（RFC 2138/2139/2865-2869 + EAP，账号 PKI/USERS.txt，可在面板关闭）");
+            }
+        } catch (Exception e) {
+            System.err.println("RADIUS 自动启动失败（忽略，不影响主服务）: " + e.getMessage());
+        }
+
+        // PPPoE 服务自动启动（PKI/CONFIG.txt 中 PPPOEAUTO=on 时，缺省 off，面板勾选后才开启）。
+        // 使用 WebAdmin 的共享实例，面板状态/统计/日志与实际服务一致。
+        try {
+            if (WebAdmin.startPppoeIfConfigured()) {
+                System.out.println("MOD PKI CA PPPoE服务已自动启动: Discovery UDP/512 Session UDP/513"
+                        + "（RFC 2516 + PPP LCP/PAP/CHAP，账号 PKI/USERS.txt，可在面板关闭）");
+            }
+        } catch (Exception e) {
+            System.err.println("PPPoE 自动启动失败（忽略，不影响主服务）: " + e.getMessage());
+        }
+
         System.out.println("MOD PKI CA Server is running on http://localhost:" + port);
         System.out.println("MOD PKI CA 服务端启动: http://localhost:" + port);
         System.out.println("MOD PKI CA OCSP服务启动: http://localhost:" + port + "/OCSP（RSA/ECC/SM2，摘要自适应 SHA1/SHA256/SHA384/SHA512/SM3）");
@@ -145,7 +167,7 @@ public final class MAIN {
             return;
         }
 
-        byte[] req = readAll(ex.getRequestBody());
+        byte[] req = readAllUnlimited(ex.getRequestBody());
         String remote = ex.getRemoteAddress() != null
                 ? ex.getRemoteAddress().getAddress().getHostAddress() : "?";
         MLog.append(baseDir, "收到OCSP请求",
@@ -413,7 +435,7 @@ public final class MAIN {
             return;
         }
 
-        byte[] body = readAll(ex.getRequestBody());
+        byte[] body = readAllUnlimited(ex.getRequestBody());
         try {
             // 请求体是 base64 文本（实测含 \r\n 与末尾 \0 空字节）。
             // 只保留 base64 字母表字符，其余（换行/回车/NUL/空格）全部丢弃，最健壮
@@ -532,7 +554,7 @@ public final class MAIN {
                         ? ex.getRemoteAddress().getAddress().getHostAddress() : "?")
                         + " 路径=" + ex.getRequestURI().getPath());
 
-        byte[] body = readAll(ex.getRequestBody());
+        byte[] body = readAllUnlimited(ex.getRequestBody());
         try {
             TimestampUtil.Rfc3161Request parsed = TimestampUtil.parseRfc3161Request(body);
             MLog.append(baseDir, "时间戳请求解析(RFC3161)",
@@ -1233,7 +1255,7 @@ public final class MAIN {
         return relPaths[relPaths.length - 1];
     }
 
-    /** 最大请求体：8MB（OCSP/时间戳/CT 请求均远小于此，仅防内存 DoS）。 */
+    /** 最大请求体：8MB（仅 CT 日志接口保留防内存 DoS，OCSP/时间戳已取消上限）。 */
     private static final long MAX_BODY_BYTES = 8L * 1024 * 1024;
 
     /** 读取请求体全部字节（带上限，超限抛 IOException 拒绝）。 */
@@ -1247,6 +1269,17 @@ public final class MAIN {
             if (total > MAX_BODY_BYTES) {
                 throw new IOException("request body too large (limit " + MAX_BODY_BYTES + " bytes)");
             }
+            out.write(buf, 0, n);
+        }
+        return out.toByteArray();
+    }
+
+    /** 读取请求体全部字节（无大小/长度上限，用于 OCSP 与时间戳接口的大请求场景）。 */
+    private static byte[] readAllUnlimited(InputStream in) throws IOException {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        byte[] buf = new byte[8192];
+        int n;
+        while ((n = in.read(buf)) != -1) {
             out.write(buf, 0, n);
         }
         return out.toByteArray();
