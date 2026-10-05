@@ -214,8 +214,8 @@ public class RadiusServer {
     private Thread acctThread;
     private long startTime;
 
-    /** EAP 挑战状态缓存：RADIUS Identifier → 状态。 */
-    private final Map<Integer, EapState> eapStates = new HashMap<>();
+    /** EAP 挑战状态缓存：来源 "ip:port" → 状态（RADIUS Identifier 每请求递增，不可作会话 key）。 */
+    private final Map<String, EapState> eapStates = new HashMap<>();
 
     /** EAP-TLS 会话缓存：RADIUS Identifier → 会话（RFC 5216，BC TLS 1.2 握手线程）。 */
     private final Map<Integer, EapTlsSession> tlsSessions = new ConcurrentHashMap<>();
@@ -906,7 +906,8 @@ public class RadiusServer {
         try {
             p = parsePacket(pkt.getData(), pkt.getLength());
         } catch (Exception e) {
-            addLog("认证包解析失败 来源=" + pkt.getAddress().getHostAddress() + " " + e);
+            addLog("认证包解析失败 来源=" + pkt.getAddress().getHostAddress() + " " + e
+                    + " hex=" + hexFull(Arrays.copyOfRange(pkt.getData(), 0, pkt.getLength())));
             return null;
         }
         if (p.code != CODE_ACCESS_REQUEST) {
@@ -930,7 +931,8 @@ public class RadiusServer {
         byte[] eap = getEapMessageConcat(p);
         if (eap != null) {
             addLog("[DBG] EAP 消息进入 type=" + (eap.length > 4 ? (eap[4] & 0xff) : -1)
-                    + " len=" + eap.length + " 来源=" + src);
+                    + " len=" + eap.length + " 来源=" + src
+                    + " hex=" + hexFull(eap));
             return handleEap(p, eap, src);
         }
         // 2) PAP
@@ -1126,35 +1128,12 @@ public class RadiusServer {
                 // 用户名带 mschapv2:/eap-mschapv2: 前缀 → 独立 EAP-MSCHAPv2（RFC 2759 / EAP-MSCHAPv2，EAP 类型 26）
                 if (name.regionMatches(true, 0, "mschapv2:", 0, 9)
                         || name.regionMatches(true, 0, "eap-mschapv2:", 0, 13)) {
-                    String realUser = name.startsWith("mschapv2:") ? name.substring(9)
-                            : name.substring(13);
-                    UsersDB.User m = realUser.isEmpty() ? null : UsersDB.find(baseDir, realUser);
-                    if (m == null || !m.enabled()) {
-                        addLog("EAP-MSCHAPv2 用户不存在或停用 来源=" + src + " 用户=" + realUser);
-                        authFail++;
-                        return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
-                                name, eapId, EAP_CODE_FAILURE, null, "用户不存在或停用");
-                    }
-                    EapState st = new EapState();
-                    st.username = realUser;
-                    st.method = "MSCHAPV2";
-                    st.challenge = new byte[16];
-                    new java.security.SecureRandom().nextBytes(st.challenge);
-                    st.expires = System.currentTimeMillis() + EAP_STATE_TTL_MS;
-                    synchronized (eapStates) {
-                        eapStates.put(p.identifier, st);
-                        evictEapStates();
-                    }
-                    // EAP-Request/MSCHAPV2 Challenge：OpCode(1)=1, MS-CHAPv2-ID(1), MS-Length(2),
-                    //     Value-Size(1)=16, Value(16B 认证挑战), Name
-                    byte mschapId = 0x02;
-                    byte[] nameB = "MODPKICA-MSCHAPV2".getBytes(StandardCharsets.UTF_8);
-                    int msLen = 1 + 16 + nameB.length;
-                    byte[] chalData = concat(new byte[]{1, mschapId,
-                            (byte) (msLen >> 8), (byte) msLen, 16}, st.challenge, nameB);
-                    addLog("EAP-MSCHAPv2 下发挑战 来源=" + src + " 用户=" + realUser);
-                    return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                            name, eapId, EAP_CODE_REQUEST, EAP_TYPE_MSCHAPV2, chalData, null);
+                    return startEapMsChapV2(p, eapId, name, src);
+                }
+                // 用户名带 md5:/eap-md5: 前缀 → EAP-MD5（RFC 3748 / 2284）
+                if (name.regionMatches(true, 0, "md5:", 0, 4)
+                        || name.regionMatches(true, 0, "eap-md5:", 0, 8)) {
+                    return startEapMd5(p, eapId, name, src);
                 }
                 // 用户名带 gtc:/eap-gtc: 前缀 → GTC（RFC 3748 §5.6）：回提示文本请求明文令牌
                 if (name.regionMatches(true, 0, "gtc:", 0, 4)
@@ -1173,7 +1152,7 @@ public class RadiusServer {
                     st.method = "GTC";
                     st.expires = System.currentTimeMillis() + EAP_STATE_TTL_MS;
                     synchronized (eapStates) {
-                        eapStates.put(p.identifier, st);
+                        eapStates.put(src, st);
                         evictEapStates();
                     }
                     addLog("EAP-Identity 已接受 来源=" + src + " 用户=" + realUser + " → 发送 GTC 提示");
@@ -1181,28 +1160,18 @@ public class RadiusServer {
                             name, eapId, EAP_CODE_REQUEST, EAP_TYPE_GTC,
                             "Enter Password: ".getBytes(StandardCharsets.UTF_8), null);
                 }
-                UsersDB.User u = name.isEmpty() ? null : UsersDB.find(baseDir, name);
-                byte[] challenge = new byte[16];
-                new java.security.SecureRandom().nextBytes(challenge);
-                EapState st = new EapState();
-                st.username = name;
-                st.challenge = challenge;
-                st.method = "MD5";
-                st.expires = System.currentTimeMillis() + EAP_STATE_TTL_MS;
-                synchronized (eapStates) {
-                    eapStates.put(p.identifier, st);
-                    evictEapStates();
+                // 无前缀（裸用户名）→ 默认 EAP-MSCHAPv2：strongSwan eap-radius / iOS / Windows
+                // 拨号客户端只发纯用户名，业界事实标准即 EAP-MSCHAPv2（RFC 2759，EAP 类型 26）
+                if (name.isEmpty()) {
+                    addLog("EAP-Identity 用户名为空 来源=" + src);
+                    authFail++;
+                    return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
+                            name, eapId, EAP_CODE_FAILURE, null, "用户名为空");
                 }
-                // EAP-Request/MD5 属性：Data = Value-Size(1) + 挑战(16) + 名称，
-                // Type 由 buildEapResponse 的 eapType 参数写入（RFC 3748 EAP-MD5 挑战结构）
-                byte[] eapReq = concat(new byte[]{16}, challenge,
-                        "MODPKICA".getBytes(StandardCharsets.UTF_8));
-                addLog("EAP-Identity 已接受 来源=" + src + " 用户=" + name + " → 发送 MD5 挑战");
-                return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                        name, eapId, EAP_CODE_REQUEST, EAP_TYPE_MD5, eapReq, null);
+                return startEapMsChapV2(p, eapId, name, src);
             }
             case EAP_TYPE_MD5: {
-                EapState st = takeEapState(p.identifier);
+                EapState st = takeEapState(src);
                 if (st == null || !"MD5".equals(st.method) || data.length < 17 || (data[0] & 0xff) != 16) {
                     authFail++;
                     addLog("EAP-MD5 状态失效或响应非法 来源=" + src + " 用户=" + username);
@@ -1222,7 +1191,7 @@ public class RadiusServer {
             }
             case EAP_TYPE_GTC: {
                 // RFC 3748 §5.6：EAP-Response/GTC 携带明文令牌/口令（隧道外明文，仅适合受控环境）
-                EapState st = takeEapState(p.identifier);
+                EapState st = takeEapState(src);
                 if (st == null || !"GTC".equals(st.method)) {
                     authFail++;
                     addLog("EAP-GTC 状态失效或响应非法 来源=" + src);
@@ -1240,7 +1209,9 @@ public class RadiusServer {
                         ok ? "EAP-GTC 认证通过" : "EAP-GTC 认证失败");
             }
             case EAP_TYPE_MSCHAPV2: {
-                // EAP-MSCHAPv2 Response: OpCode(1) MS-CHAPv2-ID(1) MS-Length(2) Value-Size(1) Value(49) Name
+                // RFC 2759 §3.4 EAP-MSCHAPv2 Response:
+                //   OpCode(1)=2, MS-CHAPv2-ID(1), MS-Length(2), Value-Size(1)=49,
+                //   Value(49B = Peer-Challenge(16) + Reserved(8) + NT-Response(24) + Flags(1)), Name
                 if (data.length < 5 || (data[0] & 0xff) != 2 /* OpCode=Response */) {
                     authFail++;
                     addLog("EAP-MSCHAPv2 响应格式非法 来源=" + src);
@@ -1248,16 +1219,16 @@ public class RadiusServer {
                             username, eapId, EAP_CODE_FAILURE, null, "EAP-MSCHAPv2 格式错误");
                 }
                 int valueSize = data[4] & 0xff;
-                if (data.length < 5 + valueSize || valueSize < 50) {
+                if (data.length < 5 + valueSize || valueSize < 49) {
                     authFail++;
                     addLog("EAP-MSCHAPv2 响应数据过短 来源=" + src);
                     return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                             username, eapId, EAP_CODE_FAILURE, null, "EAP-MSCHAPv2 数据过短");
                 }
                 byte[] value = Arrays.copyOfRange(data, 5, 5 + valueSize);
-                byte[] peerChallenge = Arrays.copyOfRange(value, 2, 18);
-                byte[] ntResponse = Arrays.copyOfRange(value, 26, 50);
-                EapState st = takeEapState(p.identifier);
+                byte[] peerChallenge = Arrays.copyOfRange(value, 0, 16);
+                byte[] ntResponse = Arrays.copyOfRange(value, 24, 48);
+                EapState st = takeEapState(src);
                 if (st == null || !"MSCHAPV2".equals(st.method)) {
                     authFail++;
                     addLog("EAP-MSCHAPv2 状态失效 来源=" + src);
@@ -1268,10 +1239,23 @@ public class RadiusServer {
                 boolean ok = u != null && u.enabled()
                         && verifyMsChapV2(u.password, st.username, peerChallenge, st.challenge, ntResponse);
                 logAuthResult(src, st.username, "EAP-MSCHAPv2", ok, "EAP");
+                List<Attr> mppe = null;
+                if (ok) {
+                    // RFC 3079 §3.1 + RFC 2548 §2.4.3：派生 MSK 并携带 MS-MPPE-Recv/Send-Key，
+                    // 供 strongSwan eap-radius 网关重建 EAP MSK（64 字节）。
+                    byte[] msk = deriveMschapv2Msk(ntPasswordHash(u.password), ntResponse);
+                    mppe = List.of(
+                            msMppeAttr(MS_MPPE_RECV_KEY, Arrays.copyOfRange(msk, 0, 16),
+                                    p.authenticator, secret),
+                            msMppeAttr(MS_MPPE_SEND_KEY, Arrays.copyOfRange(msk, 16, 32),
+                                    p.authenticator, secret));
+                    addLog("[DBG] EAP-MSCHAPV2 认证通过，已下发 MS-MPPE 密钥（MSK 前 32 字节 = "
+                            + hexFull(Arrays.copyOfRange(msk, 0, 32)) + "）");
+                }
                 return buildEapResponse(ok ? CODE_ACCESS_ACCEPT : CODE_ACCESS_REJECT,
                         p.identifier, p.authenticator, st.username, eapId,
-                        ok ? EAP_CODE_SUCCESS : EAP_CODE_FAILURE, null,
-                        ok ? "EAP-MSCHAPv2 认证通过" : "EAP-MSCHAPv2 认证失败");
+                        ok ? EAP_CODE_SUCCESS : EAP_CODE_FAILURE, -1, null,
+                        ok ? "EAP-MSCHAPv2 认证通过" : "EAP-MSCHAPv2 认证失败", mppe);
             }
             case EAP_TYPE_TLS:
                 return handleEapTls(p, eapId, data, src);
@@ -1325,6 +1309,66 @@ public class RadiusServer {
         return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
                 username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TLS,
                 eapTlsFragments(new byte[0], 0, true), null);
+    }
+
+    /** 启动独立 EAP-MSCHAPv2 认证（RFC 2759，EAP 类型 26）：校验用户并下发 MSCHAPv2 挑战。
+     *  支持 mschapv2:/eap-mschapv2: 前缀与裸用户名（strongSwan eap-radius / iOS / Windows 拨号客户端）。 */
+    private byte[] startEapMsChapV2(Packet p, int eapId, String name, String src) {
+        String realUser = name.startsWith("mschapv2:") ? name.substring(9)
+                : (name.startsWith("eap-mschapv2:") ? name.substring(13) : name);
+        UsersDB.User m = realUser.isEmpty() ? null : UsersDB.find(baseDir, realUser);
+        if (m == null || !m.enabled()) {
+            addLog("EAP-MSCHAPv2 用户不存在或停用 来源=" + src + " 用户=" + realUser);
+            authFail++;
+            return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
+                    name, eapId, EAP_CODE_FAILURE, null, "用户不存在或停用");
+        }
+        EapState st = new EapState();
+        st.username = realUser;
+        st.method = "MSCHAPV2";
+        st.challenge = new byte[16];
+        new java.security.SecureRandom().nextBytes(st.challenge);
+        st.expires = System.currentTimeMillis() + EAP_STATE_TTL_MS;
+        synchronized (eapStates) {
+            eapStates.put(src, st);
+            evictEapStates();
+        }
+        // EAP-Request/MSCHAPV2 Challenge：OpCode(1)=1, MS-CHAPv2-ID(1), MS-Length(2),
+        //     Value-Size(1)=16, Value(16B 认证挑战), Name
+        byte mschapId = 0x02;
+        byte[] nameB = "MODPKICA-MSCHAPV2".getBytes(StandardCharsets.UTF_8);
+        // RFC 2759 §3.2：MS-Length = 整个 MS-CHAPv2 消息长度
+        //   = OpCode(1) + MS-CHAPv2-ID(1) + MS-Length(2) + Value-Size(1) + Value(16) + Name = 21 + NameLen
+        int msLen = 1 + 1 + 2 + 1 + 16 + nameB.length;
+        byte[] chalData = concat(new byte[]{1, mschapId,
+                (byte) (msLen >> 8), (byte) msLen, 16}, st.challenge, nameB);
+        addLog("EAP-MSCHAPv2 下发挑战 来源=" + src + " 用户=" + realUser);
+        return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
+                name, eapId, EAP_CODE_REQUEST, EAP_TYPE_MSCHAPV2, chalData, null);
+    }
+
+    /** 启动 EAP-MD5 认证（RFC 3748 §5.4）：下发挑战。支持 md5:/eap-md5: 前缀。 */
+    private byte[] startEapMd5(Packet p, int eapId, String name, String src) {
+        String realUser = name.startsWith("md5:") ? name.substring(4)
+                : (name.startsWith("eap-md5:") ? name.substring(8) : name);
+        byte[] challenge = new byte[16];
+        new java.security.SecureRandom().nextBytes(challenge);
+        EapState st = new EapState();
+        st.username = realUser;
+        st.challenge = challenge;
+        st.method = "MD5";
+        st.expires = System.currentTimeMillis() + EAP_STATE_TTL_MS;
+        synchronized (eapStates) {
+            eapStates.put(src, st);
+            evictEapStates();
+        }
+        // EAP-Request/MD5 属性：Data = Value-Size(1) + 挑战(16) + 名称，
+        // Type 由 buildEapResponse 的 eapType 参数写入（RFC 3748 EAP-MD5 挑战结构）
+        byte[] eapReq = concat(new byte[]{16}, challenge,
+                "MODPKICA".getBytes(StandardCharsets.UTF_8));
+        addLog("EAP-Identity 已接受 来源=" + src + " 用户=" + realUser + " → 发送 MD5 挑战");
+        return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
+                name, eapId, EAP_CODE_REQUEST, EAP_TYPE_MD5, eapReq, null);
     }
 
     /** 从流中读取一个完整 EAP 包（Code/Id/Length 头 + 载荷）。 */
@@ -1404,7 +1448,7 @@ public class RadiusServer {
         new java.security.SecureRandom().nextBytes(authChallenge);
         byte mschapId = 0x02;
         byte[] name = "MODPKICA-PEAP".getBytes(StandardCharsets.UTF_8);
-        int msLen = 1 + 16 + name.length;   // Value-Size + Value + Name
+        int msLen = 1 + 1 + 2 + 1 + 16 + name.length;   // RFC 2759 §3.2：21 + NameLen
         byte[] chalData = concat(new byte[]{1, mschapId,
                 (byte) (msLen >> 8), (byte) msLen, 16}, authChallenge, name);
         byte[] chalReq = eapPacket(EAP_CODE_REQUEST, (byte) 0x02, EAP_TYPE_MSCHAPV2, chalData);
@@ -2507,9 +2551,9 @@ public class RadiusServer {
     }
 
 
-    private EapState takeEapState(int radiusId) {
+    private EapState takeEapState(String key) {
         synchronized (eapStates) {
-            EapState st = eapStates.remove(radiusId);
+            EapState st = eapStates.remove(key);
             if (st == null) {
                 return null;
             }
@@ -2639,11 +2683,18 @@ public class RadiusServer {
     // 旧签名（无 EAP Type，用于 Success/Failure 等无 Type 包），委托新签名。
     private byte[] buildEapResponse(int code, int id, byte[] reqAuth, String username,
                                     int eapId, int eapCode, byte[] eapData, String msg) {
-        return buildEapResponse(code, id, reqAuth, username, eapId, eapCode, -1, eapData, msg);
+        return buildEapResponse(code, id, reqAuth, username, eapId, eapCode, -1, eapData, msg, null);
     }
 
     private byte[] buildEapResponse(int code, int id, byte[] reqAuth, String username,
                                     int eapId, int eapCode, int eapType, byte[] eapData, String msg) {
+        return buildEapResponse(code, id, reqAuth, username, eapId, eapCode, eapType, eapData, msg, null);
+    }
+
+    /** 支持附加属性（如 MS-MPPE-*）的 EAP 响应构造；extraAttrs 仅在 Access-Accept 时并入。 */
+    private byte[] buildEapResponse(int code, int id, byte[] reqAuth, String username,
+                                    int eapId, int eapCode, int eapType, byte[] eapData, String msg,
+                                    List<Attr> extraAttrs) {
         // 组装 EAP 包（Code / Id / Length / [Type] / Data）
         ByteArrayOutputStream e = new ByteArrayOutputStream();
         e.write(eapCode);
@@ -2674,6 +2725,9 @@ public class RadiusServer {
             attrs.add(new Attr(ATTR_SERVICE_TYPE, new byte[]{0, 0, 0, 2}));
             attrs.add(new Attr(ATTR_FRAMED_PROTOCOL, new byte[]{0, 0, 0, 1}));
             attrs.add(new Attr(ATTR_SESSION_TIMEOUT, intToBytes(3600)));
+            if (extraAttrs != null) {
+                attrs.addAll(extraAttrs);
+            }
         }
         return buildPacket(code, id, reqAuth, attrs, secret, true);
     }
@@ -2842,12 +2896,22 @@ public class RadiusServer {
     }
 
     /** MS-CHAPv2 响应验证（RFC 2759 §8.5）。 */
-    static boolean verifyMsChapV2(String password, String username,
+    boolean verifyMsChapV2(String password, String username,
                                   byte[] peerChallenge, byte[] authChallenge, byte[] ntResponse) {
         try {
             byte[] expected = computeNtResponse(password, username, peerChallenge, authChallenge);
-            return constantTimeEquals(expected, ntResponse);
+            boolean ok = constantTimeEquals(expected, ntResponse);
+            if (!ok) {
+                addLog("[DBG] MSCHAPV2 校验失败 expected=" + hexFull(expected)
+                        + " got=" + hexFull(ntResponse)
+                        + " peer=" + hexFull(peerChallenge) + " auth=" + hexFull(authChallenge)
+                        + " user=" + username + " chash=" + hexFull(Arrays.copyOf(sha1(
+                            concat(peerChallenge, authChallenge,
+                                username.getBytes(StandardCharsets.UTF_8))), 8)));
+            }
+            return ok;
         } catch (Exception e) {
+            addLog("[DBG] MSCHAPV2 校验异常 " + e);
             return false;
         }
     }
@@ -2876,22 +2940,43 @@ public class RadiusServer {
         return expected;
     }
 
-    /** 计算 MS-CHAPv2 NT-Response（RFC 2759 §8.5）：MD4 口令哈希 + 3×DES 挑战哈希。 */
+    /** 计算 MS-CHAPv2 NT-Response（RFC 2759 §8.5 / strongSwan eap-mschapv2.c）：
+     *   Z = MD4(UTF-16LE(密码)) || 0x00×5（21 字节）
+     *   ChallengeHash = SHA-1(Peer-Challenge || Authenticator-Challenge || UserName) 前 8 字节
+     *   NT-Response = DesEncrypt(Z[0..6],   CHash) ||
+     *                 DesEncrypt(Z[7..13],  CHash) ||
+     *                 DesEncrypt(Z[14..20], CHash)        （同一 8 字节 CHash 加密三次）
+     *  注意：RFC 2759 §8.2 权威定义用 SHA-1（非 MD5），只取前 8 字节。 */
     static byte[] computeNtResponse(String password, String username,
                                     byte[] peerChallenge, byte[] authChallenge) {
         byte[] passwordHash = ntPasswordHash(password);
-        byte[] challengeHash = md5(concat(peerChallenge, authChallenge,
-                username.getBytes(StandardCharsets.UTF_8)));
-        // RFC 2759 §8.5：三次 DES，前两次用 ChallengeHash[0..7]/[8..15]，第三次复用 [0..7]
+        byte[] z = new byte[21];
+        System.arraycopy(passwordHash, 0, z, 0, 16);
+        byte[] challengeHash = Arrays.copyOf(sha1(concat(peerChallenge, authChallenge,
+                username.getBytes(StandardCharsets.UTF_8))), 8);
         byte[] expected = new byte[24];
         for (int i = 0; i < 3; i++) {
-            byte[] key = Arrays.copyOfRange(passwordHash, i * 8, i * 8 + 8);
-            setOddParity(key);
+            byte[] key8 = expandDesKey(Arrays.copyOfRange(z, i * 7, i * 7 + 7));
             DESEngine des = new DESEngine();
-            des.init(true, new KeyParameter(key));
-            des.processBlock(challengeHash, i == 2 ? 0 : i * 8, expected, i * 8);
+            des.init(true, new KeyParameter(key8));
+            des.processBlock(challengeHash, 0, expected, i * 8);
         }
         return expected;
+    }
+
+    /** MS-CHAP DesEncrypt 密钥扩展：7 字节 key → 8 字节 DES key（RFC 2759 §8.5 位搬移，非标准奇偶位）。
+     *  注意：Java byte 有符号，右移前必须 & 0xFF 转无符号，否则高位补 1 导致密钥错误。 */
+    private static byte[] expandDesKey(byte[] k7) {
+        byte[] key = new byte[8];
+        key[0] = k7[0];
+        key[1] = (byte) (((k7[0] << 7) & 0xFF) | ((k7[1] & 0xFF) >> 1));
+        key[2] = (byte) (((k7[1] << 6) & 0xFF) | ((k7[2] & 0xFF) >> 2));
+        key[3] = (byte) (((k7[2] << 5) & 0xFF) | ((k7[3] & 0xFF) >> 3));
+        key[4] = (byte) (((k7[3] << 4) & 0xFF) | ((k7[4] & 0xFF) >> 4));
+        key[5] = (byte) (((k7[4] << 3) & 0xFF) | ((k7[5] & 0xFF) >> 5));
+        key[6] = (byte) (((k7[5] << 2) & 0xFF) | ((k7[6] & 0xFF) >> 6));
+        key[7] = (byte) ((k7[6] << 1) & 0xFF);
+        return key;
     }
 
     /** MD4 摘要（RFC 2759 NT Password Hash）。 */
@@ -2929,6 +3014,115 @@ public class RadiusServer {
         } catch (Exception e) {
             throw new IllegalStateException(e);
         }
+    }
+
+    /** SHA-1 摘要（RFC 2759 §8.2 ChallengeHash 使用，取前 8 字节）。 */
+    private static byte[] sha1(byte[]... parts) {
+        try {
+            MessageDigest md = MessageDigest.getInstance("SHA-1");
+            for (byte[] p : parts) {
+                md.update(p);
+            }
+            return md.digest();
+        } catch (Exception e) {
+            throw new IllegalStateException(e);
+        }
+    }
+
+    // ==================== MS-MPPE 会话密钥（RFC 3079 §3.1 + RFC 2548 §2.4.3） ====================
+
+    /** RFC 3079 §3.1：MPPE Master Key 魔数 1（"This is the MPPE Master Key"）。 */
+    private static final byte[] MSK_MAGIC1 =
+            "This is the MPPE Master Key".getBytes(StandardCharsets.UTF_8);
+    /** RFC 3079 §3.1：客户端发送 / 服务器接收密钥魔数 2。 */
+    private static final byte[] MSK_MAGIC2 =
+            "On the client side, this is the send key; on the server side, it is the receive key."
+                    .getBytes(StandardCharsets.UTF_8);
+    /** RFC 3079 §3.1：客户端接收 / 服务器发送密钥魔数 3。 */
+    private static final byte[] MSK_MAGIC3 =
+            "On the client side, this is the receive key; on the server side, it is the send key."
+                    .getBytes(StandardCharsets.UTF_8);
+    private static final byte[] MSK_SHAPAD1 = new byte[40];          // 40 × 0x00
+    private static final byte[] MSK_SHAPAD2 = new byte[40];          // 40 × 0xF2
+    static {
+        java.util.Arrays.fill(MSK_SHAPAD2, (byte) 0xF2);
+    }
+
+    // 微软厂商 ID（RFC 2548）：311（已定义于常量区 VENDOR_MICROSOFT）。
+    /** MS-MPPE-Send-Key（RFC 2548 §2.4.2：NAS 向客户端发送数据的密钥）。 */
+    static final int MS_MPPE_SEND_KEY = 16;
+    /** MS-MPPE-Recv-Key（RFC 2548 §2.4.2：NAS 从客户端接收数据的密钥）。 */
+    static final int MS_MPPE_RECV_KEY = 17;
+
+    /**
+     * RFC 3079 §3.1：由 NT-Hash 与 NT-Response 派生 64 字节 EAP MSK。
+     *   passwordHashHash = MD4(NT-Hash)
+     *   master           = SHA1(passwordHashHash || NT-Response || magic1)[0..16]
+     *   receiveKey       = SHA1(master || shapad1 || magic2 || shapad2)[0..16]   （客户端 send / 服务器 receive）
+     *   sendKey          = SHA1(master || shapad1 || magic3 || shapad2)[0..16]   （客户端 recv  / 服务器 send）
+     *   MSK = receiveKey || sendKey || 16×0x00 || 16×0x00（64 字节，RFC 5247）
+     * 与 strongSwan eap-mschapv2.c GenerateMSK() 完全一致。
+     */
+    static byte[] deriveMschapv2Msk(byte[] ntHash, byte[] ntResponse) {
+        byte[] passwordHashHash = md4(ntHash);
+        byte[] master = Arrays.copyOf(sha1(passwordHashHash, ntResponse, MSK_MAGIC1), 16);
+        byte[] receiveKey = Arrays.copyOf(sha1(master, MSK_SHAPAD1, MSK_MAGIC2, MSK_SHAPAD2), 16);
+        byte[] sendKey = Arrays.copyOf(sha1(master, MSK_SHAPAD1, MSK_MAGIC3, MSK_SHAPAD2), 16);
+        byte[] msk = new byte[64];
+        System.arraycopy(receiveKey, 0, msk, 0, 16);
+        System.arraycopy(sendKey, 0, msk, 16, 16);
+        return msk;
+    }
+
+    /**
+     * RFC 2548 §2.4.3：MS-MPPE 密钥加密。
+     *   plain = keyLen(1B) || key || 0x00…（补齐到 16 的倍数）
+     *   b(1) = MD5(Secret || Request-Authenticator || Salt)
+     *   c(1) = p(1) ⊕ b(1)；
+     *   b(i) = MD5(Secret || c(i-1))，c(i) = p(i) ⊕ b(i)
+     * 返回 2 字节 Salt || 密文（Salt 首字节 MSB=0、整体非零）。
+     */
+    static byte[] encryptMppeKey(byte[] key, byte[] reqAuth, String secret) {
+        int total = (1 + key.length + 15) / 16 * 16;
+        byte[] plain = new byte[total];
+        plain[0] = (byte) key.length;
+        System.arraycopy(key, 0, plain, 1, key.length);
+        byte[] salt = new byte[2];
+        java.security.SecureRandom rnd = new java.security.SecureRandom();
+        do {
+            rnd.nextBytes(salt);
+            salt[0] &= 0x7f;
+        } while (salt[0] == 0 && salt[1] == 0);
+        byte[] sec = secret.getBytes(StandardCharsets.UTF_8);
+        byte[] b = md5(sec, reqAuth, salt);
+        byte[] cipher = new byte[total];
+        for (int i = 0; i < total; i += 16) {
+            for (int j = 0; j < 16 && i + j < total; j++) {
+                cipher[i + j] = (byte) (plain[i + j] ^ b[j]);
+            }
+            if (i + 16 < total) {
+                b = md5(sec, Arrays.copyOfRange(cipher, i, i + 16));
+            }
+        }
+        byte[] out = new byte[2 + total];
+        System.arraycopy(salt, 0, out, 0, 2);
+        System.arraycopy(cipher, 0, out, 2, total);
+        return out;
+    }
+
+    /**
+     * 构造 MS-MPPE Vendor-Specific 属性（strongSwan mppe_key_t 布局）：
+     *   Vendor-ID(4B)=311 || Type(1B: 16/17) || Length(1B: 4+N) || Salt(2B) || Cipher(NB)
+     * vendorType：MS_MPPE_SEND_KEY(16) / MS_MPPE_RECV_KEY(17)。
+     */
+    static Attr msMppeAttr(int vendorType, byte[] key, byte[] reqAuth, String secret) {
+        byte[] salted = encryptMppeKey(key, reqAuth, secret);
+        byte[] v = new byte[4 + 1 + 1 + salted.length];
+        v[0] = 0; v[1] = 0; v[2] = 1; v[3] = 0x37;                      // 311
+        v[4] = (byte) vendorType;
+        v[5] = (byte) (1 + 1 + 2 + (salted.length - 2));                 // 4 + N（Length 含 Type+Length+Salt+Cipher）
+        System.arraycopy(salted, 0, v, 6, salted.length);
+        return new Attr(ATTR_VENDOR_SPECIFIC, v);
     }
 
     /** MD5(data || secret)。 */
@@ -3860,16 +4054,16 @@ public class RadiusServer {
                     byte[] peerChallenge = new byte[16];
                     new java.security.SecureRandom().nextBytes(peerChallenge);
                     byte[] ntResp = computeNtResponse(password, realUser, peerChallenge, authChallenge);
-                    // 响应 Value(50B): Ident(1) Pad(1) PeerChallenge(16) Reserved(8) NT-Response(24)（与现有 EAP-MSCHAPv2 一致）
-                    byte[] value = new byte[50];
-                    value[0] = (byte) mschapId;
-                    value[1] = 0;
-                    System.arraycopy(peerChallenge, 0, value, 2, 16);
-                    System.arraycopy(ntResp, 0, value, 26, 24);
+                    // 标准 EAP-MSCHAPv2 Response（RFC 2759 §3.4）：
+                    //   OpCode(1)=2, MS-CHAPv2-ID(1), MS-Length(2), Value-Size(1)=49,
+                    //   Value(49B) = Peer-Challenge(16) + Reserved(8) + NT-Response(24) + Flags(1), Name
+                    byte[] value = new byte[49];
+                    System.arraycopy(peerChallenge, 0, value, 0, 16);
+                    System.arraycopy(ntResp, 0, value, 24, 24);
                     byte[] respNameB = realUser.getBytes(StandardCharsets.UTF_8);
-                    int msLen = 1 + 50 + respNameB.length;
+                    int msLen = 1 + 1 + 2 + 1 + 49 + respNameB.length;
                     byte[] respData = concat(new byte[]{2, (byte) mschapId,
-                            (byte) (msLen >> 8), (byte) msLen, 50}, value, respNameB);
+                            (byte) (msLen >> 8), (byte) msLen, 49}, value, respNameB);
                     byte[] innerResp = eapPacket(EAP_CODE_RESPONSE, chalReq[1], EAP_TYPE_MSCHAPV2, respData);
                     cs.clientTlsProto.getOutputStream().write(innerResp);
                     cs.clientTlsProto.getOutputStream().flush();
@@ -4362,13 +4556,14 @@ public class RadiusServer {
             int id, byte[] reqAuth, String username, String password, String secret, List<String> steps)
             throws Exception {
         // 阶段 1：EAP-Identity（Access-Request + EAP-Message + Message-Authenticator）
+        String eapUser = username.startsWith("md5:") ? username : "md5:" + username;
         byte[] eapIdPkt = eapPacket(EAP_CODE_RESPONSE, id, EAP_TYPE_IDENTITY,
-                username.getBytes(StandardCharsets.UTF_8));
+                eapUser.getBytes(StandardCharsets.UTF_8));
         List<Attr> attrs = new ArrayList<>();
-        attrs.add(new Attr(ATTR_USER_NAME, username.getBytes(StandardCharsets.UTF_8)));
+        attrs.add(new Attr(ATTR_USER_NAME, eapUser.getBytes(StandardCharsets.UTF_8)));
         attrs.add(new Attr(ATTR_EAP_MESSAGE, eapIdPkt));
         byte[] req1 = buildRequestPacket(id, reqAuth, attrs, secret, true);
-        steps.add("[1] 发送 Access-Request：User-Name(" + username + ") + EAP-Response/Identity"
+        steps.add("[1] 发送 Access-Request：User-Name(" + eapUser + ") + EAP-Response/Identity"
                 + " + Message-Authenticator(HMAC-MD5)");
         byte[] resp1 = sendRecv(sock, req1, host, port, steps, "[2]");
         Packet p1 = parsePacket(resp1, resp1.length);
@@ -4482,16 +4677,18 @@ public class RadiusServer {
         new java.security.SecureRandom().nextBytes(peerChallenge);
         String realUser = eapUser.startsWith("mschapv2:") ? eapUser.substring(9) : username;
         byte[] ntResp = computeNtResponse(password, realUser, peerChallenge, authChallenge);
-        // 响应 Value(50B): Ident(1) Pad(1) PeerChallenge(16) Reserved(8) NT-Response(24)；Data 前 5B：OpCode(2) MS-CHAPv2-ID MS-Length(2) Value-Size(50)
-        byte[] value = new byte[50];
-        value[0] = (byte) mschapId;
-        value[1] = 0;
-        System.arraycopy(peerChallenge, 0, value, 2, 16);
-        System.arraycopy(ntResp, 0, value, 26, 24);
+        // 标准 EAP-MSCHAPv2 Response（RFC 2759 §3.4）：
+        //   OpCode(1)=2, MS-CHAPv2-ID(1), MS-Length(2), Value-Size(1)=49,
+        //   Value(49B) = Peer-Challenge(16) + Reserved(8) + NT-Response(24) + Flags(1), Name
+        // 注意：EAP 内层不带 PPP 的 Ident/Pad 头（与 RFC 2548 MS-CHAP-Response 布局一致）
+        byte[] value = new byte[49];
+        System.arraycopy(peerChallenge, 0, value, 0, 16);   // Peer-Challenge
+        System.arraycopy(ntResp, 0, value, 24, 24);          // NT-Response
+        // value[16..24) Reserved = 0x00，value[48] Flags = 0x00（数组默认 0）
         byte[] respNameB = realUser.getBytes(StandardCharsets.UTF_8);
-        int msLen = 1 + 50 + respNameB.length;
+        int msLen = 1 + 1 + 2 + 1 + 49 + respNameB.length;  // OpCode+ID+MS-Length+Value-Size+Value+Name
         byte[] respData = concat(new byte[]{2, (byte) mschapId,
-                (byte) (msLen >> 8), (byte) msLen, 50}, value, respNameB);
+                (byte) (msLen >> 8), (byte) msLen, 49}, value, respNameB);
         byte[] eapResp = eapPacket(EAP_CODE_RESPONSE, eapId, EAP_TYPE_MSCHAPV2, respData);
         List<Attr> attrs2 = new ArrayList<>();
         attrs2.add(new Attr(ATTR_USER_NAME, eapUser.getBytes(StandardCharsets.UTF_8)));

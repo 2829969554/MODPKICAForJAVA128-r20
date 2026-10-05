@@ -81,8 +81,8 @@ import org.bouncycastle.tsp.TimeStampTokenInfo;
 /**
  * WebAdmin —— 浏览器版可视化管理界面（对应 Go 版 admin 的图形化替代）。
  *
- * <p>监听 <b>127.0.0.1:8080</b>（可通过系统属性 -Dmodpkica.admin.port 修改，
- * -Dmodpkica.admin.bind 修改绑定地址），单页 GUI 展示 ADMIN 全部功能：
+ * <p>监听 <b>0.0.0.0:8080</b>（所有本地接口，局域网内其他 IP 可访问；可通过系统属性
+ * -Dmodpkica.admin.port 修改端口，-Dmodpkica.admin.bind 修改绑定地址），单页 GUI 展示 ADMIN 全部功能：
  * <ul>
  *   <li>仪表盘：MAIN 服务状态、运行时长、API 调用计数、日志行数</li>
  *   <li>证书库：CERTS.txt 全量展示</li>
@@ -98,8 +98,8 @@ public final class WebAdmin {
 
     /** 默认端口 8080。 */
     private static final int DEFAULT_PORT = 8080;
-    /** 默认绑定地址：仅本机回环（管理界面不暴露公网）。 */
-    private static final String DEFAULT_BIND = "127.0.0.1";
+    /** 默认绑定地址：所有本地接口（局域网内其他 IP 均可访问管理面板；可用 -Dmodpkica.admin.bind 覆盖）。 */
+    private static final String DEFAULT_BIND = "0.0.0.0";
 
     /** 注册 BC Provider（独立运行时也必须可用 SM2/SM3 等算法）。 */
     static {

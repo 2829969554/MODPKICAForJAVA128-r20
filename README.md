@@ -190,7 +190,9 @@ UDP 认证端口（默认 1812）+ 计费端口（默认 1813）双线程；账�
 | 11 | PEAP-GTC | RFC 5216 隧道 + RFC 3748 §5.6 | 内层 GTC 明文令牌 |
 | 12 | EAP-pwd | RFC 5931（P-256） | 四轮密钥交换：ID(Group=6)→Commit(标量32B+SEC1 压缩点33B)→双向 Confirm(HMAC-SHA256)→Success；猎取-啄食法 PWE 派生（HKDF-SHA256，p≡3 mod 4 开根） |
 
-**属性支持**：`User-Name` / `User-Password` / `CHAP-Password`+`CHAP-Challenge` / `NAS-*`；**Vendor-Specific（微软，RFC 2548）**：MS-CHAP-Challenge / MS-CHAP-Response / MS-CHAP2-Response（按 Vendor-Type 自动分流 v1/v2）；**隧道属性（RFC 2867/2868）**：Tunnel-Type / Tunnel-Medium-Type / Tunnel-Client-Server-Endpoint / Tunnel-Password 自动解析成文字记录（PPTP/L2TP/IPsec/GRE 场景可见）；`Message-Authenticator`（RFC 2869 §5.3，HMAC-MD5）；`EAP-Message`（RFC 3579 §2.1，>253B 自动切分、响应端按出现顺序拼接还原）。
+**EAP 会话密钥（MSK）下发**：EAP-MSCHAPv2 认证通过后，Access-Accept 自动携带 **MS-MPPE-Recv-Key(type17)/MS-MPPE-Send-Key(type16)**（RFC 2548 §2.4.3 加密 + §2.4.2 语义）——密钥按 RFC 3079 §3.1 由 `SHA1(MD4(NT-Hash)‖NT-Response‖MPPE 魔数)` 派生（magic2=客户端 send / 服务器 receive、magic3=客户端 recv / 服务器 send）；strongSwan `eap-radius` 网关解密后重组 `recv‖send‖补零 64B` 即得到与客户端完全一致的 64 字节 EAP MSK（RFC 5247），**IKEv2（手机 strongSwan）+ PEAP + TTLS 会话密钥链路实测打通**；属性布局与 strongSwan `radius_socket.decrypt_msk` 的 `mppe_key_t` 逐字节对齐（`Vendor-ID(311)‖Type‖Length‖Salt‖Cipher`，Length=4+N，加密种子=对应 Access-Request 的 Request-Authenticator）。
+
+**属性支持**：`User-Name` / `User-Password` / `CHAP-Password`+`CHAP-Challenge` / `NAS-*`；**Vendor-Specific（微软，RFC 2548）**：MS-CHAP-Challenge / MS-CHAP-Response / MS-CHAP2-Response（按 Vendor-Type 自动分流 v1/v2）；**MS-MPPE-Send/Recv-Key（type16/17，会话密钥下发）**；**隧道属性（RFC 2867/2868）**：Tunnel-Type / Tunnel-Medium-Type / Tunnel-Client-Server-Endpoint / Tunnel-Password 自动解析成文字记录（PPTP/L2TP/IPsec/GRE 场景可见）；`Message-Authenticator`（RFC 2869 §5.3，HMAC-MD5）；`EAP-Message`（RFC 3579 §2.1，>253B 自动切分、响应端按出现顺序拼接还原）。
 
 **Identity 用户名前缀分流**（大小写不敏感，顺序固定）：`ttls:`/`eap-ttls:`→TTLS；`pwd:`/`eap-pwd:`→EAP-pwd；`gtc:`/`eap-gtc:`→EAP-GTC；`peap-gtc:`/`eap-peap-gtc:`→PEAP-GTC；`peap-mschapv2:`/`eap-peap-mschapv2:`→PEAP-MSCHAPv2；`peap:`/`eap-peap:`→PEAP-MD5；`tls:`/`eap-tls:`→EAP-TLS；无前缀→PAP/CHAP/MS-CHAPv1/MS-CHAPv2。
 
@@ -568,6 +570,13 @@ A：离线 / 无外网环境会请求失败，但签名**不中断**——时间
 ---
 
 ## 更新记录
+- **v1.28-r14（2026-10-05）——打通手机 strongSwan(IKEv2 EAP-MSCHAPv2) → Debian eap-radius 网关 → MODPKICA RADIUS 全链路认证**
+  - **背景**：手机日志实证 `EAP method EAP_MSCHAPV2 succeeded, MSK established` 后网关仍回 `AUTHENTICATION_FAILED`——服务端 Access-Accept 缺 **MS-MPPE-Recv/Send-Key**（RFC 2548），eap-radius 网关（`radius_client.get_msk` / `radius_socket.decrypt_msk`）拿不到 MSK，无法校验手机 IKE_AUTH [AUTH]
+  - **核心修复一（EAP-MSCHAPv2 算法对齐 strongSwan 官方源码 `eap-mschapv2.c`）**：`computeNtResponse` 的 ChallengeHash 由 **MD5(16B) 改为 SHA-1(PeerChallenge‖AuthChallenge‖UserName) 取前 8 字节、三次 DES 加密同一 8 字节块**（RFC 2759 §8.2/8.5）；两处 MS-Length 字段按 RFC 2759 §3.2 修正（v1 响应 37 字节 / v2 响应 51 字节）；`verifyMsChapV2` 失败日志挑战哈希改 SHA-1-8 十六进制；新增 `sha1()` 工具
+  - **核心修复二（MSK 派生 + MS-MPPE 属性下发，RFC 3079 §3.1 + RFC 2548 §2.4.3）**：新增 `deriveMschapv2Msk(ntHash, ntResponse)`——`master=SHA1(MD4(NT-Hash)‖NT-Response‖"This is the MPPE Master Key")[0..16]`，`receiveKey=SHA1(master‖0x00×40‖magic2‖0xF2×40)[0..16]`（客户端 send / 服务器 receive）、`sendKey=SHA1(master‖0x00×40‖magic3‖0xF2×40)[0..16]`（客户端 recv / 服务器 send），64 字节 MSK=receive‖send‖0x00×32；新增 `encryptMppeKey()`（RFC 2548：`b1=MD5(Secret‖Request-Authenticator‖Salt)`、`b(i)=MD5(Secret‖c(i-1))`，明文=keyLen‖key‖补齐 16 倍数，Salt 首字节 MSB=0）与 `msMppeAttr()`（strongSwan `mppe_key_t` 布局：`Vendor-ID(311)‖Type‖Length‖Salt‖Cipher`，Length=4+N）；EAP-MSCHAPv2 认证通过后 Access-Accept 附带 **MS-MPPE-Recv-Key(type17)=magic2 派生** 与 **MS-MPPE-Send-Key(type16)=magic3 派生**（种子=该次 Access-Request 的 Request-Authenticator，RFC 2548 §2.4.3）；`buildEapResponse` 新增 10 参重载（`extraAttrs`，仅 Access-Accept 并入）
+  - **独立验证（`_MppeVerifyClient.java`，RFC 2759/3079/2548 全独立实现）**：走 R1 Challenge → R2 NT-Response → Access-Accept，按 strongSwan `radius_socket.decrypt_msk` 逻辑解密 type16/17 → 重组 `recv‖send‖补零 64B` → 与客户端 GenerateMSK **逐字节完全一致**（`0d50de2a...‖aa6571cf...‖00×32`），VSA Length=36、Salt/密文结构全部符合 RFC 2548
+  - **实测**：手机 strongSwan 重新拨号——`EAP_MSCHAPV2 succeeded` → IKE_AUTH [AUTH] 校验通过 → **拿到 10.10.0.x 地址，全链路认证成功**；`javac -Xlint:all` **零警告**；README 升 v1.28-r14
+
 - **v1.28-r13（2026-10-05）——补齐独立 EAP-MSCHAPv2（IKEv2 用户名密码认证的核心链路）**
   - **背景**：方案 4 确认手机 VPN 认证链路时发现——服务端已有 `case EAP_TYPE_MSCHAPV2` 响应校验（NT-Response 验证复用 `verifyMsChapV2`），但 **Identity 分流缺 `mschapv2:` 前缀启动**，客户端 `clientDial` 缺 `EAP-MSCHAPV2` 方法名，导致"独立 EAP-MSCHAPv2"无法从调试专区发起
   - **服务端**：Identity 分流新增 `mschapv2:` / `eap-mschapv2:` 前缀 → `startEapMsChapV2` 逻辑（查用户存在/启用 → 建 `EapState{method="MSCHAPV2", challenge=16B 随机}` → 回 `EAP-Request/MSCHAPV2 Challenge`：OpCode(1)=1、MS-CHAPv2-ID、MS-Length、Value-Size=16、Value(16B 认证挑战)、Name=MODPKICA-MSCHAPV2）；`case EAP_TYPE_MSCHAPV2` 响应校验补 `"MSCHAPV2".equals(st.method)` 检查（防状态串用）

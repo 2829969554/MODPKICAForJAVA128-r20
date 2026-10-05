@@ -97,7 +97,7 @@ public final class MAIN {
         server.setExecutor(java.util.concurrent.Executors.newFixedThreadPool(8));
         server.start();
 
-        // 启动可视化 WebAdmin 管理界面（默认 127.0.0.1:8080，
+        // 启动可视化 WebAdmin 管理界面（默认 0.0.0.0:8080，局域网内其他 IP 可访问；
         // 可用 -Dmodpkica.admin.port / -Dmodpkica.admin.bind 调整；
         // 端口被占用时自动跳过，不影响 MAIN 主服务）
         WebAdmin.start(port);
