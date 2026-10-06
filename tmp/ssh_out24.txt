@@ -1,0 +1,3 @@
+﻿====================
+$ sudo freeradius -Cx 2>&1 | grep -B2 -A6 -iE 'error|invalid|failed|unknown' | head -40
+====================

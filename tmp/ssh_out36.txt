@@ -1,0 +1,24 @@
+﻿====================
+$ sudo journalctl -u strongswan --since '19:02:05.80' --until '19:02:05.83' --no-pager -o short-precise | head -80
+====================
+Oct 06 19:02:05.803581 debian charon-systemd[4154]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (96 bytes)
+Oct 06 19:02:05.803711 debian charon-systemd[4154]: parsed IKE_AUTH request 2 [ EAP/RES/ID ]
+Oct 06 19:02:05.803839 debian charon-systemd[4154]: received EAP identity 'admin666'
+Oct 06 19:02:05.804095 debian charon-systemd[4154]: sending RADIUS Access-Request to server 'primary'
+Oct 06 19:02:05.808707 debian charon-systemd[4154]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 19:02:05.808743 debian charon-systemd[4154]: initiating EAP_MD5 method (id 0x01)
+Oct 06 19:02:05.808846 debian charon-systemd[4154]: generating IKE_AUTH response 2 [ EAP/REQ/MD5 ]
+Oct 06 19:02:05.808974 debian charon-systemd[4154]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (96 bytes)
+Oct 06 19:02:05.813702 debian charon-systemd[4154]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (80 bytes)
+Oct 06 19:02:05.813864 debian charon-systemd[4154]: parsed IKE_AUTH request 3 [ EAP/RES/NAK ]
+Oct 06 19:02:05.813935 debian charon-systemd[4154]: sending RADIUS Access-Request to server 'primary'
+Oct 06 19:02:05.815712 debian charon-systemd[4154]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 19:02:05.815855 debian charon-systemd[4154]: generating IKE_AUTH response 3 [ EAP/REQ/MSCHAPV2 ]
+Oct 06 19:02:05.815961 debian charon-systemd[4154]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (112 bytes)
+Oct 06 19:02:05.824737 debian charon-systemd[4154]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (144 bytes)
+Oct 06 19:02:05.824893 debian charon-systemd[4154]: parsed IKE_AUTH request 4 [ EAP/RES/MSCHAPV2 ]
+Oct 06 19:02:05.825024 debian charon-systemd[4154]: sending RADIUS Access-Request to server 'primary'
+Oct 06 19:02:05.825900 debian charon-systemd[4154]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 19:02:05.825971 debian charon-systemd[4154]: generating IKE_AUTH response 4 [ EAP/REQ/MSCHAPV2 ]
+Oct 06 19:02:05.826120 debian charon-systemd[4154]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (128 bytes)
+Oct 06 19:02:05.829142 debian charon-systemd[4154]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (80 bytes)

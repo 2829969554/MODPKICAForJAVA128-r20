@@ -1,0 +1,28 @@
+﻿====================
+$ sudo journalctl -u freeradius --no-pager -n 25
+====================
+Oct 06 18:59:15 debian freeradius[3883]: Shared secret for client localhost_ipv6 is short, and likely can be broken by an attacker.
+Oct 06 18:59:15 debian freeradius[3883]: Shared secret for client modpkica-test is short, and likely can be broken by an attacker.
+Oct 06 18:59:15 debian freeradius[3883]: Failed to add duplicate client modpkica-test
+Oct 06 18:59:15 debian freeradius[3883]: /etc/freeradius/3.0/clients.conf[387]: Failed to add client modpkica_test
+Oct 06 18:59:15 debian systemd[1]: freeradius.service: Control process exited, code=exited, status=1/FAILURE
+Oct 06 18:59:15 debian systemd[1]: freeradius.service: Failed with result 'exit-code'.
+Oct 06 18:59:15 debian systemd[1]: Failed to start freeradius.service - FreeRADIUS multi-protocol policy server.
+Oct 06 18:59:20 debian systemd[1]: freeradius.service: Scheduled restart job, restart counter is at 6.
+Oct 06 18:59:20 debian systemd[1]: Starting freeradius.service - FreeRADIUS multi-protocol policy server...
+Oct 06 18:59:20 debian freeradius[3888]: FreeRADIUS Version 3.2.7
+Oct 06 18:59:20 debian freeradius[3888]: Copyright (C) 1999-2023 The FreeRADIUS server project and contributors
+Oct 06 18:59:20 debian freeradius[3888]: There is NO warranty; not even for MERCHANTABILITY or FITNESS FOR A
+Oct 06 18:59:20 debian freeradius[3888]: PARTICULAR PURPOSE
+Oct 06 18:59:20 debian freeradius[3888]: You may redistribute copies of FreeRADIUS under the terms of the
+Oct 06 18:59:20 debian freeradius[3888]: GNU General Public License
+Oct 06 18:59:20 debian freeradius[3888]: For more information about these matters, see the file named COPYRIGHT
+Oct 06 18:59:20 debian freeradius[3888]: Starting - reading configuration files ...
+Oct 06 18:59:20 debian freeradius[3888]: Shared secret for client localhost is short, and likely can be broken by an attacker.
+Oct 06 18:59:20 debian freeradius[3888]: Shared secret for client localhost_ipv6 is short, and likely can be broken by an attacker.
+Oct 06 18:59:20 debian freeradius[3888]: Shared secret for client modpkica-test is short, and likely can be broken by an attacker.
+Oct 06 18:59:20 debian freeradius[3888]: Failed to add duplicate client modpkica-test
+Oct 06 18:59:20 debian freeradius[3888]: /etc/freeradius/3.0/clients.conf[387]: Failed to add client modpkica_test
+Oct 06 18:59:20 debian systemd[1]: freeradius.service: Control process exited, code=exited, status=1/FAILURE
+Oct 06 18:59:20 debian systemd[1]: freeradius.service: Failed with result 'exit-code'.
+Oct 06 18:59:20 debian systemd[1]: Failed to start freeradius.service - FreeRADIUS multi-protocol policy server.

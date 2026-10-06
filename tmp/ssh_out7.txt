@@ -1,0 +1,24 @@
+﻿====================
+$ sudo journalctl -u strongswan --since '18:49:30' --no-pager -o short-precise | grep -iE 'EAP|MSCHAP|RADIUS|generating|parsed|payload|len=' | tail -60
+====================
+Oct 06 18:50:11.816787 debian charon-systemd[2527]: parsed IKE_SA_INIT request 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) V V V V ]
+Oct 06 18:50:11.819071 debian charon-systemd[2527]: generating IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) CERTREQ N(FRAG_SUP) N(CHDLESS_SUP) N(MULT_AUTH) ]
+Oct 06 18:50:11.829520 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ EF(2/3) ]
+Oct 06 18:50:11.829846 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ EF(3/3) ]
+Oct 06 18:50:11.830045 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ EF(1/3) ]
+Oct 06 18:50:11.830354 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ IDi CERTREQ N(MOBIKE_SUP) CPRQ(ADDR DNS NBNS SRV ADDR6 DNS6 SRV6) SA TSi TSr ]
+Oct 06 18:50:11.847431 debian charon-systemd[2527]: selected peer config 'ikev2-mschapv2'
+Oct 06 18:50:11.847459 debian charon-systemd[2527]: initiating EAP_IDENTITY method (id 0x00)
+Oct 06 18:50:11.850977 debian charon-systemd[2527]: generating IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
+Oct 06 18:50:11.851051 debian charon-systemd[2527]: generating IKE_AUTH response 1 [ EF(1/2) ]
+Oct 06 18:50:11.851196 debian charon-systemd[2527]: generating IKE_AUTH response 1 [ EF(2/2) ]
+Oct 06 18:50:11.873651 debian charon-systemd[2527]: parsed IKE_AUTH request 2 [ EAP/RES/ID ]
+Oct 06 18:50:11.873744 debian charon-systemd[2527]: received EAP identity 'admin666'
+Oct 06 18:50:11.873824 debian charon-systemd[2527]: sending RADIUS Access-Request to server 'primary'
+Oct 06 18:50:11.883943 debian charon-systemd[2527]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 18:50:11.883986 debian charon-systemd[2527]: initiating EAP_MSCHAPV2 method (id 0x00)
+Oct 06 18:50:11.884188 debian charon-systemd[2527]: generating IKE_AUTH response 2 [ EAP/REQ/MSCHAPV2 ]
+Oct 06 18:50:11.890908 debian charon-systemd[2527]: parsed IKE_AUTH request 3 [ EAP/RES/MSCHAPV2 ]
+Oct 06 18:50:11.890981 debian charon-systemd[2527]: sending RADIUS Access-Request to server 'primary'
+Oct 06 18:50:11.901189 debian charon-systemd[2527]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 18:50:11.901445 debian charon-systemd[2527]: generating IKE_AUTH response 3 [ EAP/REQ/MSCHAPV2 ]

@@ -1,0 +1,8 @@
+﻿====================
+$ sudo sed -i '/^client modpkica_test {/,/^}/d' /etc/freeradius/3.0/clients.conf; printf '\nclient modpkica_test {\n    ipaddr = 127.0.0.1\n    secret = mytestkey\n    shortname = modpkica-test\n}\n' >> /etc/freeradius/3.0/clients.conf; grep -c modpkica_test /etc/freeradius/3.0/clients.conf; systemctl restart freeradius; systemctl is-active freeradius
+====================
+activating
+[stderr] bash: line 1: /etc/freeradius/3.0/clients.conf: Permission denied
+grep: /etc/freeradius/3.0/clients.conf: Permission denied
+Failed to restart freeradius.service: Interactive authentication required.
+See system logs and 'systemctl status freeradius.service' for details.

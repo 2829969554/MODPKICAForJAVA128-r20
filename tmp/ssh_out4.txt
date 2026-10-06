@@ -1,0 +1,18 @@
+﻿====================
+$ sudo cat /etc/strongswan.d/zzz-debug.conf
+====================
+charon {
+    debug {
+        ike = 3
+        eap = 3
+        enc = 3
+        tls = 3
+        cfg = 2
+        esp = 2
+        knl = 2
+        lib = 2
+        dmn = 2
+        mgr = 2
+        job = 2
+    }
+}

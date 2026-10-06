@@ -1,0 +1,21 @@
+﻿====================
+$ sudo grep -n 'admin666' /etc/freeradius/3.0/users
+====================
+208:admin666 Cleartext-Password := "admin666"
+210:admin666 Cleartext-Password := "admin666"
+212:admin666 Cleartext-Password := "admin666"
+====================
+$ sudo grep -A3 'client localhost' /etc/freeradius/3.0/clients.conf | head -6
+====================
+client localhost {
+	#  Only *one* of ipaddr, ipv4addr, ipv6addr may be specified for
+	#  a client.
+	#
+--
+client localhost_ipv6 {
+====================
+$ sudo ss -ulnp | grep 1812
+====================
+UNCONN 0      0                              127.0.0.1:18120      0.0.0.0:*    users:(("freeradius",pid=4016,fd=8))     
+UNCONN 0      0                                0.0.0.0:1812       0.0.0.0:*    users:(("freeradius",pid=4016,fd=9))     
+UNCONN 0      0                                   [::]:1812          [::]:*    users:(("freeradius",pid=4016,fd=11))

@@ -1,0 +1,11 @@
+﻿====================
+$ sudo systemctl restart strongswan
+====================
+====================
+$ sudo systemctl is-active strongswan
+====================
+active
+====================
+$ sudo ps aux | grep radius_sniffer | grep -v grep | wc -l
+====================
+2

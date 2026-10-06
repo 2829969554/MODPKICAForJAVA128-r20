@@ -1,0 +1,52 @@
+﻿====================
+$ sudo journalctl -u strongswan --since '18:50:11.80' --until '18:50:12.1' --no-pager -o short-precise
+====================
+Oct 06 18:50:11.816586 debian charon-systemd[2527]: received packet: from 192.168.1.6[500] to 192.168.1.42[500] (1104 bytes)
+Oct 06 18:50:11.816787 debian charon-systemd[2527]: parsed IKE_SA_INIT request 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) V V V V ]
+Oct 06 18:50:11.816880 debian charon-systemd[2527]: received MS NT5 ISAKMPOAKLEY v9 vendor ID
+Oct 06 18:50:11.816893 debian charon-systemd[2527]: received MS-Negotiation Discovery Capable vendor ID
+Oct 06 18:50:11.816905 debian charon-systemd[2527]: received Vid-Initial-Contact vendor ID
+Oct 06 18:50:11.816928 debian charon-systemd[2527]: received unknown vendor ID: 01:52:8b:bb:c0:06:96:12:18:49:ab:9a:1c:5b:2a:51:00:00:00:02
+Oct 06 18:50:11.816947 debian charon-systemd[2527]: 192.168.1.6 is initiating an IKE_SA
+Oct 06 18:50:11.817048 debian charon-systemd[2527]: selected proposal: IKE:AES_CBC_256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_1024
+Oct 06 18:50:11.818800 debian charon-systemd[2527]: sending cert request for "C=CN, O=ChinaITboy, OU=ChinaITboy, CN=ChinaITboys RSA ROOT"
+Oct 06 18:50:11.819071 debian charon-systemd[2527]: generating IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) CERTREQ N(FRAG_SUP) N(CHDLESS_SUP) N(MULT_AUTH) ]
+Oct 06 18:50:11.819124 debian charon-systemd[2527]: sending packet: from 192.168.1.42[500] to 192.168.1.6[500] (353 bytes)
+Oct 06 18:50:11.827160 debian charon-systemd[2527]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (580 bytes)
+Oct 06 18:50:11.829520 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ EF(2/3) ]
+Oct 06 18:50:11.829625 debian charon-systemd[2527]: received fragment #2 of 3, waiting for complete IKE message
+Oct 06 18:50:11.829773 debian charon-systemd[2527]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (292 bytes)
+Oct 06 18:50:11.829846 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ EF(3/3) ]
+Oct 06 18:50:11.829864 debian charon-systemd[2527]: received fragment #3 of 3, waiting for complete IKE message
+Oct 06 18:50:11.829977 debian charon-systemd[2527]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (580 bytes)
+Oct 06 18:50:11.830045 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ EF(1/3) ]
+Oct 06 18:50:11.830068 debian charon-systemd[2527]: received fragment #1 of 3, reassembled fragmented IKE message (1280 bytes)
+Oct 06 18:50:11.830354 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ IDi CERTREQ N(MOBIKE_SUP) CPRQ(ADDR DNS NBNS SRV ADDR6 DNS6 SRV6) SA TSi TSr ]
+Oct 06 18:50:11.834191 debian charon-systemd[2527]: received cert request for "C=CN, O=ChinaITboy, OU=ChinaITboy, CN=ChinaITboys RSA ROOT"
+Oct 06 18:50:11.847312 debian charon-systemd[2527]: received 39 cert requests for an unknown ca
+Oct 06 18:50:11.847381 debian charon-systemd[2527]: looking for peer configs matching 192.168.1.42[%any]...192.168.1.6[192.168.1.6]
+Oct 06 18:50:11.847431 debian charon-systemd[2527]: selected peer config 'ikev2-mschapv2'
+Oct 06 18:50:11.847459 debian charon-systemd[2527]: initiating EAP_IDENTITY method (id 0x00)
+Oct 06 18:50:11.847475 debian charon-systemd[2527]: peer supports MOBIKE
+Oct 06 18:50:11.850852 debian charon-systemd[2527]: authentication of 'vpn.local' (myself) with RSA signature successful
+Oct 06 18:50:11.850917 debian charon-systemd[2527]: sending end entity cert "L=newer york, O=China IT Boys, OU=IT Clubs, CN=vpn.local"
+Oct 06 18:50:11.850977 debian charon-systemd[2527]: generating IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
+Oct 06 18:50:11.851029 debian charon-systemd[2527]: splitting IKE message (2112 bytes) into 2 fragments
+Oct 06 18:50:11.851051 debian charon-systemd[2527]: generating IKE_AUTH response 1 [ EF(1/2) ]
+Oct 06 18:50:11.851196 debian charon-systemd[2527]: generating IKE_AUTH response 1 [ EF(2/2) ]
+Oct 06 18:50:11.851261 debian charon-systemd[2527]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (1236 bytes)
+Oct 06 18:50:11.851327 debian charon-systemd[2527]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (948 bytes)
+Oct 06 18:50:11.873511 debian charon-systemd[2527]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (96 bytes)
+Oct 06 18:50:11.873651 debian charon-systemd[2527]: parsed IKE_AUTH request 2 [ EAP/RES/ID ]
+Oct 06 18:50:11.873744 debian charon-systemd[2527]: received EAP identity 'admin666'
+Oct 06 18:50:11.873824 debian charon-systemd[2527]: sending RADIUS Access-Request to server 'primary'
+Oct 06 18:50:11.883943 debian charon-systemd[2527]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 18:50:11.883986 debian charon-systemd[2527]: initiating EAP_MSCHAPV2 method (id 0x00)
+Oct 06 18:50:11.884188 debian charon-systemd[2527]: generating IKE_AUTH response 2 [ EAP/REQ/MSCHAPV2 ]
+Oct 06 18:50:11.884328 debian charon-systemd[2527]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (112 bytes)
+Oct 06 18:50:11.890766 debian charon-systemd[2527]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (144 bytes)
+Oct 06 18:50:11.890908 debian charon-systemd[2527]: parsed IKE_AUTH request 3 [ EAP/RES/MSCHAPV2 ]
+Oct 06 18:50:11.890981 debian charon-systemd[2527]: sending RADIUS Access-Request to server 'primary'
+Oct 06 18:50:11.901189 debian charon-systemd[2527]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 18:50:11.901445 debian charon-systemd[2527]: generating IKE_AUTH response 3 [ EAP/REQ/MSCHAPV2 ]
+Oct 06 18:50:11.901611 debian charon-systemd[2527]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (144 bytes)

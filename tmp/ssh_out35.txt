@@ -1,0 +1,25 @@
+﻿====================
+$ sudo cat /etc/strongswan.d/zzz-debug.conf
+====================
+charon {
+    debug {
+        ike = 3
+        eap = 3
+        enc = 4
+        tls = 3
+        cfg = 2
+        esp = 2
+        knl = 2
+        lib = 2
+        dmn = 2
+        mgr = 2
+        job = 2
+    }
+}
+====================
+$ sudo strongswan statusall 2>/dev/null | head -3
+====================
+====================
+$ sudo ls -la /etc/strongswan.d/zzz-debug.conf
+====================
+-rw-r--r-- 1 root root 205 Oct  6 18:49 /etc/strongswan.d/zzz-debug.conf

@@ -1,0 +1,8 @@
+﻿====================
+$ sudo systemctl is-active freeradius; tail -5 /etc/freeradius/3.0/users; grep -n 'modpkica_test' /etc/freeradius/3.0/clients.conf; systemctl status freeradius --no-pager 2>&1 | grep -iE 'error|fail|listen|Active' | head -10
+====================
+activating
+     Active: activating (auto-restart) (Result: exit-code) since Tue 2026-10-06 18:57:44 +08; 4s ago
+    Process: 3653 ExecStartPre=/usr/sbin/freeradius $FREERADIUS_OPTIONS -Cx -lstdout (code=exited, status=1/FAILURE)
+[stderr] tail: cannot open '/etc/freeradius/3.0/users' for reading: Permission denied
+grep: /etc/freeradius/3.0/clients.conf: Permission denied

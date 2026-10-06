@@ -1,0 +1,16 @@
+﻿uploaded switch_radius_local.py -> /tmp/switch_radius_local.py
+$ python3 /tmp/switch_radius_local.py
+eap-radius {
+	load = yes
+	servers {
+		primary {
+			address = 127.0.0.1
+			secret = testing123
+			auth_port = 1812
+			acct_port = 1813
+		}
+	}
+}
+$ systemctl restart strongswan
+$ systemctl is-active strongswan
+active

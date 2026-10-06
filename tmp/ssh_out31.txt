@@ -1,0 +1,18 @@
+﻿====================
+$ sudo systemctl stop freeradius
+====================
+====================
+$ sudo pkill -f 'freeradius' || true
+====================
+====================
+$ sudo nohup freeradius -X > /tmp/freeradius_debug.log 2>&1 &
+====================
+====================
+$ sudo sleep 3
+====================
+====================
+$ sudo ss -ulnp | grep 1812
+====================
+UNCONN 0      0                              127.0.0.1:18120      0.0.0.0:*    users:(("freeradius",pid=4264,fd=7))     
+UNCONN 0      0                                0.0.0.0:1812       0.0.0.0:*    users:(("freeradius",pid=4264,fd=8))     
+UNCONN 0      0                                   [::]:1812          [::]:*    users:(("freeradius",pid=4264,fd=10))

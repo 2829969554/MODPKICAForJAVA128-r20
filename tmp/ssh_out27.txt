@@ -1,0 +1,15 @@
+﻿====================
+$ sudo printf '\nclient modpkica_test {\n    ipaddr = 127.0.0.1\n    secret = mytestkey\n    shortname = modpkica-test\n}\n' >> /etc/freeradius/3.0/clients.conf
+====================
+[stderr] bash: line 1: /etc/freeradius/3.0/clients.conf: Permission denied
+====================
+$ sudo grep -c modpkica_test /etc/freeradius/3.0/clients.conf
+====================
+0
+====================
+$ sudo systemctl restart freeradius
+====================
+====================
+$ sudo systemctl is-active freeradius
+====================
+active

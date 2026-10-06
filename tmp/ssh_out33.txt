@@ -1,0 +1,14 @@
+﻿====================
+$ sudo journalctl -u strongswan --since '19:01:50' --until '19:02:20' --no-pager -o short-precise | grep -iE 'payload|EAP_MSCHAPV2|EAP_IDENTITY|relaying|RADIUS' | head -30
+====================
+Oct 06 19:02:05.771616 debian charon-systemd[4154]: initiating EAP_IDENTITY method (id 0x00)
+Oct 06 19:02:05.804095 debian charon-systemd[4154]: sending RADIUS Access-Request to server 'primary'
+Oct 06 19:02:05.808707 debian charon-systemd[4154]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 19:02:05.813935 debian charon-systemd[4154]: sending RADIUS Access-Request to server 'primary'
+Oct 06 19:02:05.815712 debian charon-systemd[4154]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 19:02:05.825024 debian charon-systemd[4154]: sending RADIUS Access-Request to server 'primary'
+Oct 06 19:02:05.825900 debian charon-systemd[4154]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 19:02:05.829348 debian charon-systemd[4154]: sending RADIUS Access-Request to server 'primary'
+Oct 06 19:02:05.830393 debian charon-systemd[4154]: received RADIUS Access-Accept from server 'primary'
+Oct 06 19:02:05.830593 debian charon-systemd[4154]: RADIUS authentication of 'admin666' successful
+Oct 06 19:02:05.830705 debian charon-systemd[4154]: EAP method EAP_MSCHAPV2 succeeded, MSK established

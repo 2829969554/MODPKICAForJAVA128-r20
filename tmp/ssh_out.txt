@@ -1,0 +1,14 @@
+﻿====================
+$ sudo ps aux | grep radius_sniffer | grep -v grep; echo '--- capture tail ---'; tail -3 /tmp/radius_capture.txt; wc -c /tmp/radius_capture.txt; journalctl -u strongswan --since '18:30' -o short-precise --no-pager | tail -5
+====================
+root        2110  0.0  1.6  18708  7404 ?        S    18:14   0:00 sudo -S -p  nohup python3 /tmp/radius_sniffer.py
+root        2141  0.0  2.4  16324 11048 ?        S    18:14   0:00 python3 /tmp/radius_sniffer.py
+--- capture tail ---
+18:20:33    EAP-Message[53] = 010300331a0302002e533d33334644303244323738423430343441324131323344303433444646433846433931433245454432
+18:20:33    Msg-Auth[18] = 8d1c1693d8a20afe396b9d07d019faba
+18:20:33 IKE  →IKE 192.168.1.42:4500→192.168.1.6:4500 len=132
+2810 /tmp/radius_capture.txt
+-- No entries --
+[stderr] Hint: You are currently not seeing messages from other users and the system.
+      Users in groups 'adm', 'systemd-journal' can see all messages.
+      Pass -q to turn off this notice.

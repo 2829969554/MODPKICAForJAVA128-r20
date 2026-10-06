@@ -1,0 +1,115 @@
+﻿====================
+$ sudo ls /etc/strongswan.d/charon/; echo '===='; cat /etc/strongswan.d/charon/*.conf 2>/dev/null | head -60
+====================
+addrblock.conf
+aesni.conf
+agent.conf
+attr.conf
+bypass-lan.conf
+certexpire.conf
+connmark.conf
+constraints.conf
+counters.conf
+dhcp.conf
+dnskey.conf
+drbg.conf
+eap-aka.conf
+eap-gtc.conf
+eap-identity.conf
+eap-md5.conf
+eap-mschapv2.conf
+eap-radius.conf
+eap-radius.conf.bak.1791198744
+eap-tls.conf
+eap-tnc.conf
+eap-ttls.conf
+error-notify.conf
+farp.conf
+forecast.conf
+gcm.conf
+ha.conf
+kernel-libipsec.conf
+kernel-netlink.conf
+led.conf
+lookip.conf
+nonce.conf
+openssl.conf
+pem.conf
+pkcs1.conf
+pkcs7.conf
+pkcs8.conf
+pubkey.conf
+random.conf
+resolve.conf
+revocation.conf
+socket-default.conf
+sshkey.conf
+tnc-tnccs.conf
+unity.conf
+updown.conf
+vici.conf
+x509.conf
+xauth-eap.conf
+xauth-generic.conf
+xauth-pam.conf
+====
+addrblock {
+
+    # How deep towards the root CA to validate issuer cert addrblock extensions.
+    # depth = -1
+
+    # Whether to load the plugin. Can also be an integer to increase the
+    # priority of this plugin.
+    load = yes
+
+    # Whether to strictly require addrblock extension in subject certificates.
+    # strict = yes
+
+}
+
+aesni {
+
+    # Whether to load the plugin. Can also be an integer to increase the
+    # priority of this plugin.
+    load = yes
+
+}
+
+agent {
+
+    # Whether to load the plugin. Can also be an integer to increase the
+    # priority of this plugin.
+    load = yes
+
+}
+
+# Section to specify arbitrary attributes that are assigned to a peer via
+# configuration payload (CP).
+attr {
+
+    # <attr> is an attribute name or an integer, values can be an IP address,
+    # subnet or arbitrary value.
+    # <attr> =
+
+    # Whether to load the plugin. Can also be an integer to increase the
+    # priority of this plugin.
+    load = yes
+
+}
+
+bypass-lan {
+
+    # A comma-separated list of network interfaces for which connected subnets
+    # should be ignored, if interfaces_use is specified this option has no
+    # effect.
+    # interfaces_ignore =
+
+    # A comma-separated list of network interfaces for which connected subnets
+    # should be considered. All other interfaces are ignored.
+    # interfaces_use =
+
+    # Whether to load the plugin. Can also be an integer to increase the
+    # priority of this plugin.
+    load = no
+
+}

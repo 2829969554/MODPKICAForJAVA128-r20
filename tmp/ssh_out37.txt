@@ -1,0 +1,17 @@
+﻿====================
+$ sudo journalctl -u strongswan --since '18:49:40' --until '18:50:40' --no-pager -o short-precise | grep -E 'initiating|generating IKE_AUTH|parsed IKE_AUTH|RADIUS authentication|half open|deleting' | head -40
+====================
+Oct 06 18:50:11.816947 debian charon-systemd[2527]: 192.168.1.6 is initiating an IKE_SA
+Oct 06 18:50:11.829520 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ EF(2/3) ]
+Oct 06 18:50:11.829846 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ EF(3/3) ]
+Oct 06 18:50:11.830045 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ EF(1/3) ]
+Oct 06 18:50:11.830354 debian charon-systemd[2527]: parsed IKE_AUTH request 1 [ IDi CERTREQ N(MOBIKE_SUP) CPRQ(ADDR DNS NBNS SRV ADDR6 DNS6 SRV6) SA TSi TSr ]
+Oct 06 18:50:11.847459 debian charon-systemd[2527]: initiating EAP_IDENTITY method (id 0x00)
+Oct 06 18:50:11.850977 debian charon-systemd[2527]: generating IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
+Oct 06 18:50:11.851051 debian charon-systemd[2527]: generating IKE_AUTH response 1 [ EF(1/2) ]
+Oct 06 18:50:11.851196 debian charon-systemd[2527]: generating IKE_AUTH response 1 [ EF(2/2) ]
+Oct 06 18:50:11.873651 debian charon-systemd[2527]: parsed IKE_AUTH request 2 [ EAP/RES/ID ]
+Oct 06 18:50:11.883986 debian charon-systemd[2527]: initiating EAP_MSCHAPV2 method (id 0x00)
+Oct 06 18:50:11.884188 debian charon-systemd[2527]: generating IKE_AUTH response 2 [ EAP/REQ/MSCHAPV2 ]
+Oct 06 18:50:11.890908 debian charon-systemd[2527]: parsed IKE_AUTH request 3 [ EAP/RES/MSCHAPV2 ]
+Oct 06 18:50:11.901445 debian charon-systemd[2527]: generating IKE_AUTH response 3 [ EAP/REQ/MSCHAPV2 ]

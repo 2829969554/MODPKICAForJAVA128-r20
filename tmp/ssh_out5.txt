@@ -1,0 +1,8 @@
+﻿====================
+$ sudo sed -i 's/enc = 3/enc = 4/' /etc/strongswan.d/zzz-debug.conf; grep enc /etc/strongswan.d/zzz-debug.conf; systemctl restart strongswan; sleep 2; systemctl is-active strongswan; ps aux | grep radius_sniffer | grep -v grep | wc -l
+====================
+        enc = 4
+active
+2
+[stderr] Failed to restart strongswan.service: Interactive authentication required.
+See system logs and 'systemctl status strongswan.service' for details.

@@ -1,0 +1,32 @@
+﻿====================
+$ sudo journalctl -u strongswan --since '18:20' --no-pager -o short-precise | tail -25
+====================
+Oct 06 18:20:32.558859 debian charon-systemd[2191]: initiating EAP_IDENTITY method (id 0x00)
+Oct 06 18:20:32.558876 debian charon-systemd[2191]: peer supports MOBIKE
+Oct 06 18:20:32.562138 debian charon-systemd[2191]: authentication of 'vpn.local' (myself) with RSA signature successful
+Oct 06 18:20:32.562184 debian charon-systemd[2191]: sending end entity cert "L=newer york, O=China IT Boys, OU=IT Clubs, CN=vpn.local"
+Oct 06 18:20:32.562234 debian charon-systemd[2191]: generating IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
+Oct 06 18:20:32.562268 debian charon-systemd[2191]: splitting IKE message (2112 bytes) into 2 fragments
+Oct 06 18:20:32.562297 debian charon-systemd[2191]: generating IKE_AUTH response 1 [ EF(1/2) ]
+Oct 06 18:20:32.562471 debian charon-systemd[2191]: generating IKE_AUTH response 1 [ EF(2/2) ]
+Oct 06 18:20:32.562537 debian charon-systemd[2191]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (1236 bytes)
+Oct 06 18:20:32.562571 debian charon-systemd[2191]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (948 bytes)
+Oct 06 18:20:32.605287 debian charon-systemd[2191]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (96 bytes)
+Oct 06 18:20:32.605427 debian charon-systemd[2191]: parsed IKE_AUTH request 2 [ EAP/RES/ID ]
+Oct 06 18:20:32.605533 debian charon-systemd[2191]: received EAP identity 'admin666'
+Oct 06 18:20:32.605626 debian charon-systemd[2191]: sending RADIUS Access-Request to server 'primary'
+Oct 06 18:20:33.131744 debian charon-systemd[2191]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 18:20:33.131785 debian charon-systemd[2191]: initiating EAP_MSCHAPV2 method (id 0x00)
+Oct 06 18:20:33.131865 debian charon-systemd[2191]: generating IKE_AUTH response 2 [ EAP/REQ/MSCHAPV2 ]
+Oct 06 18:20:33.131971 debian charon-systemd[2191]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (112 bytes)
+Oct 06 18:20:33.150100 debian charon-systemd[2191]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (144 bytes)
+Oct 06 18:20:33.150282 debian charon-systemd[2191]: parsed IKE_AUTH request 3 [ EAP/RES/MSCHAPV2 ]
+Oct 06 18:20:33.150345 debian charon-systemd[2191]: sending RADIUS Access-Request to server 'primary'
+Oct 06 18:20:33.242631 debian charon-systemd[2191]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 18:20:33.243099 debian charon-systemd[2191]: generating IKE_AUTH response 3 [ EAP/REQ/MSCHAPV2 ]
+Oct 06 18:20:33.243217 debian charon-systemd[2191]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (128 bytes)
+Oct 06 18:21:02.528318 debian charon-systemd[2191]: deleting half open IKE_SA with 192.168.1.6 after timeout
+====================
+$ sudo ipsec status
+====================
+[stderr] sudo: ipsec: command not found

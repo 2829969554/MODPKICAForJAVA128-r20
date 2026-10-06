@@ -1,0 +1,4 @@
+﻿====================
+$ sudo curl -s https://mirrors.tuna.tsinghua.edu.cn/debian/pool/main/s/strongswan/ | grep -oE 'strongswan_[0-9.]+\.orig\.tar\.[a-z0-9]+' | sort -u | tail -5
+====================
+[stderr] sudo: curl: command not found

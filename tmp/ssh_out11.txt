@@ -1,0 +1,33 @@
+﻿====================
+$ sudo cp /etc/swanctl/swanctl.conf /etc/swanctl/swanctl.conf.bak_modpkica; ls -la /etc/swanctl/; which freeradius || echo 'no freeradius'; grep -i '^deb ' /etc/apt/sources.list /etc/apt/sources.list.d/*.list 2>/dev/null | head -5
+====================
+total 116
+drwxr-xr-x  16 root root  4096 Oct  6 18:54 .
+drwxr-xr-x 126 root root 12288 Oct  6 16:06 ..
+drwxr-xr-x   2 root root  4096 Oct  5 22:52 archive
+drwxr-xr-x   2 root root  4096 May 27 14:40 conf.d
+drwx------   2 root root  4096 May 27 14:40 ecdsa
+drwxr-xr-x   2 root root  4096 May 27 14:40 pkcs12
+drwx------   2 root root  4096 May 27 14:40 pkcs8
+drwx------   2 root root  4096 Oct  5 22:57 private
+drwxr-xr-x   2 root root  4096 May 27 14:40 pubkey
+drwx------   2 root root  4096 May 27 14:40 rsa
+-rw-r--r--   1 root root  3707 Oct  6 10:14 swanctl.conf
+-rw-r--r--   1 root root  1700 Oct  5 21:28 swanctl.conf.bak
+-rw-r--r--   1 root root  1646 Oct  5 19:38 swanctl.conf.bak.1791200314
+-rw-r--r--   1 root root  1700 Oct  5 21:30 swanctl.conf.bak2
+-rw-r--r--   1 root root  1700 Oct  5 22:04 swanctl.conf.bak3
+-rw-r--r--   1 root root  1700 Oct  5 22:06 swanctl.conf.bak4
+-rw-r--r--   1 root root  1700 Oct  5 22:45 swanctl.conf.bak5
+-rw-r--r--   1 root root  2210 Oct  5 22:57 swanctl.conf.bak6
+-rw-r--r--   1 root root  2210 Oct  6 10:12 swanctl.conf.bak7
+-rw-r--r--   1 root root  3917 Oct  6 10:14 swanctl.conf.bak8
+-rw-r--r--   1 root root  3707 Oct  6 18:54 swanctl.conf.bak_modpkica
+drwxr-xr-x   2 root root  4096 Oct  5 22:57 x509
+drwxr-xr-x   2 root root  4096 May 27 14:40 x509aa
+drwxr-xr-x   2 root root  4096 May 27 14:40 x509ac
+drwxr-xr-x   2 root root  4096 Oct  5 22:52 x509ca
+drwxr-xr-x   2 root root  4096 May 27 14:40 x509crl
+drwxr-xr-x   2 root root  4096 May 27 14:40 x509ocsp
+no freeradius
+/etc/apt/sources.list:deb https://mirrors.tuna.tsinghua.edu.cn/debian/ trixie main contrib non-free non-free-firmware

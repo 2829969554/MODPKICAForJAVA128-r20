@@ -1,0 +1,53 @@
+﻿====================
+$ sudo grep -iE 'MS-CHAP|EAP-Message|EAP-Message|mschap|challenge|Success|Sending Access|Received Access' /tmp/freeradius_debug.log | grep -vE 'checking|Found|auth_ok|Login OK' | tail -50
+====================
+(3)       if (&reply:EAP-Message && &reply:Reply-Message) {
+(3)       if (&reply:EAP-Message && &reply:Reply-Message)  -> FALSE
+(3)   EAP-Message = 0x03030004
+(4) Received Access-Request Id 233 from 127.0.0.1:46529 to 127.0.0.1:1812 length 154
+(4)   NAS-Port-Id = "ikev2-mschapv2"
+(4)   EAP-Message = 0x0200000d0161646d696e363636
+(4)     [mschap] = noop
+(4) eap_md5: Issuing MD5 Challenge
+(4) Using Post-Auth-Type Challenge
+(4)   Challenge { ... } # empty sub-section is ignored
+(4) Sent Access-Challenge Id 233 from 127.0.0.1:1812 to 127.0.0.1:46529 length 80
+(4)   EAP-Message = 0x010100160410d9b092615aa40f820f3446c63febbf62
+(5) Received Access-Request Id 234 from 127.0.0.1:46529 to 127.0.0.1:1812 length 165
+(5)   NAS-Port-Id = "ikev2-mschapv2"
+(5)   EAP-Message = 0x02010006031a
+(5)     [mschap] = noop
+(5) eap: Calling submodule eap_mschapv2 to process data
+(5) eap_mschapv2: Issuing Challenge
+(5) Using Post-Auth-Type Challenge
+(5)   Challenge { ... } # empty sub-section is ignored
+(5) Sent Access-Challenge Id 234 from 127.0.0.1:1812 to 127.0.0.1:46529 length 100
+(5)   EAP-Message = 0x0102002a1a01020025100fc524e7c7238006459593fdf52505ae667265657261646975732d332e322e37
+(6) Received Access-Request Id 235 from 127.0.0.1:46529 to 127.0.0.1:1812 length 226
+(6)   NAS-Port-Id = "ikev2-mschapv2"
+(6)   EAP-Message = 0x020200431a0202003e3189a8becc51e218bc8bc966eed067e2a10000000000000000b588fbcf50ec764de5366a06c60c0466488444fad2d9ff220061646d696e363636
+(6)     [mschap] = noop
+(6) eap: Peer sent packet with method EAP MSCHAPv2 (26)
+(6) eap: Calling submodule eap_mschapv2 to process data
+(6) eap_mschapv2: # Executing group from file /etc/freeradius/3.0/sites-enabled/default
+(6) eap_mschapv2:   authenticate {
+(6) mschap: Creating challenge hash with username: admin666
+(6) mschap: Client is using MS-CHAPv2
+(6) mschap: Adding MS-CHAPv2 MPPE keys
+(6) eap_mschapv2:     [mschap] = ok
+(6) eap_mschapv2:   } # authenticate = ok
+(6) eap_mschapv2: MSCHAP Success
+(6) Using Post-Auth-Type Challenge
+(6)   Challenge { ... } # empty sub-section is ignored
+(6) Sent Access-Challenge Id 235 from 127.0.0.1:1812 to 127.0.0.1:46529 length 109
+(6)   EAP-Message = 0x010300331a0302002e533d46353432333446433746314142334236324239363542393446443633334631463336374230374530
+(7) Received Access-Request Id 236 from 127.0.0.1:46529 to 127.0.0.1:1812 length 165
+(7)   NAS-Port-Id = "ikev2-mschapv2"
+(7)   EAP-Message = 0x020300061a03
+(7)     [mschap] = noop
+(7) eap: Peer sent packet with method EAP MSCHAPv2 (26)
+(7) eap: Calling submodule eap_mschapv2 to process data
+(7) eap: Sending EAP Success (code 3) ID 3 length 4
+(7)       if (&reply:EAP-Message && &reply:Reply-Message) {
+(7)       if (&reply:EAP-Message && &reply:Reply-Message)  -> FALSE
+(7)   EAP-Message = 0x03030004

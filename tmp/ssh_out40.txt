@@ -1,0 +1,3 @@
+﻿====================
+$ sudo ls -d /tmp/ss-src 2>/dev/null && find /tmp/ss-src/src -name '*eap_ikev2*' -o -name '*eap_manager*' | head -20
+====================

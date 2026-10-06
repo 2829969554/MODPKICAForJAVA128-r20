@@ -1,0 +1,25 @@
+﻿====================
+$ sudo bash /tmp/setup_freeradius.sh 2>&1 | tail -30
+====================
+		default_eap_type = mschapv2
+
+		#  The PEAP module also has these configuration
+		#  items, which are the same as for TTLS.
+		#
+--
+	mschapv2 {
+		#  In earlier versions of the server, this module
+		#  never sent the MS-CHAP-Error message to the client.
+		#  This worked, but it had issues when the cached
+		#  password was wrong.  The server *should* send
+--
+	#	default_eap_type = mschapv2
+
+		#
+		#  Set the EAP type for user / machine authentication.
+		#
+--
+#		user_eap_type = mschapv2
+#		machine_eap_type = tls
+Job for freeradius.service failed because the control process exited with error code.
+See "systemctl status freeradius.service" and "journalctl -xeu freeradius.service" for details.

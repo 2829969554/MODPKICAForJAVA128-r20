@@ -1,0 +1,56 @@
+﻿====================
+$ sudo journalctl -u strongswan --since '18:41:30' --no-pager -o short-precise | tail -30
+====================
+Oct 06 18:42:16.289299 debian charon-systemd[2191]: parsed IKE_AUTH request 1 [ IDi CERTREQ N(MOBIKE_SUP) CPRQ(ADDR DNS NBNS SRV ADDR6 DNS6 SRV6) SA TSi TSr ]
+Oct 06 18:42:16.292330 debian charon-systemd[2191]: received cert request for "C=CN, O=ChinaITboy, OU=ChinaITboy, CN=ChinaITboys RSA ROOT"
+Oct 06 18:42:16.305999 debian charon-systemd[2191]: received 39 cert requests for an unknown ca
+Oct 06 18:42:16.306067 debian charon-systemd[2191]: looking for peer configs matching 192.168.1.42[%any]...192.168.1.6[192.168.1.6]
+Oct 06 18:42:16.306121 debian charon-systemd[2191]: selected peer config 'ikev2-mschapv2'
+Oct 06 18:42:16.306148 debian charon-systemd[2191]: initiating EAP_IDENTITY method (id 0x00)
+Oct 06 18:42:16.306166 debian charon-systemd[2191]: peer supports MOBIKE
+Oct 06 18:42:16.309457 debian charon-systemd[2191]: authentication of 'vpn.local' (myself) with RSA signature successful
+Oct 06 18:42:16.309510 debian charon-systemd[2191]: sending end entity cert "L=newer york, O=China IT Boys, OU=IT Clubs, CN=vpn.local"
+Oct 06 18:42:16.309563 debian charon-systemd[2191]: generating IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
+Oct 06 18:42:16.309615 debian charon-systemd[2191]: splitting IKE message (2112 bytes) into 2 fragments
+Oct 06 18:42:16.309640 debian charon-systemd[2191]: generating IKE_AUTH response 1 [ EF(1/2) ]
+Oct 06 18:42:16.309852 debian charon-systemd[2191]: generating IKE_AUTH response 1 [ EF(2/2) ]
+Oct 06 18:42:16.309915 debian charon-systemd[2191]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (1236 bytes)
+Oct 06 18:42:16.309950 debian charon-systemd[2191]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (948 bytes)
+Oct 06 18:42:16.352410 debian charon-systemd[2191]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (96 bytes)
+Oct 06 18:42:16.352544 debian charon-systemd[2191]: parsed IKE_AUTH request 2 [ EAP/RES/ID ]
+Oct 06 18:42:16.352602 debian charon-systemd[2191]: received EAP identity 'admin666'
+Oct 06 18:42:16.352655 debian charon-systemd[2191]: sending RADIUS Access-Request to server 'primary'
+Oct 06 18:42:16.952522 debian charon-systemd[2191]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 18:42:16.952570 debian charon-systemd[2191]: initiating EAP_MSCHAPV2 method (id 0x00)
+Oct 06 18:42:16.952634 debian charon-systemd[2191]: generating IKE_AUTH response 2 [ EAP/REQ/MSCHAPV2 ]
+Oct 06 18:42:16.952744 debian charon-systemd[2191]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (112 bytes)
+Oct 06 18:42:16.970175 debian charon-systemd[2191]: received packet: from 192.168.1.6[4500] to 192.168.1.42[4500] (144 bytes)
+Oct 06 18:42:16.970310 debian charon-systemd[2191]: parsed IKE_AUTH request 3 [ EAP/RES/MSCHAPV2 ]
+Oct 06 18:42:16.970484 debian charon-systemd[2191]: sending RADIUS Access-Request to server 'primary'
+Oct 06 18:42:17.033893 debian charon-systemd[2191]: received RADIUS Access-Challenge from server 'primary'
+Oct 06 18:42:17.033987 debian charon-systemd[2191]: generating IKE_AUTH response 3 [ EAP/REQ/MSCHAPV2 ]
+Oct 06 18:42:17.034098 debian charon-systemd[2191]: sending packet: from 192.168.1.42[4500] to 192.168.1.6[4500] (144 bytes)
+Oct 06 18:42:46.263172 debian charon-systemd[2191]: deleting half open IKE_SA with 192.168.1.6 after timeout
+====================
+$ sudo tail -20 /tmp/radius_capture.txt
+====================
+18:42:16    EAP-Message[45] = 0100002b1a01020026106f64fa54a6288e8dfab93340e75c69134d4f44504b4943412d4d53434841505632
+18:42:16    Msg-Auth[18] = 046e85e79851e6ad209158d91711a1ad
+18:42:16 IKE  →IKE 192.168.1.42:4500→192.168.1.6:4500 len=116
+18:42:16 IKE  →IKE 192.168.1.6:4500→192.168.1.42:4500 len=148
+18:42:16 RADIUS →REQ Access-Request 192.168.1.42:39236→192.168.1.6:1812 id-len=208 auth=c9ee741ac82371a34a7f882e40594b1f
+18:42:16    User-Name = admin666
+18:42:16    Attr[61/6] = 00000005
+18:42:16    Attr[6/6] = 00000002
+18:42:16    Attr[5/6] = 00000002
+18:42:16    Attr[87/16] = 696b6576322d6d73636861707632
+18:42:16    Attr[4/6] = c0a8012a
+18:42:16    Attr[30/20] = 3139322e3136382e312e34325b343530305d
+18:42:16    Attr[31/19] = 3139322e3136382e312e365b343530305d
+18:42:16    EAP-Message[69] = 020200431a0202003e31180ae5d98cfbd6e57aee40685b4c1ec9000000000000000043b97bb65e71e6628765da9822d0480d1009e1a2f794b52d0061646d696e363636
+18:42:16    Attr[32/12] = 7374726f6e675377616e
+18:42:16    Msg-Auth[18] = 865f91345dee8ef0cf3bbbde480f2495
+18:42:17 RADIUS ←RESP Access-Challenge 192.168.1.6:1812→192.168.1.42:39236 id-len=111 auth=a00f1920579dfd93b387335f3e7f52ba
+18:42:17    EAP-Message[73] = 010300471a03020042533d32363138384645393341413238304234333436324343443639334335364445464644373937304133204d3d4d4f44504b4943412d4d53434841505632
+18:42:17    Msg-Auth[18] = f8de03f467913fe4d6c991972e19b4af
+18:42:17 IKE  →IKE 192.168.1.42:4500→192.168.1.6:4500 len=148

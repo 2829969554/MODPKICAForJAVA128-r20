@@ -1,0 +1,9 @@
+﻿====================
+$ sudo ls -la /tmp/setup_freeradius.sh; wc -l /etc/freeradius/3.0/users /etc/freeradius/3.0/clients.conf; grep -c modpkica_test /etc/freeradius/3.0/clients.conf || true; grep -c admin666 /etc/freeradius/3.0/users || true
+====================
+-rw-rw-r-- 1 wxg wxg 614 Oct  6 18:58 /tmp/setup_freeradius.sh
+0 total
+[stderr] wc: /etc/freeradius/3.0/users: Permission denied
+wc: /etc/freeradius/3.0/clients.conf: Permission denied
+grep: /etc/freeradius/3.0/clients.conf: Permission denied
+grep: /etc/freeradius/3.0/users: Permission denied

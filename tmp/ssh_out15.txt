@@ -1,0 +1,19 @@
+﻿====================
+$ sudo cat /etc/strongswan.conf; echo '==== strongswan.d 列表 ===='; ls /etc/strongswan.d/; echo '==== eap-radius 配置 ===='; cat /etc/strongswan.d/eap-radius.conf 2>/dev/null
+====================
+# strongswan.conf - strongSwan configuration file
+charon {
+	load_modular = yes
+	plugins {
+		include strongswan.d/charon/*.conf
+	}
+}
+include strongswan.d/*.conf
+==== strongswan.d 列表 ====
+charon
+charon-systemd.conf
+pki.conf
+swanctl.conf
+tnc.conf
+zzz-debug.conf
+==== eap-radius 配置 ====
