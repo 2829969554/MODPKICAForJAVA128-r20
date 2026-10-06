@@ -1,0 +1,77 @@
+connections {
+    ikev2-mschapv2 {
+        version = 2
+        send_cert = always
+        pools = vpnpool
+        proposals = aes256-sha256-modp2048,aes128-sha256-modp2048,default
+        local {
+            auth = pubkey
+            certs = c8ffb3b6784947d79e977cbf6a12811a.crt
+            id = vpn.local
+        }
+        remote {
+            auth = eap-radius
+            eap_id = %any
+        }
+        children {
+            ikev2-mschapv2 {
+                remote_ts = 0.0.0.0/0
+            }
+        }
+    }
+    ikev2-eaptls {
+        version = 2
+        send_cert = always
+        pools = vpnpool
+        proposals = aes256-sha256-modp2048,aes128-sha256-modp2048,default
+        local {
+            auth = pubkey
+            certs = c8ffb3b6784947d79e977cbf6a12811a.crt
+            id = vpn.local
+        }
+        remote {
+            auth = eap-tls
+            eap_id = %any
+            cacerts = 7712d9352e6038ce78e57e3f572cec74.crt
+        }
+        children {
+            ikev2-eaptls {
+                remote_ts = 0.0.0.0/0
+            }
+        }
+    }
+    ikev1-xauth {
+        version = 1
+        pools = vpnpool
+        proposals = aes256-sha1-modp1024,aes128-sha1-modp1024
+        local {
+            auth = psk
+        }
+        remote {
+            auth = psk
+        }
+        remote2 {
+            auth = xauth-radius
+        }
+        children {
+            ikev1-xauth {
+                esp_proposals = aes256-sha1,aes128-sha1
+                remote_ts = 0.0.0.0/0
+            }
+        }
+    }
+}
+
+pools {
+    vpnpool {
+        addrs = 10.10.0.0/24
+        dns = 192.168.1.1
+    }
+}
+
+secrets {
+    ike-1 {
+        id-remote = cisco-group
+        secret = group123456
+    }
+}

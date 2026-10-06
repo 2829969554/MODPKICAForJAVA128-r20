@@ -1,0 +1,9 @@
+eap-radius {
+    server = 192.168.1.6
+    secret = mytestkey
+    port = 1812
+    xauth {
+        server = 192.168.1.6
+        secret = mytestkey
+    }
+}
