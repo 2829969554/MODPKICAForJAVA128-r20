@@ -59145,3 +59145,465 @@
 命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
 结果: 认证通过
 
+时间: 2026/10/07 08:04:20
+时间戳: 1791331460020
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=2
+
+时间: 2026/10/07 08:04:28
+时间戳: 1791331468186
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:04:46
+时间戳: 1791331486617
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:04:58
+时间戳: 1791331498140
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:05:23
+时间戳: 1791331523233
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/07 08:05:27
+时间戳: 1791331527570
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:05:33
+时间戳: 1791331533205
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:05:47
+时间戳: 1791331547910
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/07 08:05:56
+时间戳: 1791331556017
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:05:59
+时间戳: 1791331559711
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/07 08:06:03
+时间戳: 1791331563617
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:06:16
+时间戳: 1791331576808
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/07 08:06:18
+时间戳: 1791331578226
+操作: Radius 服务停止
+命令: 
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/07 08:06:18
+时间戳: 1791331578226
+操作: WebAdmin /api/radius/stop
+命令: POST /api/radius/stop 提交数据={}
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/07 08:06:18
+时间戳: 1791331578972
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=2
+
+时间: 2026/10/07 08:06:18
+时间戳: 1791331578972
+操作: WebAdmin /api/radius/start
+命令: POST /api/radius/start 提交数据={"auth_port":"1812","acct_port":"1813","secret":"mytestkey"}
+结果: RADIUS 服务器已启动（认证 1812 / 计费 1813，已加载 2 个账号）
+
+时间: 2026/10/07 08:06:33
+时间戳: 1791331593088
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:06:36
+时间戳: 1791331596162
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/07 08:06:38
+时间戳: 1791331598242
+操作: Radius 服务停止
+命令: 
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/07 08:06:38
+时间戳: 1791331598242
+操作: WebAdmin /api/radius/stop
+命令: POST /api/radius/stop 提交数据={}
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/07 08:06:39
+时间戳: 1791331599810
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/07 08:06:41
+时间戳: 1791331601300
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=2
+
+时间: 2026/10/07 08:06:41
+时间戳: 1791331601301
+操作: WebAdmin /api/radius/start
+命令: POST /api/radius/start 提交数据={"auth_port":"1812","acct_port":"1813","secret":"mytestkey"}
+结果: RADIUS 服务器已启动（认证 1812 / 计费 1813，已加载 2 个账号）
+
+时间: 2026/10/07 08:06:47
+时间戳: 1791331607123
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:18:56
+时间戳: 1791332336708
+操作: 收到文件请求
+命令: 
+结果: 来源=192.168.1.19 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/07 08:18:56
+时间戳: 1791332336712
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/07 08:19:58
+时间戳: 1791332398446
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:20:19
+时间戳: 1791332419277
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/07 08:20:22
+时间戳: 1791332422763
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:38:09
+时间戳: 1791333489994
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=2
+
+时间: 2026/10/07 08:38:51
+时间戳: 1791333531923
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:39:54
+时间戳: 1791333594968
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:40:20
+时间戳: 1791333620954
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:45:57
+时间戳: 1791333957073
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/07 08:46:01
+时间戳: 1791333961648
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:48:56
+时间戳: 1791334136830
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:49:43
+时间戳: 1791334183962
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:50:23
+时间戳: 1791334223012
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:50:39
+时间戳: 1791334239434
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 08:52:32
+时间戳: 1791334352727
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/07 08:52:40
+时间戳: 1791334360570
+操作: Radius 服务停止
+命令: 
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/07 08:52:40
+时间戳: 1791334360570
+操作: WebAdmin /api/radius/stop
+命令: POST /api/radius/stop 提交数据={}
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/07 08:52:44
+时间戳: 1791334364901
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/07 08:52:46
+时间戳: 1791334366151
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=2
+
+时间: 2026/10/07 08:52:46
+时间戳: 1791334366151
+操作: WebAdmin /api/radius/start
+命令: POST /api/radius/start 提交数据={"auth_port":"1812","acct_port":"1813","secret":"mytestkey"}
+结果: RADIUS 服务器已启动（认证 1812 / 计费 1813，已加载 2 个账号）
+
+时间: 2026/10/07 09:20:11
+时间戳: 1791336011283
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 09:26:11
+时间戳: 1791336371487
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 09:28:58
+时间戳: 1791336538054
+操作: Radius 认证
+命令: 来源=127.0.0.1:64016 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 09:28:58
+时间戳: 1791336538063
+操作: Radius 客户端调试
+命令: 认证方式=EAP-MSCHAPv2 用户=admin666 目标=127.0.0.1:1812
+结果: EAP-MSCHAPv2 认证通过（EAP-Success）
+
+时间: 2026/10/07 09:28:58
+时间戳: 1791336538063
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"EAP-MSCHAPv2","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812","cert":""}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: EAP-MSCHAPv2，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：User-Name(mschapv2:admin666) + EAP-Response/Identity + Message-Authenticator\n[2] 已发送 Access-Request（81 字节）→ 127.0.0.1:1812\n[6] 收到 EAP-Request/MSCHAPV2（ID=161，MS-CHAPv2-ID=2，挑战 91098d26c0f44c9138d1d7054c92b1ad）\n[7] 发送 Access-Request：EAP-Response/MSCHAPV2（NT-Response 1a6529297dc8f60c919d46c4502ae894…）\n[8] 已发送 Access-Request（126 字节）→ 127.0.0.1:1812\n[9] 收到 Access-Challenge + 方法层 MS-CHAPv2 Success（OpCode=3，MS-Length=46，Authenticator 验证通过）\n[10] 发送 Access-Request：空 EAP-Response 确认 Success\n[8] 已发送 Access-Request（63 字节）→ 127.0.0.1:1812\n[12] 收到 Access-Accept（ID=160，响应 Authenticator 校验通过）\n=== 流程结束 ===\n结果: EAP-MSCHAPv2 认证通过（EAP-Success）
+
+时间: 2026/10/07 09:29:25
+时间戳: 1791336565545
+操作: Radius 认证
+命令: 来源=127.0.0.1:59902 用户=admin666 方法=EAP(EAP-MD5)
+结果: 认证通过
+
+时间: 2026/10/07 09:29:25
+时间戳: 1791336565546
+操作: Radius 客户端调试
+命令: 认证方式=EAP-MD5 用户=admin666 目标=127.0.0.1:1812
+结果: EAP-MD5 认证通过
+
+时间: 2026/10/07 09:29:25
+时间戳: 1791336565547
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"EAP-MD5","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812","cert":""}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: EAP-MD5，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：User-Name(md5:admin666) + EAP-Response/Identity + Message-Authenticator(HMAC-MD5)\n[2] 已发送 Access-Request（71 字节）→ 127.0.0.1:1812\n[3] 收到 Access-Challenge + EAP-Request/MD5（ID=69，挑战 0f367cfe8361209712331a54a577cd38）\n[4] 发送 Access-Request：EAP-Response/MD5（6bfac9b069faab3a01c12e1c2baae77d）\n[8] 已发送 Access-Request（72 字节）→ 127.0.0.1:1812\n[6] 收到 Access-Accept（ID=69，响应 Authenticator 校验通过）\n=== 流程结束 ===\n结果: EAP-MD5 认证通过
+
+时间: 2026/10/07 09:29:32
+时间戳: 1791336572062
+操作: Radius 认证
+命令: 来源=127.0.0.1:59903 用户=admin666 方法=EAP(PEAP-MD5)
+结果: 认证通过
+
+时间: 2026/10/07 09:29:32
+时间戳: 1791336572063
+操作: Radius 客户端调试
+命令: 认证方式=PEAP-MD5 用户=admin666 目标=127.0.0.1:1812
+结果: PEAP 认证通过（EAP-Success）
+
+时间: 2026/10/07 09:29:32
+时间戳: 1791336572064
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"PEAP-MD5","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812","cert":""}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: PEAP-MD5，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(peap:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（73 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/PEAP/Start（RADIUS=Access-Challenge，S 位）\n[4] 发送 EAP-Response/PEAP/Start（S 位确认）\n[5] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[6] 发送 EAP-Response/PEAP/TLS（片 1/1，159B 拆 1 片）\n[7] 已发送 Access-Request（224 字节）→ 127.0.0.1:1812\n[8] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[10] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[11] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[12] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[13] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[14] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[15] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[16] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[17] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[18] 发送 EAP-Response/PEAP/TLS（片 1/1，93B 拆 1 片）\n[19] 已发送 Access-Request（158 字节）→ 127.0.0.1:1812\n[20] 外层 TLS 隧道建立，进入内层 EAP-MD5\n[21] 内层 EAP-Response/MD5 已写入隧道（cc5edac9dbbf185e3c67231873f7217c）\n[22] 发送内层响应 TLS 分片（片 1/1）\n[23] 已发送 Access-Request（116 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: PEAP 认证通过（EAP-Success）
+
+时间: 2026/10/07 09:29:40
+时间戳: 1791336580160
+操作: Radius 客户端调试
+命令: 认证方式=PEAP-MSCHAPv2 用户=admin666 目标=127.0.0.1:1812
+结果: PEAP 认证失败（Access-Reject）
+
+时间: 2026/10/07 09:29:40
+时间戳: 1791336580161
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"PEAP-MSCHAPv2","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812","cert":""}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: PEAP-MSCHAPv2，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(peap-mschapv2:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（91 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/PEAP/Start（RADIUS=Access-Challenge，S 位）\n[4] 发送 EAP-Response/PEAP/Start（S 位确认）\n[5] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[6] 发送 EAP-Response/PEAP/TLS（片 1/1，159B 拆 1 片）\n[7] 已发送 Access-Request（233 字节）→ 127.0.0.1:1812\n[8] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[10] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[11] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[12] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[13] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[14] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[15] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[16] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[17] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[18] 发送 EAP-Response/PEAP/TLS（片 1/1，93B 拆 1 片）\n[19] 已发送 Access-Request（167 字节）→ 127.0.0.1:1812\n[20] 外层 TLS 隧道建立，进入内层 EAP-MSCHAPV2\n[21] 内层 EAP-Response/Identity(admin666) 已写入隧道\n[22] 发送 PEAP 隧道分片（片 1/1）\n[23] 已发送 Access-Request（116 字节）→ 127.0.0.1:1812\n[25] 内层 EAP-Response/MSCHAPV2 已写入隧道（NT-Response b72193182f1f2580c06add5a7ae9bff5…）\n[26] 发送 PEAP 隧道分片（片 1/1）\n[27] 已发送 Access-Request（170 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: PEAP 认证失败（Access-Reject）
+
+时间: 2026/10/07 09:30:07
+时间戳: 1791336607886
+操作: Radius 客户端调试
+命令: 认证方式=PEAP-MSCHAPv2 用户=admin666 目标=127.0.0.1:1812 证书=9f260af25264d331d3c9720dac37b505
+结果: PEAP 认证失败（Access-Reject）
+
+时间: 2026/10/07 09:30:07
+时间戳: 1791336607887
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"PEAP-MSCHAPv2","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812","cert":"9f260af25264d331d3c9720dac37b505"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: PEAP-MSCHAPv2，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(peap-mschapv2:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（91 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/PEAP/Start（RADIUS=Access-Challenge，S 位）\n[4] 发送 EAP-Response/PEAP/Start（S 位确认）\n[5] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n已加载客户端证书（信任锚链 2 级，含私钥作客户端凭据）\n[6] 发送 EAP-Response/PEAP/TLS（片 1/1，159B 拆 1 片）\n[7] 已发送 Access-Request（233 字节）→ 127.0.0.1:1812\n[8] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[10] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[11] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[12] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[13] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[14] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[15] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[16] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[17] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[18] 发送 EAP-Response/PEAP/TLS（片 1/1，93B 拆 1 片）\n[19] 已发送 Access-Request（167 字节）→ 127.0.0.1:1812\n[20] 外层 TLS 隧道建立，进入内层 EAP-MSCHAPV2\n[21] 内层 EAP-Response/Identity(admin666) 已写入隧道\n[22] 发送 PEAP 隧道分片（片 1/1）\n[23] 已发送 Access-Request（116 字节）→ 127.0.0.1:1812\n[26] 内层 EAP-Response/MSCHAPV2 已写入隧道（NT-Response 0cc3dd35cf1174370448a5fa24bb5816…）\n[27] 发送 PEAP 隧道分片（片 1/1）\n[28] 已发送 Access-Request（170 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: PEAP 认证失败（Access-Reject）
+
+时间: 2026/10/07 09:30:17
+时间戳: 1791336617942
+操作: Radius 客户端调试
+命令: 认证方式=PEAP-MSCHAPv2 用户=admin666 目标=127.0.0.1:1812 证书=b53080fef0b95fd6730fec18d55b6ac8
+结果: PEAP 认证失败（Access-Reject）
+
+时间: 2026/10/07 09:30:17
+时间戳: 1791336617944
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"PEAP-MSCHAPv2","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812","cert":"b53080fef0b95fd6730fec18d55b6ac8"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: PEAP-MSCHAPv2，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(peap-mschapv2:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（91 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/PEAP/Start（RADIUS=Access-Challenge，S 位）\n[4] 发送 EAP-Response/PEAP/Start（S 位确认）\n[5] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n已加载客户端证书（信任锚链 2 级，含私钥作客户端凭据）\n[6] 发送 EAP-Response/PEAP/TLS（片 1/1，159B 拆 1 片）\n[7] 已发送 Access-Request（233 字节）→ 127.0.0.1:1812\n[8] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[10] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[11] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[12] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[13] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[14] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[15] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[16] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[17] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[18] 发送 EAP-Response/PEAP/TLS（片 1/1，93B 拆 1 片）\n[19] 已发送 Access-Request（167 字节）→ 127.0.0.1:1812\n[20] 外层 TLS 隧道建立，进入内层 EAP-MSCHAPV2\n[21] 内层 EAP-Response/Identity(admin666) 已写入隧道\n[22] 发送 PEAP 隧道分片（片 1/1）\n[23] 已发送 Access-Request（116 字节）→ 127.0.0.1:1812\n[26] 内层 EAP-Response/MSCHAPV2 已写入隧道（NT-Response 862e020ff580d3dd8b1fae3a5257cb0c…）\n[27] 发送 PEAP 隧道分片（片 1/1）\n[28] 已发送 Access-Request（170 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: PEAP 认证失败（Access-Reject）
+
+时间: 2026/10/07 09:30:22
+时间戳: 1791336622905
+操作: Radius 客户端调试
+命令: 认证方式=PEAP-MSCHAPv2 用户=admin666 目标=127.0.0.1:1812
+结果: PEAP 认证失败（Access-Reject）
+
+时间: 2026/10/07 09:30:22
+时间戳: 1791336622905
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"PEAP-MSCHAPv2","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812","cert":""}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: PEAP-MSCHAPv2，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(peap-mschapv2:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（91 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/PEAP/Start（RADIUS=Access-Challenge，S 位）\n[4] 发送 EAP-Response/PEAP/Start（S 位确认）\n[5] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[6] 发送 EAP-Response/PEAP/TLS（片 1/1，159B 拆 1 片）\n[7] 已发送 Access-Request（233 字节）→ 127.0.0.1:1812\n[8] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[10] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[11] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[12] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[13] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[14] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[15] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[16] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[17] 已发送 Access-Request（70 字节）→ 127.0.0.1:1812\n[18] 发送 EAP-Response/PEAP/TLS（片 1/1，93B 拆 1 片）\n[19] 已发送 Access-Request（167 字节）→ 127.0.0.1:1812\n[20] 外层 TLS 隧道建立，进入内层 EAP-MSCHAPV2\n[21] 内层 EAP-Response/Identity(admin666) 已写入隧道\n[22] 发送 PEAP 隧道分片（片 1/1）\n[23] 已发送 Access-Request（116 字节）→ 127.0.0.1:1812\n[25] 内层 EAP-Response/MSCHAPV2 已写入隧道（NT-Response 3de30e855c051dd9f8369f79c15dddb3…）\n[26] 发送 PEAP 隧道分片（片 1/1）\n[27] 已发送 Access-Request（170 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: PEAP 认证失败（Access-Reject）
+
+时间: 2026/10/07 09:30:26
+时间戳: 1791336626875
+操作: Radius 认证
+命令: 来源=127.0.0.1:52185 用户=peap-gtc:admin666 方法=EAP(PEAP-MD5)
+结果: 认证通过
+
+时间: 2026/10/07 09:30:26
+时间戳: 1791336626876
+操作: Radius 客户端调试
+命令: 认证方式=PEAP-GTC 用户=admin666 目标=127.0.0.1:1812
+结果: PEAP 认证通过（EAP-Success）
+
+时间: 2026/10/07 09:30:26
+时间戳: 1791336626877
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"PEAP-GTC","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812","cert":""}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: PEAP-GTC，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(peap-gtc:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（81 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/PEAP/Start（RADIUS=Access-Challenge，S 位）\n[4] 发送 EAP-Response/PEAP/Start（S 位确认）\n[5] 已发送 Access-Request（65 字节）→ 127.0.0.1:1812\n[6] 发送 EAP-Response/PEAP/TLS（片 1/1，159B 拆 1 片）\n[7] 已发送 Access-Request（228 字节）→ 127.0.0.1:1812\n[8] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（65 字节）→ 127.0.0.1:1812\n[10] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[11] 已发送 Access-Request（65 字节）→ 127.0.0.1:1812\n[12] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[13] 已发送 Access-Request（65 字节）→ 127.0.0.1:1812\n[14] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[15] 已发送 Access-Request（65 字节）→ 127.0.0.1:1812\n[16] 收到服务器 PEAP TLS 分片（M=1，继续拉取）\n[17] 已发送 Access-Request（65 字节）→ 127.0.0.1:1812\n[18] 发送 EAP-Response/PEAP/TLS（片 1/1，93B 拆 1 片）\n[19] 已发送 Access-Request（162 字节）→ 127.0.0.1:1812\n[20] 外层 TLS 隧道建立，进入内层 EAP-GTC\n[21] 内层 EAP-Response/Identity(admin666) 已写入隧道\n[22] 发送 PEAP 隧道分片（片 1/1）\n[23] 已发送 Access-Request（111 字节）→ 127.0.0.1:1812\n[25] 内层 EAP-Response/GTC 已写入隧道（明文令牌，RFC 3748 §5.6）\n[26] 发送 PEAP 隧道分片（片 1/1）\n[27] 已发送 Access-Request（111 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: PEAP 认证通过（EAP-Success）
+
+时间: 2026/10/07 09:30:32
+时间戳: 1791336632327
+操作: Radius 认证
+命令: 来源=127.0.0.1:52186 用户=admin666 方法=EAP(EAP-TTLS)
+结果: 认证通过
+
+时间: 2026/10/07 09:30:32
+时间戳: 1791336632328
+操作: Radius 客户端调试
+命令: 认证方式=EAP-TTLS 用户=admin666 目标=127.0.0.1:1812
+结果: TTLS 认证通过（EAP-Success）
+
+时间: 2026/10/07 09:30:32
+时间戳: 1791336632329
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"EAP-TTLS","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812","cert":""}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: EAP-TTLS，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(ttls:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（73 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/TTLS/Start（RADIUS=Access-Challenge，S 位）\n[4] 发送 EAP-Response/TTLS/Start（S 位确认）\n[5] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[6] 发送 EAP-Response/TTLS/TLS（片 1/1，159B 拆 1 片）\n[7] 已发送 Access-Request（224 字节）→ 127.0.0.1:1812\n[8] 收到服务器 TTLS TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[10] 收到服务器 TTLS TLS 分片（M=1，继续拉取）\n[11] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[12] 收到服务器 TTLS TLS 分片（M=1，继续拉取）\n[13] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[14] 收到服务器 TTLS TLS 分片（M=1，继续拉取）\n[15] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[16] 收到服务器 TTLS TLS 分片（M=1，继续拉取）\n[17] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[18] 发送 EAP-Response/TTLS/TLS（片 1/1，93B 拆 1 片）\n[19] 已发送 Access-Request（158 字节）→ 127.0.0.1:1812\n[20] 外层 TLS 隧道建立，进入内层 PAP（RFC 5281 §8.5）\n[21] 内层 User-Name + User-Password(明文) AVP 已写入隧道\n[22] 发送内层响应 TLS 分片（片 1/1）\n[23] 已发送 Access-Request（114 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: TTLS 认证通过（EAP-Success）
+
+时间: 2026/10/07 09:30:37
+时间戳: 1791336637766
+操作: Radius 认证
+命令: 来源=127.0.0.1:52187 用户=admin666 方法=EAP(EAP-TTLS)
+结果: 认证通过
+
+时间: 2026/10/07 09:30:37
+时间戳: 1791336637767
+操作: Radius 客户端调试
+命令: 认证方式=EAP-TTLS 用户=admin666 目标=127.0.0.1:1812 证书=9f260af25264d331d3c9720dac37b505
+结果: TTLS 认证通过（EAP-Success）
+
+时间: 2026/10/07 09:30:37
+时间戳: 1791336637768
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"EAP-TTLS","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812","cert":"9f260af25264d331d3c9720dac37b505"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: EAP-TTLS，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(ttls:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（73 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/TTLS/Start（RADIUS=Access-Challenge，S 位）\n[4] 发送 EAP-Response/TTLS/Start（S 位确认）\n[5] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n已加载客户端证书（信任锚链 2 级，含私钥作客户端凭据）\n[6] 发送 EAP-Response/TTLS/TLS（片 1/1，159B 拆 1 片）\n[7] 已发送 Access-Request（224 字节）→ 127.0.0.1:1812\n[8] 收到服务器 TTLS TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[10] 收到服务器 TTLS TLS 分片（M=1，继续拉取）\n[11] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[12] 收到服务器 TTLS TLS 分片（M=1，继续拉取）\n[13] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[14] 收到服务器 TTLS TLS 分片（M=1，继续拉取）\n[15] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[16] 收到服务器 TTLS TLS 分片（M=1，继续拉取）\n[17] 已发送 Access-Request（61 字节）→ 127.0.0.1:1812\n[18] 发送 EAP-Response/TTLS/TLS（片 1/1，93B 拆 1 片）\n[19] 已发送 Access-Request（158 字节）→ 127.0.0.1:1812\n[20] 外层 TLS 隧道建立，进入内层 PAP（RFC 5281 §8.5）\n[21] 内层 User-Name + User-Password(明文) AVP 已写入隧道\n[22] 发送内层响应 TLS 分片（片 1/1）\n[23] 已发送 Access-Request（114 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: TTLS 认证通过（EAP-Success）
+
+时间: 2026/10/07 09:30:49
+时间戳: 1791336649670
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/07 09:33:23
+时间戳: 1791336803842
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 09:33:38
+时间戳: 1791336818485
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/07 09:33:43
+时间戳: 1791336823292
+操作: Radius 认证
+命令: 来源=192.168.1.42:44140 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+

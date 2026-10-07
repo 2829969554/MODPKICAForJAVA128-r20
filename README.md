@@ -1,4 +1,4 @@
-# MODPKICA Java 复刻版 v1.28-r13（BC 1.85 离线）
+# MODPKICA Java 复刻版 v1.28-r15（BC 1.85 离线）
 
 > 使用 **Java + BouncyCastle 1.85** 离线复刻 Go 版 MODPKICA 全套 PKI 功能：X.509 证书签发、CRL 吊销列表、OCSP 在线状态、RFC3161 / Authenticode 时间戳、RFC 6962 CT 日志服务（SCT 服务管理）、WebAdmin 浏览器管理面板。
 >
@@ -570,6 +570,20 @@ A：离线 / 无外网环境会请求失败，但签名**不中断**——时间
 ---
 
 ## 更新记录
+- **v1.28-r15（2026-10-07）——统一版接入服务与多客户端兼容能力整理**
+  - **RADIUS 服务统一整合**：`RadiusServer` 提供 UDP/1812 认证、UDP/1813 计费服务，共享密钥可配置，账号统一使用 `PKI/USERS.txt`；WebAdmin 支持服务启动、停止、配置保存、状态统计、认证/计费日志查看与清空。
+  - **认证方式扩展**：统一 RADIUS 服务支持 PAP、CHAP、MS-CHAPv1、MS-CHAPv2，以及 EAP-MD5、EAP-GTC、EAP-MSCHAPv2、EAP-TLS、EAP-TTLS、EAP-pwd、PEAP-MD5、PEAP-MSCHAPv2、PEAP-GTC 等认证流程；客户端调试区同步提供对应认证方式的模拟拨号入口。
+  - **EAP-MSCHAPv2 完整链路**：实现 EAP-Identity → MSCHAPv2 Challenge/Response → 方法层 Success → 客户端确认 → Access-Accept 的完整状态机；支持 RFC 2759 的 NT-Response 校验，并结合 RFC 3079 / RFC 2548 派生及下发 MS-MPPE-Recv-Key / MS-MPPE-Send-Key。
+  - **EAP 自适应认证流程**：裸用户名进入统一 EAP-MSCHAPv2 首选流程；客户端通过 EAP-NAK 明确声明可用方法后，可根据协商结果进行兼容处理；带 `mschapv2:`、`eap-mschapv2:`、`md5:`、`eap-md5:`、`tls:`、`eap-tls:`、`ttls:`、`eap-ttls:`、`peap:`、`eap-peap:`、`peap-mschapv2:`、`eap-peap-mschapv2:`、`peap-gtc:`、`eap-peap-gtc:`、`pwd:`、`eap-pwd:`、`gtc:`、`eap-gtc:` 前缀可直接选择对应认证流程。
+  - **TLS 族认证基础设施**：基于 BouncyCastle 1.85 实现 EAP-TLS、EAP-TTLS、PEAP 系列认证，支持 TLS 分片、重组、会话状态维护及可选客户端证书；客户端调试区 TLS 族支持选择证书作为信任锚/客户端凭据。
+  - **RADIUS 客户端调试区完善**：WebAdmin 提供 PAP / CHAP / MS-CHAPv1 / MS-CHAPv2 / EAP-MD5 / EAP-GTC / EAP-MSCHAPv2 / EAP-TLS / EAP-TTLS / PEAP-MD5 / PEAP-MSCHAPv2 / PEAP-GTC / EAP-pwd 等方法选择，并支持 TLS 族客户端证书选择。
+  - **PPPoE 服务整合**：新增/整合 PPPoE 服务管理，按 RFC 2516 模拟 Discovery 与 Session 阶段，覆盖 PADI → PADO → PADR → PADS → PPP LCP → PAP/CHAP → PADT；认证账号与 RADIUS 共用 `PKI/USERS.txt`，WebAdmin 提供服务管理、状态统计、日志及客户端完整拨号模拟。
+  - **配置统一管理**：`CONFIG.txt` 统一管理 RADIUS 认证端口、计费端口、共享密钥、自动启动，以及 PPPoE Discovery/Session 端口；MAIN 启动时可根据配置自动拉起 RADIUS / PPPoE 服务。
+  - **证书签发模板与 CA 路径配置**：WebAdmin 证书模板管理支持根证书/CA/终端证书类型、DN、算法、密钥长度、摘要算法、KeyUsage、EKU、路径长度、策略、有效期、DNS/IP 等参数；签发页面提供 CA 路径长度选择及统一参数回填。
+  - **CT 服务管理继续统一集成**：保留 RFC 6962 CT 日志服务、CT 日志密钥管理、可信公网 CT 日志公钥库、CT 请求日志及 Merkle 树数据展示，并支持证书签发时按配置提交 SCT。
+  - **WebAdmin 服务化管理继续完善**：RADIUS、PPPoE、用户管理、证书模板、CT 服务、证书库及证书查看/验证等功能统一纳入 WebAdmin，服务日志采用 WinRadius 风格列表展示并支持自动刷新。
+  - **构建方式保持离线化**：项目继续采用 Java `javac` + BouncyCastle 1.85 + PDFBox 离线依赖结构，Windows 使用 `build.cmd`、Linux 使用 `build.sh`，不依赖 Maven/Gradle 在线仓库。
+
 - **v1.28-r14（2026-10-05）——打通手机 strongSwan(IKEv2 EAP-MSCHAPv2) → Debian eap-radius 网关 → MODPKICA RADIUS 全链路认证**
   - **背景**：手机日志实证 `EAP method EAP_MSCHAPV2 succeeded, MSK established` 后网关仍回 `AUTHENTICATION_FAILED`——服务端 Access-Accept 缺 **MS-MPPE-Recv/Send-Key**（RFC 2548），eap-radius 网关（`radius_client.get_msk` / `radius_socket.decrypt_msk`）拿不到 MSK，无法校验手机 IKE_AUTH [AUTH]
   - **核心修复一（EAP-MSCHAPv2 算法对齐 strongSwan 官方源码 `eap-mschapv2.c`）**：`computeNtResponse` 的 ChallengeHash 由 **MD5(16B) 改为 SHA-1(PeerChallenge‖AuthChallenge‖UserName) 取前 8 字节、三次 DES 加密同一 8 字节块**（RFC 2759 §8.2/8.5）；两处 MS-Length 字段按 RFC 2759 §3.2 修正（v1 响应 37 字节 / v2 响应 51 字节）；`verifyMsChapV2` 失败日志挑战哈希改 SHA-1-8 十六进制；新增 `sha1()` 工具

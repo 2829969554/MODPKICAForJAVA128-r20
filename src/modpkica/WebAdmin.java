@@ -4961,781 +4961,725 @@ public final class WebAdmin {
         return v == null ? "" : String.valueOf(v);
     }
 
+    /** 将多个独立的 Base64 分片在运行时解码并按原顺序拼接。
+     *  每个分片单独解码，避免生成超过 Java 常量池限制的超大字符串常量。
+     */
+    private static String decodeBase64Parts(String[] parts) {
+        ByteArrayOutputStream out = new ByteArrayOutputStream();
+        Base64.Decoder decoder = Base64.getDecoder();
+        for (String part : parts) {
+            byte[] bytes = decoder.decode(part);
+            out.write(bytes, 0, bytes.length);
+        }
+        return new String(out.toByteArray(), StandardCharsets.UTF_8);
+    }
+
     // ============================================================
     // 内嵌前端页面（单文件原生 HTML/CSS/JS，无任何外部依赖，离线可用）
     // ============================================================
 
     @SuppressWarnings("text-blocks")
-    private static final String PAGE_P1 = """
-        <!DOCTYPE html>
-        <html lang="zh-CN">
-        <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>MODPKICA 管理控制台</title>
-        <style>
-          :root {
-            --bg: #0f1419; --panel: #171e26; --panel2: #1d2630;
-            --border: #263241; --text: #d8e1ea; --dim: #8b98a5;
-            --accent: #38bdf8; --accent2: #22d3ee; --ok: #34d399; --warn: #fbbf24;
-            --err: #f87171; --mono: Consolas, "Courier New", monospace;
-          }
-          * { margin: 0; padding: 0; box-sizing: border-box; }
-          body { background: var(--bg); color: var(--text); font-family: "Segoe UI", "Microsoft YaHei", sans-serif; font-size: 15px; display: flex; height: 100vh; overflow: hidden; }
-          /* ===== 侧边栏 ===== */
-          #sidebar { width: 200px; min-width: 200px; background: var(--panel); border-right: 1px solid var(--border); display: flex; flex-direction: column; }
-          .logo { padding: 18px 16px; font-size: 18px; font-weight: 700; letter-spacing: 1px; border-bottom: 1px solid var(--border); }
-          .logo span { color: var(--accent); }
-          nav { flex: 1; overflow-y: auto; padding: 8px 0; }
-          nav a { display: block; padding: 10px 18px; color: var(--dim); text-decoration: none; cursor: pointer; border-left: 3px solid transparent; transition: all .15s; }
-          nav a:hover { color: var(--text); background: var(--panel2); }
-          nav a.active { color: var(--accent); background: var(--panel2); border-left-color: var(--accent); }
-          .side-foot { padding: 12px 16px; font-size: 12px; color: var(--dim); border-top: 1px solid var(--border); }
-          /* ===== 主区 ===== */
-          #main { flex: 1; display: flex; flex-direction: column; min-width: 0; }
-          #topbar { height: 56px; display: flex; align-items: center; gap: 14px; padding: 0 20px; background: var(--panel); border-bottom: 1px solid var(--border); }
-          #topbar h1 { font-size: 16px; font-weight: 600; flex: 1; }
-          #content { flex: 1; overflow-y: auto; min-height: 0; padding: 20px; }
-          .page { display: none; }
-          .page.active { display: block; }
-          /* ===== 组件 ===== */
-          .card { background: var(--panel); border: 1px solid var(--border); border-radius: 10px; padding: 16px 18px; margin-bottom: 16px; }
-          .card h2 { font-size: 14px; font-weight: 600; margin-bottom: 12px; color: var(--accent); }
-          .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
-          .stat { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-          .stat .label { font-size: 12px; color: var(--dim); margin-bottom: 6px; }
-          .stat .value { font-size: 20px; font-weight: 700; font-family: var(--mono); }
-          .stat .value.ok { color: var(--ok); } .stat .value.warn { color: var(--warn); } .stat .value.err { color: var(--err); }
-          .stat.stat-wide { grid-column: 1 / -1; }
-          .stat.stat-wide .value { font-size: 13px; white-space: normal; word-break: break-all; line-height: 1.6; }
-          .cfg-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 14px; margin-top: 14px; }
-          .cfg-field { background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; padding: 12px 14px; }
-          .cfg-field label { display: block; font-size: 13px; font-weight: 600; color: var(--fg); margin-bottom: 8px; }
-          .cfg-tag { font-size: 11px; font-weight: 400; color: var(--dim); margin-left: 6px; }
-          .cfg-field input { width: 100%; box-sizing: border-box; font-family: var(--mono); font-size: 13px; }
-          .cfg-field textarea { width: 100%; box-sizing: border-box; font-family: var(--mono); font-size: 13px; resize: vertical; min-height: 90px; line-height: 1.6; }
-          .cfg-field-wide { grid-column: 1 / -1; }
-          .cfg-hint { font-size: 11px; color: var(--dim); margin: 8px 0 0; line-height: 1.5; }
-          .eku-modal { width: min(700px, 94vw); }
-          .eku-body { display: grid; grid-template-columns: repeat(auto-fill, minmax(310px, 1fr)); gap: 4px; max-height: 55vh; overflow: auto; padding: 10px 4px; }
-          .eku-item { display: flex; align-items: center; gap: 8px; font-size: 13px; padding: 7px 9px; border-radius: 6px; cursor: pointer; }
-          .eku-item:hover { background: var(--panel2); }
-          .eku-item input { width: auto; flex: none; }
-          .eku-item code { color: var(--dim); font-size: 11px; margin-left: auto; white-space: nowrap; }
-          .modal-foot { display: flex; gap: 10px; justify-content: flex-end; padding: 12px 18px; border-top: 1px solid var(--border); }
-          .val-row { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-          .val-row label { width: 64px; font-size: 13px; color: var(--fg); flex: none; }
-          .val-row input { width: 100%; font-family: var(--mono); font-size: 13px; }
-          .fsec { margin-top: 16px; padding-top: 12px; border-top: 1px dashed var(--border); }
-          .fsec:first-of-type { margin-top: 0; padding-top: 0; border-top: none; }
-          .fsec-title { font-size: 12px; font-weight: 700; color: var(--accent); margin-bottom: 10px; letter-spacing: 1px; }
-          select.t-box { cursor: pointer; }
-          select.t-box:hover { border-color: var(--accent); }
-          .badge { display: inline-block; padding: 3px 10px; border-radius: 20px; font-size: 12px; font-weight: 600; }
-          .badge.ok { background: rgba(52,211,153,.15); color: var(--ok); }
-          .badge.err { background: rgba(248,113,113,.15); color: var(--err); }
-          .badge.dim { background: var(--panel2); color: var(--dim); }
-          label { display: block; font-size: 12px; color: var(--dim); margin: 10px 0 4px; }
-          input, select, textarea { width: 100%; background: var(--panel2); border: 1px solid var(--border); color: var(--text); border-radius: 6px; padding: 8px 10px; font-family: var(--mono); font-size: 13px; outline: none; }
-          input:focus, select:focus, textarea:focus { border-color: var(--accent); }
-          .row { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; }
-          .sig-tabs { display: flex; gap: 10px; margin-bottom: 16px; border-bottom: 1px solid var(--border); padding-bottom: 12px; }
-          .sig-tab { padding: 10px 28px; font-size: 15px; font-weight: 700; background: var(--panel2); color: var(--dim); border: 1px solid var(--border); border-radius: 8px; cursor: pointer; transition: all .15s; }
-          .sig-tab:hover { color: var(--text); border-color: var(--accent); }
-          .sig-tab.active { background: var(--accent); color: #0b1220; border-color: var(--accent); }
-          .sig-pane { font-size: 14px; }
-          .sig-pane .row { grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-          .dropzone { border: 2px dashed var(--border); border-radius: 10px; padding: 28px 20px; text-align: center; margin: 14px 0; cursor: pointer; transition: all .15s; }
-          .dropzone.over { border-color: var(--accent); background: rgba(96,165,250,.08); }
-          .fake-btn { display: inline-block; padding: 9px 22px; font-size: 14px; font-weight: 700; color: #0b1220; background: var(--accent); border-radius: 7px; cursor: pointer; }
-          .pdf-list-head { display: flex; gap: 10px; align-items: center; margin-top: 14px; font-size: 14px; }
-          .pdf-list-head button { padding: 7px 16px; }
-          .pdf-list { max-height: 240px; overflow: auto; border: 1px solid var(--border); border-radius: 8px; margin: 10px 0; }
-          .pdf-row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-bottom: 1px solid var(--border); font-size: 13px; }
-          .pdf-row:last-child { border-bottom: none; }
-          .pdf-row .nm { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 13px; }
-          .pdf-row .st { font-size: 12px; min-width: 150px; }
-          .pdf-row .st.ok { color: var(--ok); } .pdf-row .st.err { color: var(--err); } .pdf-row .st.wait { color: var(--dim); }
-          .pdf-row button { padding: 3px 10px; font-size: 12px; }
-          .pdf-row a.dl { color: var(--accent); font-weight: 700; font-size: 12px; text-decoration: none; }
-          button { background: var(--accent); color: #06202e; border: none; border-radius: 6px; padding: 9px 20px; font-size: 13px; font-weight: 700; cursor: pointer; transition: filter .15s; }
-          button:hover { filter: brightness(1.15); }
-          button.ghost { background: var(--panel2); color: var(--text); border: 1px solid var(--border); }
-          button.danger { background: #7f1d1d; color: #fecaca; }
-          button.success { background: #14532d; color: #bbf7d0; }
-          button:disabled { opacity: .5; cursor: not-allowed; }
-          table { width: 100%; border-collapse: collapse; font-family: var(--mono); font-size: 12.5px; }
-          th, td { padding: 8px 10px; border-bottom: 1px solid var(--border); text-align: left; white-space: nowrap; }
-          th { color: var(--dim); font-weight: 600; position: sticky; top: 0; background: var(--panel); }
-          tr:hover td { background: var(--panel2); }
-          pre.out { background: #0a0e13; border: 1px solid var(--border); border-radius: 8px; padding: 14px; font-family: var(--mono); font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-all; max-height: 420px; overflow-y: auto; margin-top: 14px; }
-          pre.out.ok { border-color: rgba(52,211,153,.4); } pre.out.err { border-color: rgba(248,113,113,.4); }
-          .toolbar { display: flex; gap: 10px; align-items: center; margin-bottom: 12px; flex-wrap: wrap; }
-          .toolbar input { width: auto; } .toolbar select { width: auto; }
-          .hint { font-size: 12px; color: var(--warn); background: rgba(251,191,36,.08); border: 1px solid rgba(251,191,36,.3); border-radius: 6px; padding: 8px 12px; margin-bottom: 10px; }
-          .loading { opacity: .6; pointer-events: none; }
-          ::-webkit-scrollbar { width: 8px; height: 8px; }
-          ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 4px; }
-          /* ===== 证书链树 ===== */
-          .t-row { display: flex; gap: 28px; align-items: flex-start; flex-wrap: wrap; }
-          .t-node { position: relative; margin: 4px 0; }
-          .t-head { display: flex; align-items: center; gap: 4px; }
-          .t-toggle { flex: none; width: 16px; height: 16px; line-height: 14px; text-align: center; font-size: 9px; cursor: pointer; user-select: none; color: var(--accent); background: var(--panel2); border: 1px solid var(--border); border-radius: 4px; }
-          .t-toggle:hover { background: var(--border); }
-          .t-node-root > .t-head > .t-box { border-color: #b45309; }
-          .t-node-c > .t-head > .t-box { border-color: #2563eb; }
-          .t-node-e > .t-head > .t-box { border-color: #059669; }
-          .t-box { display: inline-block; padding: 7px 12px; border: 1px solid var(--border); border-left-width: 4px; border-radius: 8px; background: var(--panel2); cursor: default; font-family: var(--mono); font-size: 12px; white-space: nowrap; }
-          .t-box .t-badge { display: inline-block; width: 18px; height: 18px; line-height: 18px; text-align: center; border-radius: 4px; font-size: 11px; font-weight: 700; margin-right: 6px; }
-          .t-badge.R { background: rgba(180,83,9,.25); color: #fbbf24; }
-          .t-badge.C { background: rgba(37,99,235,.25); color: #60a5fa; }
-          .t-badge.E { background: rgba(5,150,105,.25); color: #34d399; }
-          .t-kind { color: var(--dim); font-size: 11px; margin-right: 8px; }
-          .t-box .t-st { margin-left: 8px; font-size: 11px; }
-          .t-box .t-st.V { color: var(--ok); } .t-box .t-st.R { color: var(--err); } .t-box .t-st.N { color: var(--warn); }
-          .t-children { margin-left: 22px; padding-left: 14px; border-left: 2px solid var(--border); }
-          .t-children.collapsed { display: none; }
-          .t-tip, #tipFloat b { color: var(--accent); }
-          .t-tip, #tipFloat .kv { font-family: var(--mono); }
-          /* 悬浮详情：fixed 挂 body，避免被 #content 滚动容器裁剪或被顶栏遮挡 */
-          #tipFloat { position: fixed; z-index: 9999; left: 0; top: 0; min-width: 260px; max-width: 420px; background: #0a0e13; border: 1px solid var(--accent); border-radius: 8px; padding: 10px 12px; font-size: 12px; line-height: 1.7; display: none; pointer-events: none; box-shadow: 0 8px 24px rgba(0,0,0,.5); }
-          /* ===== 详情弹窗 ===== */
-          .modal-mask { position: fixed; inset: 0; background: rgba(0,0,0,.65); z-index: 100; display: none; align-items: center; justify-content: center; }
-          .modal-mask.show { display: flex; }
-          .modal { width: min(900px, 92vw); max-height: 86vh; background: var(--panel); border: 1px solid var(--border); border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
-          .modal-head { display: flex; align-items: center; padding: 12px 18px; border-bottom: 1px solid var(--border); }
-          .modal-head h3 { flex: 1; font-size: 14px; color: var(--accent); }
-          .modal-body { overflow: auto; padding: 14px 18px; }
-          .modal-body pre { font-family: var(--mono); font-size: 12px; line-height: 1.5; white-space: pre-wrap; word-break: break-all; }
-          /* ===== 证书操作弹窗（吊销/续签/密钥更换） ===== */
-          .op-tabs { display: flex; gap: 4px; margin-bottom: 14px; border-bottom: 1px solid var(--border); }
-          .op-tab { padding: 8px 18px; cursor: pointer; color: var(--dim); border-bottom: 2px solid transparent; font-size: 13px; user-select: none; }
-          .op-tab:hover { color: var(--text); }
-          .op-tab.active { color: var(--accent); border-bottom-color: var(--accent); font-weight: 700; }
-          .op-pane label { display: block; color: var(--dim); font-size: 12px; margin: 10px 0 6px; }
-          .op-pane input[list] { width: 100%; }
-          .op-serial-info { margin-top: 12px; padding: 10px 14px; background: var(--panel2); border: 1px solid var(--border); border-radius: 8px; font-size: 12px; line-height: 1.8; }
-          .op-serial-info .kv { font-family: var(--mono); }
-          .op-serial-info .kv b { color: var(--accent); }
-          #opSerialList { display: none; }
-          /* ===== 证书验证弹窗：状态徽标 + 标题三态配色 ===== */
-          .v-badge { padding: 3px 14px; border-radius: 6px; font-weight: 700; font-size: 12px; margin-right: 10px; white-space: nowrap; }
-          .v-text { font-size: 13px; color: var(--text); margin-right: 12px; white-space: nowrap; }
-        </style>
-        </head>
-        <body>
-        <!-- ===== 侧边栏 ===== -->
-        <aside id="sidebar">
-          <div class="logo">MOD<span>PKICA</span></div>
-          <nav id="nav">
-            <a data-page="dashboard" class="active">仪表盘</a>
-            <a data-page="certs">证书库</a>
-            <a data-page="makeroot">签发根证书</a>
-            <a data-page="signcert">签发证书</a>
-            <a data-page="ocsp">OCSP|TSA签发</a>
-            <a data-page="template">模板管理</a>
-            <a data-page="revoke">吊销证书</a>
-            <a data-page="verify">证书验证</a>
-            <a data-page="sign">签名专区</a>
-            <a data-page="ctlog">SCT服务管理</a>
-            <a data-page="radius">Radius服务管理</a>
-            <a data-page="pppoe">PPPoE服务管理</a>
-            <a data-page="init">初始化环境</a>
-            <a data-page="users">用户管理</a>
-            <a data-page="config">系统配置</a>
-            <a data-page="logs">操作日志</a>
-          </nav>
-          <div class="side-foot" id="sideVersion">加载中...</div>
-        </aside>
+    private static final String PAGE_P1 = decodeBase64Parts(new String[]{
+            "ICAgICAgICA8IURPQ1RZUEUgaHRtbD4KICAgICAgICA8aHRtbCBsYW5nPSJ6aC1DTiI+CiAgICAgICAgPGhlYWQ+CiAgICAgICAgPG1ldGEgY2hhcnNldD0i",
+            "VVRGLTgiPgogICAgICAgIDxtZXRhIG5hbWU9InZpZXdwb3J0IiBjb250ZW50PSJ3aWR0aD1kZXZpY2Utd2lkdGgsIGluaXRpYWwtc2NhbGU9MS4wIj4KICAg",
+            "ICAgICA8dGl0bGU+TU9EUEtJQ0Eg566h55CG5o6n5Yi25Y+wPC90aXRsZT4KICAgICAgICA8c3R5bGU+CiAgICAgICAgICA6cm9vdCB7CiAgICAgICAgICAg",
+            "IC0tYmc6ICMwZjE0MTk7IC0tcGFuZWw6ICMxNzFlMjY7IC0tcGFuZWwyOiAjMWQyNjMwOwogICAgICAgICAgICAtLWJvcmRlcjogIzI2MzI0MTsgLS10ZXh0",
+            "OiAjZDhlMWVhOyAtLWRpbTogIzhiOThhNTsKICAgICAgICAgICAgLS1hY2NlbnQ6ICMzOGJkZjg7IC0tYWNjZW50MjogIzIyZDNlZTsgLS1vazogIzM0ZDM5",
+            "OTsgLS13YXJuOiAjZmJiZjI0OwogICAgICAgICAgICAtLWVycjogI2Y4NzE3MTsgLS1tb25vOiBDb25zb2xhcywgIkNvdXJpZXIgTmV3IiwgbW9ub3NwYWNl",
+            "OwogICAgICAgICAgfQogICAgICAgICAgKiB7IG1hcmdpbjogMDsgcGFkZGluZzogMDsgYm94LXNpemluZzogYm9yZGVyLWJveDsgfQogICAgICAgICAgYm9k",
+            "eSB7IGJhY2tncm91bmQ6IHZhcigtLWJnKTsgY29sb3I6IHZhcigtLXRleHQpOyBmb250LWZhbWlseTogIlNlZ29lIFVJIiwgIk1pY3Jvc29mdCBZYUhlaSIs",
+            "IHNhbnMtc2VyaWY7IGZvbnQtc2l6ZTogMTVweDsgZGlzcGxheTogZmxleDsgaGVpZ2h0OiAxMDB2aDsgb3ZlcmZsb3c6IGhpZGRlbjsgfQogICAgICAgICAg",
+            "LyogPT09PT0g5L6n6L655qCPID09PT09ICovCiAgICAgICAgICAjc2lkZWJhciB7IHdpZHRoOiAyMDBweDsgbWluLXdpZHRoOiAyMDBweDsgYmFja2dyb3Vu",
+            "ZDogdmFyKC0tcGFuZWwpOyBib3JkZXItcmlnaHQ6IDFweCBzb2xpZCB2YXIoLS1ib3JkZXIpOyBkaXNwbGF5OiBmbGV4OyBmbGV4LWRpcmVjdGlvbjogY29s",
+            "dW1uOyB9CiAgICAgICAgICAubG9nbyB7IHBhZGRpbmc6IDE4cHggMTZweDsgZm9udC1zaXplOiAxOHB4OyBmb250LXdlaWdodDogNzAwOyBsZXR0ZXItc3Bh",
+            "Y2luZzogMXB4OyBib3JkZXItYm90dG9tOiAxcHggc29saWQgdmFyKC0tYm9yZGVyKTsgfQogICAgICAgICAgLmxvZ28gc3BhbiB7IGNvbG9yOiB2YXIoLS1h",
+            "Y2NlbnQpOyB9CiAgICAgICAgICBuYXYgeyBmbGV4OiAxOyBvdmVyZmxvdy15OiBhdXRvOyBwYWRkaW5nOiA4cHggMDsgfQogICAgICAgICAgbmF2IGEgeyBk",
+            "aXNwbGF5OiBibG9jazsgcGFkZGluZzogMTBweCAxOHB4OyBjb2xvcjogdmFyKC0tZGltKTsgdGV4dC1kZWNvcmF0aW9uOiBub25lOyBjdXJzb3I6IHBvaW50",
+            "ZXI7IGJvcmRlci1sZWZ0OiAzcHggc29saWQgdHJhbnNwYXJlbnQ7IHRyYW5zaXRpb246IGFsbCAuMTVzOyB9CiAgICAgICAgICBuYXYgYTpob3ZlciB7IGNv",
+            "bG9yOiB2YXIoLS10ZXh0KTsgYmFja2dyb3VuZDogdmFyKC0tcGFuZWwyKTsgfQogICAgICAgICAgbmF2IGEuYWN0aXZlIHsgY29sb3I6IHZhcigtLWFjY2Vu",
+            "dCk7IGJhY2tncm91bmQ6IHZhcigtLXBhbmVsMik7IGJvcmRlci1sZWZ0LWNvbG9yOiB2YXIoLS1hY2NlbnQpOyB9CiAgICAgICAgICAuc2lkZS1mb290IHsg",
+            "cGFkZGluZzogMTJweCAxNnB4OyBmb250LXNpemU6IDEycHg7IGNvbG9yOiB2YXIoLS1kaW0pOyBib3JkZXItdG9wOiAxcHggc29saWQgdmFyKC0tYm9yZGVy",
+            "KTsgfQogICAgICAgICAgLyogPT09PT0g5Li75Yy6ID09PT09ICovCiAgICAgICAgICAjbWFpbiB7IGZsZXg6IDE7IGRpc3BsYXk6IGZsZXg7IGZsZXgtZGly",
+            "ZWN0aW9uOiBjb2x1bW47IG1pbi13aWR0aDogMDsgfQogICAgICAgICAgI3RvcGJhciB7IGhlaWdodDogNTZweDsgZGlzcGxheTogZmxleDsgYWxpZ24taXRl",
+            "bXM6IGNlbnRlcjsgZ2FwOiAxNHB4OyBwYWRkaW5nOiAwIDIwcHg7IGJhY2tncm91bmQ6IHZhcigtLXBhbmVsKTsgYm9yZGVyLWJvdHRvbTogMXB4IHNvbGlk",
+            "IHZhcigtLWJvcmRlcik7IH0KICAgICAgICAgICN0b3BiYXIgaDEgeyBmb250LXNpemU6IDE2cHg7IGZvbnQtd2VpZ2h0OiA2MDA7IGZsZXg6IDE7IH0KICAg",
+            "ICAgICAgICNjb250ZW50IHsgZmxleDogMTsgb3ZlcmZsb3cteTogYXV0bzsgbWluLWhlaWdodDogMDsgcGFkZGluZzogMjBweDsgfQogICAgICAgICAgLnBh",
+            "Z2UgeyBkaXNwbGF5OiBub25lOyB9CiAgICAgICAgICAucGFnZS5hY3RpdmUgeyBkaXNwbGF5OiBibG9jazsgfQogICAgICAgICAgLyogPT09PT0g57uE5Lu2",
+            "ID09PT09ICovCiAgICAgICAgICAuY2FyZCB7IGJhY2tncm91bmQ6IHZhcigtLXBhbmVsKTsgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tYm9yZGVyKTsgYm9y",
+            "ZGVyLXJhZGl1czogMTBweDsgcGFkZGluZzogMTZweCAxOHB4OyBtYXJnaW4tYm90dG9tOiAxNnB4OyB9CiAgICAgICAgICAuY2FyZCBoMiB7IGZvbnQtc2l6",
+            "ZTogMTRweDsgZm9udC13ZWlnaHQ6IDYwMDsgbWFyZ2luLWJvdHRvbTogMTJweDsgY29sb3I6IHZhcigtLWFjY2VudCk7IH0KICAgICAgICAgIC5ncmlkIHsg",
+            "ZGlzcGxheTogZ3JpZDsgZ3JpZC10ZW1wbGF0ZS1jb2x1bW5zOiByZXBlYXQoYXV0by1maWxsLCBtaW5tYXgoMjAwcHgsIDFmcikpOyBnYXA6IDEycHg7IH0K",
+            "ICAgICAgICAgIC5zdGF0IHsgYmFja2dyb3VuZDogdmFyKC0tcGFuZWwyKTsgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tYm9yZGVyKTsgYm9yZGVyLXJhZGl1",
+            "czogOHB4OyBwYWRkaW5nOiAxNHB4OyB9CiAgICAgICAgICAuc3RhdCAubGFiZWwgeyBmb250LXNpemU6IDEycHg7IGNvbG9yOiB2YXIoLS1kaW0pOyBtYXJn",
+            "aW4tYm90dG9tOiA2cHg7IH0KICAgICAgICAgIC5zdGF0IC52YWx1ZSB7IGZvbnQtc2l6ZTogMjBweDsgZm9udC13ZWlnaHQ6IDcwMDsgZm9udC1mYW1pbHk6",
+            "IHZhcigtLW1vbm8pOyB9CiAgICAgICAgICAuc3RhdCAudmFsdWUub2sgeyBjb2xvcjogdmFyKC0tb2spOyB9IC5zdGF0IC52YWx1ZS53YXJuIHsgY29sb3I6",
+            "IHZhcigtLXdhcm4pOyB9IC5zdGF0IC52YWx1ZS5lcnIgeyBjb2xvcjogdmFyKC0tZXJyKTsgfQogICAgICAgICAgLnN0YXQuc3RhdC13aWRlIHsgZ3JpZC1j",
+            "b2x1bW46IDEgLyAtMTsgfQogICAgICAgICAgLnN0YXQuc3RhdC13aWRlIC52YWx1ZSB7IGZvbnQtc2l6ZTogMTNweDsgd2hpdGUtc3BhY2U6IG5vcm1hbDsg",
+            "d29yZC1icmVhazogYnJlYWstYWxsOyBsaW5lLWhlaWdodDogMS42OyB9CiAgICAgICAgICAuY2ZnLWdyaWQgeyBkaXNwbGF5OiBncmlkOyBncmlkLXRlbXBs",
+            "YXRlLWNvbHVtbnM6IHJlcGVhdChhdXRvLWZpbGwsIG1pbm1heCgzMjBweCwgMWZyKSk7IGdhcDogMTRweDsgbWFyZ2luLXRvcDogMTRweDsgfQogICAgICAg",
+            "ICAgLmNmZy1maWVsZCB7IGJhY2tncm91bmQ6IHZhcigtLXBhbmVsMik7IGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWJvcmRlcik7IGJvcmRlci1yYWRpdXM6",
+            "IDhweDsgcGFkZGluZzogMTJweCAxNHB4OyB9CiAgICAgICAgICAuY2ZnLWZpZWxkIGxhYmVsIHsgZGlzcGxheTogYmxvY2s7IGZvbnQtc2l6ZTogMTNweDsg",
+            "Zm9udC13ZWlnaHQ6IDYwMDsgY29sb3I6IHZhcigtLWZnKTsgbWFyZ2luLWJvdHRvbTogOHB4OyB9CiAgICAgICAgICAuY2ZnLXRhZyB7IGZvbnQtc2l6ZTog",
+            "MTFweDsgZm9udC13ZWlnaHQ6IDQwMDsgY29sb3I6IHZhcigtLWRpbSk7IG1hcmdpbi1sZWZ0OiA2cHg7IH0KICAgICAgICAgIC5jZmctZmllbGQgaW5wdXQg",
+            "eyB3aWR0aDogMTAwJTsgYm94LXNpemluZzogYm9yZGVyLWJveDsgZm9udC1mYW1pbHk6IHZhcigtLW1vbm8pOyBmb250LXNpemU6IDEzcHg7IH0KICAgICAg",
+            "ICAgIC5jZmctZmllbGQgdGV4dGFyZWEgeyB3aWR0aDogMTAwJTsgYm94LXNpemluZzogYm9yZGVyLWJveDsgZm9udC1mYW1pbHk6IHZhcigtLW1vbm8pOyBm",
+            "b250LXNpemU6IDEzcHg7IHJlc2l6ZTogdmVydGljYWw7IG1pbi1oZWlnaHQ6IDkwcHg7IGxpbmUtaGVpZ2h0OiAxLjY7IH0KICAgICAgICAgIC5jZmctZmll",
+            "bGQtd2lkZSB7IGdyaWQtY29sdW1uOiAxIC8gLTE7IH0KICAgICAgICAgIC5jZmctaGludCB7IGZvbnQtc2l6ZTogMTFweDsgY29sb3I6IHZhcigtLWRpbSk7",
+            "IG1hcmdpbjogOHB4IDAgMDsgbGluZS1oZWlnaHQ6IDEuNTsgfQogICAgICAgICAgLmVrdS1tb2RhbCB7IHdpZHRoOiBtaW4oNzAwcHgsIDk0dncpOyB9CiAg",
+            "ICAgICAgICAuZWt1LWJvZHkgeyBkaXNwbGF5OiBncmlkOyBncmlkLXRlbXBsYXRlLWNvbHVtbnM6IHJlcGVhdChhdXRvLWZpbGwsIG1pbm1heCgzMTBweCwg",
+            "MWZyKSk7IGdhcDogNHB4OyBtYXgtaGVpZ2h0OiA1NXZoOyBvdmVyZmxvdzogYXV0bzsgcGFkZGluZzogMTBweCA0cHg7IH0KICAgICAgICAgIC5la3UtaXRl",
+            "bSB7IGRpc3BsYXk6IGZsZXg7IGFsaWduLWl0ZW1zOiBjZW50ZXI7IGdhcDogOHB4OyBmb250LXNpemU6IDEzcHg7IHBhZGRpbmc6IDdweCA5cHg7IGJvcmRl",
+            "ci1yYWRpdXM6IDZweDsgY3Vyc29yOiBwb2ludGVyOyB9CiAgICAgICAgICAuZWt1LWl0ZW06aG92ZXIgeyBiYWNrZ3JvdW5kOiB2YXIoLS1wYW5lbDIpOyB9",
+            "CiAgICAgICAgICAuZWt1LWl0ZW0gaW5wdXQgeyB3aWR0aDogYXV0bzsgZmxleDogbm9uZTsgfQogICAgICAgICAgLmVrdS1pdGVtIGNvZGUgeyBjb2xvcjog",
+            "dmFyKC0tZGltKTsgZm9udC1zaXplOiAxMXB4OyBtYXJnaW4tbGVmdDogYXV0bzsgd2hpdGUtc3BhY2U6IG5vd3JhcDsgfQogICAgICAgICAgLm1vZGFsLWZv",
+            "b3QgeyBkaXNwbGF5OiBmbGV4OyBnYXA6IDEwcHg7IGp1c3RpZnktY29udGVudDogZmxleC1lbmQ7IHBhZGRpbmc6IDEycHggMThweDsgYm9yZGVyLXRvcDog",
+            "MXB4IHNvbGlkIHZhcigtLWJvcmRlcik7IH0KICAgICAgICAgIC52YWwtcm93IHsgZGlzcGxheTogZmxleDsgYWxpZ24taXRlbXM6IGNlbnRlcjsgZ2FwOiAx",
+            "MHB4OyBtYXJnaW4tYm90dG9tOiAxMnB4OyB9CiAgICAgICAgICAudmFsLXJvdyBsYWJlbCB7IHdpZHRoOiA2NHB4OyBmb250LXNpemU6IDEzcHg7IGNvbG9y",
+            "OiB2YXIoLS1mZyk7IGZsZXg6IG5vbmU7IH0KICAgICAgICAgIC52YWwtcm93IGlucHV0IHsgd2lkdGg6IDEwMCU7IGZvbnQtZmFtaWx5OiB2YXIoLS1tb25v",
+            "KTsgZm9udC1zaXplOiAxM3B4OyB9CiAgICAgICAgICAuZnNlYyB7IG1hcmdpbi10b3A6IDE2cHg7IHBhZGRpbmctdG9wOiAxMnB4OyBib3JkZXItdG9wOiAx",
+            "cHggZGFzaGVkIHZhcigtLWJvcmRlcik7IH0KICAgICAgICAgIC5mc2VjOmZpcnN0LW9mLXR5cGUgeyBtYXJnaW4tdG9wOiAwOyBwYWRkaW5nLXRvcDogMDsg",
+            "Ym9yZGVyLXRvcDogbm9uZTsgfQogICAgICAgICAgLmZzZWMtdGl0bGUgeyBmb250LXNpemU6IDEycHg7IGZvbnQtd2VpZ2h0OiA3MDA7IGNvbG9yOiB2YXIo",
+            "LS1hY2NlbnQpOyBtYXJnaW4tYm90dG9tOiAxMHB4OyBsZXR0ZXItc3BhY2luZzogMXB4OyB9CiAgICAgICAgICBzZWxlY3QudC1ib3ggeyBjdXJzb3I6IHBv",
+            "aW50ZXI7IH0KICAgICAgICAgIHNlbGVjdC50LWJveDpob3ZlciB7IGJvcmRlci1jb2xvcjogdmFyKC0tYWNjZW50KTsgfQogICAgICAgICAgLmJhZGdlIHsg",
+            "ZGlzcGxheTogaW5saW5lLWJsb2NrOyBwYWRkaW5nOiAzcHggMTBweDsgYm9yZGVyLXJhZGl1czogMjBweDsgZm9udC1zaXplOiAxMnB4OyBmb250LXdlaWdo",
+            "dDogNjAwOyB9CiAgICAgICAgICAuYmFkZ2Uub2sgeyBiYWNrZ3JvdW5kOiByZ2JhKDUyLDIxMSwxNTMsLjE1KTsgY29sb3I6IHZhcigtLW9rKTsgfQogICAg",
+            "ICAgICAgLmJhZGdlLmVyciB7IGJhY2tncm91bmQ6IHJnYmEoMjQ4LDExMywxMTMsLjE1KTsgY29sb3I6IHZhcigtLWVycik7IH0KICAgICAgICAgIC5iYWRn",
+            "ZS5kaW0geyBiYWNrZ3JvdW5kOiB2YXIoLS1wYW5lbDIpOyBjb2xvcjogdmFyKC0tZGltKTsgfQogICAgICAgICAgbGFiZWwgeyBkaXNwbGF5OiBibG9jazsg",
+            "Zm9udC1zaXplOiAxMnB4OyBjb2xvcjogdmFyKC0tZGltKTsgbWFyZ2luOiAxMHB4IDAgNHB4OyB9CiAgICAgICAgICBpbnB1dCwgc2VsZWN0LCB0ZXh0YXJl",
+            "YSB7IHdpZHRoOiAxMDAlOyBiYWNrZ3JvdW5kOiB2YXIoLS1wYW5lbDIpOyBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1ib3JkZXIpOyBjb2xvcjogdmFyKC0t",
+            "dGV4dCk7IGJvcmRlci1yYWRpdXM6IDZweDsgcGFkZGluZzogOHB4IDEwcHg7IGZvbnQtZmFtaWx5OiB2YXIoLS1tb25vKTsgZm9udC1zaXplOiAxM3B4OyBv",
+            "dXRsaW5lOiBub25lOyB9CiAgICAgICAgICBpbnB1dDpmb2N1cywgc2VsZWN0OmZvY3VzLCB0ZXh0YXJlYTpmb2N1cyB7IGJvcmRlci1jb2xvcjogdmFyKC0t",
+            "YWNjZW50KTsgfQogICAgICAgICAgLnJvdyB7IGRpc3BsYXk6IGdyaWQ7IGdyaWQtdGVtcGxhdGUtY29sdW1uczogcmVwZWF0KGF1dG8tZml0LCBtaW5tYXgo",
+            "MTgwcHgsIDFmcikpOyBnYXA6IDEycHg7IH0KICAgICAgICAgIC5zaWctdGFicyB7IGRpc3BsYXk6IGZsZXg7IGdhcDogMTBweDsgbWFyZ2luLWJvdHRvbTog",
+            "MTZweDsgYm9yZGVyLWJvdHRvbTogMXB4IHNvbGlkIHZhcigtLWJvcmRlcik7IHBhZGRpbmctYm90dG9tOiAxMnB4OyB9CiAgICAgICAgICAuc2lnLXRhYiB7",
+            "IHBhZGRpbmc6IDEwcHggMjhweDsgZm9udC1zaXplOiAxNXB4OyBmb250LXdlaWdodDogNzAwOyBiYWNrZ3JvdW5kOiB2YXIoLS1wYW5lbDIpOyBjb2xvcjog",
+            "dmFyKC0tZGltKTsgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tYm9yZGVyKTsgYm9yZGVyLXJhZGl1czogOHB4OyBjdXJzb3I6IHBvaW50ZXI7IHRyYW5zaXRp",
+            "b246IGFsbCAuMTVzOyB9CiAgICAgICAgICAuc2lnLXRhYjpob3ZlciB7IGNvbG9yOiB2YXIoLS10ZXh0KTsgYm9yZGVyLWNvbG9yOiB2YXIoLS1hY2NlbnQp",
+            "OyB9CiAgICAgICAgICAuc2lnLXRhYi5hY3RpdmUgeyBiYWNrZ3JvdW5kOiB2YXIoLS1hY2NlbnQpOyBjb2xvcjogIzBiMTIyMDsgYm9yZGVyLWNvbG9yOiB2",
+            "YXIoLS1hY2NlbnQpOyB9CiAgICAgICAgICAuc2lnLXBhbmUgeyBmb250LXNpemU6IDE0cHg7IH0KICAgICAgICAgIC5zaWctcGFuZSAucm93IHsgZ3JpZC10",
+            "ZW1wbGF0ZS1jb2x1bW5zOiByZXBlYXQoYXV0by1maXQsIG1pbm1heCgyMzBweCwgMWZyKSk7IH0KICAgICAgICAgIC5kcm9wem9uZSB7IGJvcmRlcjogMnB4",
+            "IGRhc2hlZCB2YXIoLS1ib3JkZXIpOyBib3JkZXItcmFkaXVzOiAxMHB4OyBwYWRkaW5nOiAyOHB4IDIwcHg7IHRleHQtYWxpZ246IGNlbnRlcjsgbWFyZ2lu",
+            "OiAxNHB4IDA7IGN1cnNvcjogcG9pbnRlcjsgdHJhbnNpdGlvbjogYWxsIC4xNXM7IH0KICAgICAgICAgIC5kcm9wem9uZS5vdmVyIHsgYm9yZGVyLWNvbG9y",
+            "OiB2YXIoLS1hY2NlbnQpOyBiYWNrZ3JvdW5kOiByZ2JhKDk2LDE2NSwyNTAsLjA4KTsgfQogICAgICAgICAgLmZha2UtYnRuIHsgZGlzcGxheTogaW5saW5l",
+            "LWJsb2NrOyBwYWRkaW5nOiA5cHggMjJweDsgZm9udC1zaXplOiAxNHB4OyBmb250LXdlaWdodDogNzAwOyBjb2xvcjogIzBiMTIyMDsgYmFja2dyb3VuZDog",
+            "dmFyKC0tYWNjZW50KTsgYm9yZGVyLXJhZGl1czogN3B4OyBjdXJzb3I6IHBvaW50ZXI7IH0KICAgICAgICAgIC5wZGYtbGlzdC1oZWFkIHsgZGlzcGxheTog",
+            "ZmxleDsgZ2FwOiAxMHB4OyBhbGlnbi1pdGVtczogY2VudGVyOyBtYXJnaW4tdG9wOiAxNHB4OyBmb250LXNpemU6IDE0cHg7IH0KICAgICAgICAgIC5wZGYt",
+            "bGlzdC1oZWFkIGJ1dHRvbiB7IHBhZGRpbmc6IDdweCAxNnB4OyB9CiAgICAgICAgICAucGRmLWxpc3QgeyBtYXgtaGVpZ2h0OiAyNDBweDsgb3ZlcmZsb3c6",
+            "IGF1dG87IGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWJvcmRlcik7IGJvcmRlci1yYWRpdXM6IDhweDsgbWFyZ2luOiAxMHB4IDA7IH0KICAgICAgICAgIC5w",
+            "ZGYtcm93IHsgZGlzcGxheTogZmxleDsgYWxpZ24taXRlbXM6IGNlbnRlcjsgZ2FwOiAxMHB4OyBwYWRkaW5nOiA4cHggMTJweDsgYm9yZGVyLWJvdHRvbTog",
+            "MXB4IHNvbGlkIHZhcigtLWJvcmRlcik7IGZvbnQtc2l6ZTogMTNweDsgfQogICAgICAgICAgLnBkZi1yb3c6bGFzdC1jaGlsZCB7IGJvcmRlci1ib3R0b206",
+            "IG5vbmU7IH0KICAgICAgICAgIC5wZGYtcm93IC5ubSB7IGZsZXg6IDE7IG1pbi13aWR0aDogMDsgb3ZlcmZsb3c6IGhpZGRlbjsgdGV4dC1vdmVyZmxvdzog",
+            "ZWxsaXBzaXM7IHdoaXRlLXNwYWNlOiBub3dyYXA7IGZvbnQtc2l6ZTogMTNweDsgfQogICAgICAgICAgLnBkZi1yb3cgLnN0IHsgZm9udC1zaXplOiAxMnB4",
+            "OyBtaW4td2lkdGg6IDE1MHB4OyB9CiAgICAgICAgICAucGRmLXJvdyAuc3Qub2sgeyBjb2xvcjogdmFyKC0tb2spOyB9IC5wZGYtcm93IC5zdC5lcnIgeyBj",
+            "b2xvcjogdmFyKC0tZXJyKTsgfSAucGRmLXJvdyAuc3Qud2FpdCB7IGNvbG9yOiB2YXIoLS1kaW0pOyB9CiAgICAgICAgICAucGRmLXJvdyBidXR0b24geyBw",
+            "YWRkaW5nOiAzcHggMTBweDsgZm9udC1zaXplOiAxMnB4OyB9CiAgICAgICAgICAucGRmLXJvdyBhLmRsIHsgY29sb3I6IHZhcigtLWFjY2VudCk7IGZvbnQt",
+            "d2VpZ2h0OiA3MDA7IGZvbnQtc2l6ZTogMTJweDsgdGV4dC1kZWNvcmF0aW9uOiBub25lOyB9CiAgICAgICAgICBidXR0b24geyBiYWNrZ3JvdW5kOiB2YXIo",
+            "LS1hY2NlbnQpOyBjb2xvcjogIzA2MjAyZTsgYm9yZGVyOiBub25lOyBib3JkZXItcmFkaXVzOiA2cHg7IHBhZGRpbmc6IDlweCAyMHB4OyBmb250LXNpemU6",
+            "IDEzcHg7IGZvbnQtd2VpZ2h0OiA3MDA7IGN1cnNvcjogcG9pbnRlcjsgdHJhbnNpdGlvbjogZmlsdGVyIC4xNXM7IH0KICAgICAgICAgIGJ1dHRvbjpob3Zl",
+            "ciB7IGZpbHRlcjogYnJpZ2h0bmVzcygxLjE1KTsgfQogICAgICAgICAgYnV0dG9uLmdob3N0IHsgYmFja2dyb3VuZDogdmFyKC0tcGFuZWwyKTsgY29sb3I6",
+            "IHZhcigtLXRleHQpOyBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1ib3JkZXIpOyB9CiAgICAgICAgICBidXR0b24uZGFuZ2VyIHsgYmFja2dyb3VuZDogIzdm",
+            "MWQxZDsgY29sb3I6ICNmZWNhY2E7IH0KICAgICAgICAgIGJ1dHRvbi5zdWNjZXNzIHsgYmFja2dyb3VuZDogIzE0NTMyZDsgY29sb3I6ICNiYmY3ZDA7IH0K",
+            "ICAgICAgICAgIGJ1dHRvbjpkaXNhYmxlZCB7IG9wYWNpdHk6IC41OyBjdXJzb3I6IG5vdC1hbGxvd2VkOyB9CiAgICAgICAgICB0YWJsZSB7IHdpZHRoOiAx",
+            "MDAlOyBib3JkZXItY29sbGFwc2U6IGNvbGxhcHNlOyBmb250LWZhbWlseTogdmFyKC0tbW9ubyk7IGZvbnQtc2l6ZTogMTIuNXB4OyB9CiAgICAgICAgICB0",
+            "aCwgdGQgeyBwYWRkaW5nOiA4cHggMTBweDsgYm9yZGVyLWJvdHRvbTogMXB4IHNvbGlkIHZhcigtLWJvcmRlcik7IHRleHQtYWxpZ246IGxlZnQ7IHdoaXRl",
+            "LXNwYWNlOiBub3dyYXA7IH0KICAgICAgICAgIHRoIHsgY29sb3I6IHZhcigtLWRpbSk7IGZvbnQtd2VpZ2h0OiA2MDA7IHBvc2l0aW9uOiBzdGlja3k7IHRv",
+            "cDogMDsgYmFja2dyb3VuZDogdmFyKC0tcGFuZWwpOyB9CiAgICAgICAgICB0cjpob3ZlciB0ZCB7IGJhY2tncm91bmQ6IHZhcigtLXBhbmVsMik7IH0KICAg",
+            "ICAgICAgIHByZS5vdXQgeyBiYWNrZ3JvdW5kOiAjMGEwZTEzOyBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1ib3JkZXIpOyBib3JkZXItcmFkaXVzOiA4cHg7",
+            "IHBhZGRpbmc6IDE0cHg7IGZvbnQtZmFtaWx5OiB2YXIoLS1tb25vKTsgZm9udC1zaXplOiAxM3B4OyBsaW5lLWhlaWdodDogMS42OyB3aGl0ZS1zcGFjZTog",
+            "cHJlLXdyYXA7IHdvcmQtYnJlYWs6IGJyZWFrLWFsbDsgbWF4LWhlaWdodDogNDIwcHg7IG92ZXJmbG93LXk6IGF1dG87IG1hcmdpbi10b3A6IDE0cHg7IH0K",
+            "ICAgICAgICAgIHByZS5vdXQub2sgeyBib3JkZXItY29sb3I6IHJnYmEoNTIsMjExLDE1MywuNCk7IH0gcHJlLm91dC5lcnIgeyBib3JkZXItY29sb3I6IHJn",
+            "YmEoMjQ4LDExMywxMTMsLjQpOyB9CiAgICAgICAgICAudG9vbGJhciB7IGRpc3BsYXk6IGZsZXg7IGdhcDogMTBweDsgYWxpZ24taXRlbXM6IGNlbnRlcjsg",
+            "bWFyZ2luLWJvdHRvbTogMTJweDsgZmxleC13cmFwOiB3cmFwOyB9CiAgICAgICAgICAudG9vbGJhciBpbnB1dCB7IHdpZHRoOiBhdXRvOyB9IC50b29sYmFy",
+            "IHNlbGVjdCB7IHdpZHRoOiBhdXRvOyB9CiAgICAgICAgICAuaGludCB7IGZvbnQtc2l6ZTogMTJweDsgY29sb3I6IHZhcigtLXdhcm4pOyBiYWNrZ3JvdW5k",
+            "OiByZ2JhKDI1MSwxOTEsMzYsLjA4KTsgYm9yZGVyOiAxcHggc29saWQgcmdiYSgyNTEsMTkxLDM2LC4zKTsgYm9yZGVyLXJhZGl1czogNnB4OyBwYWRkaW5n",
+            "OiA4cHggMTJweDsgbWFyZ2luLWJvdHRvbTogMTBweDsgfQogICAgICAgICAgLmxvYWRpbmcgeyBvcGFjaXR5OiAuNjsgcG9pbnRlci1ldmVudHM6IG5vbmU7",
+            "IH0KICAgICAgICAgIDo6LXdlYmtpdC1zY3JvbGxiYXIgeyB3aWR0aDogOHB4OyBoZWlnaHQ6IDhweDsgfQogICAgICAgICAgOjotd2Via2l0LXNjcm9sbGJh",
+            "ci10aHVtYiB7IGJhY2tncm91bmQ6IHZhcigtLWJvcmRlcik7IGJvcmRlci1yYWRpdXM6IDRweDsgfQogICAgICAgICAgLyogPT09PT0g6K+B5Lmm6ZO+5qCR",
+            "ID09PT09ICovCiAgICAgICAgICAudC1yb3cgeyBkaXNwbGF5OiBmbGV4OyBnYXA6IDI4cHg7IGFsaWduLWl0ZW1zOiBmbGV4LXN0YXJ0OyBmbGV4LXdyYXA6",
+            "IHdyYXA7IH0KICAgICAgICAgIC50LW5vZGUgeyBwb3NpdGlvbjogcmVsYXRpdmU7IG1hcmdpbjogNHB4IDA7IH0KICAgICAgICAgIC50LWhlYWQgeyBkaXNw",
+            "bGF5OiBmbGV4OyBhbGlnbi1pdGVtczogY2VudGVyOyBnYXA6IDRweDsgfQogICAgICAgICAgLnQtdG9nZ2xlIHsgZmxleDogbm9uZTsgd2lkdGg6IDE2cHg7",
+            "IGhlaWdodDogMTZweDsgbGluZS1oZWlnaHQ6IDE0cHg7IHRleHQtYWxpZ246IGNlbnRlcjsgZm9udC1zaXplOiA5cHg7IGN1cnNvcjogcG9pbnRlcjsgdXNl",
+            "ci1zZWxlY3Q6IG5vbmU7IGNvbG9yOiB2YXIoLS1hY2NlbnQpOyBiYWNrZ3JvdW5kOiB2YXIoLS1wYW5lbDIpOyBib3JkZXI6IDFweCBzb2xpZCB2YXIoLS1i",
+            "b3JkZXIpOyBib3JkZXItcmFkaXVzOiA0cHg7IH0KICAgICAgICAgIC50LXRvZ2dsZTpob3ZlciB7IGJhY2tncm91bmQ6IHZhcigtLWJvcmRlcik7IH0KICAg",
+            "ICAgICAgIC50LW5vZGUtcm9vdCA+IC50LWhlYWQgPiAudC1ib3ggeyBib3JkZXItY29sb3I6ICNiNDUzMDk7IH0KICAgICAgICAgIC50LW5vZGUtYyA+IC50",
+            "LWhlYWQgPiAudC1ib3ggeyBib3JkZXItY29sb3I6ICMyNTYzZWI7IH0KICAgICAgICAgIC50LW5vZGUtZSA+IC50LWhlYWQgPiAudC1ib3ggeyBib3JkZXIt",
+            "Y29sb3I6ICMwNTk2Njk7IH0KICAgICAgICAgIC50LWJveCB7IGRpc3BsYXk6IGlubGluZS1ibG9jazsgcGFkZGluZzogN3B4IDEycHg7IGJvcmRlcjogMXB4",
+            "IHNvbGlkIHZhcigtLWJvcmRlcik7IGJvcmRlci1sZWZ0LXdpZHRoOiA0cHg7IGJvcmRlci1yYWRpdXM6IDhweDsgYmFja2dyb3VuZDogdmFyKC0tcGFuZWwy",
+            "KTsgY3Vyc29yOiBkZWZhdWx0OyBmb250LWZhbWlseTogdmFyKC0tbW9ubyk7IGZvbnQtc2l6ZTogMTJweDsgd2hpdGUtc3BhY2U6IG5vd3JhcDsgfQogICAg",
+            "ICAgICAgLnQtYm94IC50LWJhZGdlIHsgZGlzcGxheTogaW5saW5lLWJsb2NrOyB3aWR0aDogMThweDsgaGVpZ2h0OiAxOHB4OyBsaW5lLWhlaWdodDogMThw",
+            "eDsgdGV4dC1hbGlnbjogY2VudGVyOyBib3JkZXItcmFkaXVzOiA0cHg7IGZvbnQtc2l6ZTogMTFweDsgZm9udC13ZWlnaHQ6IDcwMDsgbWFyZ2luLXJpZ2h0",
+            "OiA2cHg7IH0KICAgICAgICAgIC50LWJhZGdlLlIgeyBiYWNrZ3JvdW5kOiByZ2JhKDE4MCw4Myw5LC4yNSk7IGNvbG9yOiAjZmJiZjI0OyB9CiAgICAgICAg",
+            "ICAudC1iYWRnZS5DIHsgYmFja2dyb3VuZDogcmdiYSgzNyw5OSwyMzUsLjI1KTsgY29sb3I6ICM2MGE1ZmE7IH0KICAgICAgICAgIC50LWJhZGdlLkUgeyBi",
+            "YWNrZ3JvdW5kOiByZ2JhKDUsMTUwLDEwNSwuMjUpOyBjb2xvcjogIzM0ZDM5OTsgfQogICAgICAgICAgLnQta2luZCB7IGNvbG9yOiB2YXIoLS1kaW0pOyBm",
+            "b250LXNpemU6IDExcHg7IG1hcmdpbi1yaWdodDogOHB4OyB9CiAgICAgICAgICAudC1ib3ggLnQtc3QgeyBtYXJnaW4tbGVmdDogOHB4OyBmb250LXNpemU6",
+            "IDExcHg7IH0KICAgICAgICAgIC50LWJveCAudC1zdC5WIHsgY29sb3I6IHZhcigtLW9rKTsgfSAudC1ib3ggLnQtc3QuUiB7IGNvbG9yOiB2YXIoLS1lcnIp",
+            "OyB9IC50LWJveCAudC1zdC5OIHsgY29sb3I6IHZhcigtLXdhcm4pOyB9CiAgICAgICAgICAudC1jaGlsZHJlbiB7IG1hcmdpbi1sZWZ0OiAyMnB4OyBwYWRk",
+            "aW5nLWxlZnQ6IDE0cHg7IGJvcmRlci1sZWZ0OiAycHggc29saWQgdmFyKC0tYm9yZGVyKTsgfQogICAgICAgICAgLnQtY2hpbGRyZW4uY29sbGFwc2VkIHsg",
+            "ZGlzcGxheTogbm9uZTsgfQogICAgICAgICAgLnQtdGlwLCAjdGlwRmxvYXQgYiB7IGNvbG9yOiB2YXIoLS1hY2NlbnQpOyB9CiAgICAgICAgICAudC10aXAs",
+            "ICN0aXBGbG9hdCAua3YgeyBmb250LWZhbWlseTogdmFyKC0tbW9ubyk7IH0KICAgICAgICAgIC8qIOaCrOa1ruivpuaDhe+8mmZpeGVkIOaMgiBib2R577yM",
+            "6YG/5YWN6KKrICNjb250ZW50IOa7muWKqOWuueWZqOijgeWJquaIluiiq+mhtuagj+mBruaMoSAqLwogICAgICAgICAgI3RpcEZsb2F0IHsgcG9zaXRpb246",
+            "IGZpeGVkOyB6LWluZGV4OiA5OTk5OyBsZWZ0OiAwOyB0b3A6IDA7IG1pbi13aWR0aDogMjYwcHg7IG1heC13aWR0aDogNDIwcHg7IGJhY2tncm91bmQ6ICMw",
+            "YTBlMTM7IGJvcmRlcjogMXB4IHNvbGlkIHZhcigtLWFjY2VudCk7IGJvcmRlci1yYWRpdXM6IDhweDsgcGFkZGluZzogMTBweCAxMnB4OyBmb250LXNpemU6",
+            "IDEycHg7IGxpbmUtaGVpZ2h0OiAxLjc7IGRpc3BsYXk6IG5vbmU7IHBvaW50ZXItZXZlbnRzOiBub25lOyBib3gtc2hhZG93OiAwIDhweCAyNHB4IHJnYmEo",
+            "MCwwLDAsLjUpOyB9CiAgICAgICAgICAvKiA9PT09PSDor6bmg4XlvLnnqpcgPT09PT0gKi8KICAgICAgICAgIC5tb2RhbC1tYXNrIHsgcG9zaXRpb246IGZp",
+            "eGVkOyBpbnNldDogMDsgYmFja2dyb3VuZDogcmdiYSgwLDAsMCwuNjUpOyB6LWluZGV4OiAxMDA7IGRpc3BsYXk6IG5vbmU7IGFsaWduLWl0ZW1zOiBjZW50",
+            "ZXI7IGp1c3RpZnktY29udGVudDogY2VudGVyOyB9CiAgICAgICAgICAubW9kYWwtbWFzay5zaG93IHsgZGlzcGxheTogZmxleDsgfQogICAgICAgICAgLm1v",
+            "ZGFsIHsgd2lkdGg6IG1pbig5MDBweCwgOTJ2dyk7IG1heC1oZWlnaHQ6IDg2dmg7IGJhY2tncm91bmQ6IHZhcigtLXBhbmVsKTsgYm9yZGVyOiAxcHggc29s",
+            "aWQgdmFyKC0tYm9yZGVyKTsgYm9yZGVyLXJhZGl1czogMTJweDsgZGlzcGxheTogZmxleDsgZmxleC1kaXJlY3Rpb246IGNvbHVtbjsgb3ZlcmZsb3c6IGhp",
+            "ZGRlbjsgfQogICAgICAgICAgLm1vZGFsLWhlYWQgeyBkaXNwbGF5OiBmbGV4OyBhbGlnbi1pdGVtczogY2VudGVyOyBwYWRkaW5nOiAxMnB4IDE4cHg7IGJv",
+            "cmRlci1ib3R0b206IDFweCBzb2xpZCB2YXIoLS1ib3JkZXIpOyB9CiAgICAgICAgICAubW9kYWwtaGVhZCBoMyB7IGZsZXg6IDE7IGZvbnQtc2l6ZTogMTRw",
+            "eDsgY29sb3I6IHZhcigtLWFjY2VudCk7IH0KICAgICAgICAgIC5tb2RhbC1ib2R5IHsgb3ZlcmZsb3c6IGF1dG87IHBhZGRpbmc6IDE0cHggMThweDsgfQog",
+            "ICAgICAgICAgLm1vZGFsLWJvZHkgcHJlIHsgZm9udC1mYW1pbHk6IHZhcigtLW1vbm8pOyBmb250LXNpemU6IDEycHg7IGxpbmUtaGVpZ2h0OiAxLjU7IHdo",
+            "aXRlLXNwYWNlOiBwcmUtd3JhcDsgd29yZC1icmVhazogYnJlYWstYWxsOyB9CiAgICAgICAgICAvKiA9PT09PSDor4Hkuabmk43kvZzlvLnnqpfvvIjlkIrp",
+            "lIAv57ut562+L+WvhumSpeabtOaNou+8iSA9PT09PSAqLwogICAgICAgICAgLm9wLXRhYnMgeyBkaXNwbGF5OiBmbGV4OyBnYXA6IDRweDsgbWFyZ2luLWJv",
+            "dHRvbTogMTRweDsgYm9yZGVyLWJvdHRvbTogMXB4IHNvbGlkIHZhcigtLWJvcmRlcik7IH0KICAgICAgICAgIC5vcC10YWIgeyBwYWRkaW5nOiA4cHggMThw",
+            "eDsgY3Vyc29yOiBwb2ludGVyOyBjb2xvcjogdmFyKC0tZGltKTsgYm9yZGVyLWJvdHRvbTogMnB4IHNvbGlkIHRyYW5zcGFyZW50OyBmb250LXNpemU6IDEz",
+            "cHg7IHVzZXItc2VsZWN0OiBub25lOyB9CiAgICAgICAgICAub3AtdGFiOmhvdmVyIHsgY29sb3I6IHZhcigtLXRleHQpOyB9CiAgICAgICAgICAub3AtdGFi",
+            "LmFjdGl2ZSB7IGNvbG9yOiB2YXIoLS1hY2NlbnQpOyBib3JkZXItYm90dG9tLWNvbG9yOiB2YXIoLS1hY2NlbnQpOyBmb250LXdlaWdodDogNzAwOyB9CiAg",
+            "ICAgICAgICAub3AtcGFuZSBsYWJlbCB7IGRpc3BsYXk6IGJsb2NrOyBjb2xvcjogdmFyKC0tZGltKTsgZm9udC1zaXplOiAxMnB4OyBtYXJnaW46IDEwcHgg",
+            "MCA2cHg7IH0KICAgICAgICAgIC5vcC1wYW5lIGlucHV0W2xpc3RdIHsgd2lkdGg6IDEwMCU7IH0KICAgICAgICAgIC5vcC1zZXJpYWwtaW5mbyB7IG1hcmdp",
+            "bi10b3A6IDEycHg7IHBhZGRpbmc6IDEwcHggMTRweDsgYmFja2dyb3VuZDogdmFyKC0tcGFuZWwyKTsgYm9yZGVyOiAxcHggc29saWQgdmFyKC0tYm9yZGVy",
+            "KTsgYm9yZGVyLXJhZGl1czogOHB4OyBmb250LXNpemU6IDEycHg7IGxpbmUtaGVpZ2h0OiAxLjg7IH0KICAgICAgICAgIC5vcC1zZXJpYWwtaW5mbyAua3Yg",
+            "eyBmb250LWZhbWlseTogdmFyKC0tbW9ubyk7IH0KICAgICAgICAgIC5vcC1zZXJpYWwtaW5mbyAua3YgYiB7IGNvbG9yOiB2YXIoLS1hY2NlbnQpOyB9CiAg",
+            "ICAgICAgICAjb3BTZXJpYWxMaXN0IHsgZGlzcGxheTogbm9uZTsgfQogICAgICAgICAgLyogPT09PT0g6K+B5Lmm6aqM6K+B5by556qX77ya54q25oCB5b69",
+            "5qCHICsg5qCH6aKY5LiJ5oCB6YWN6ImyID09PT09ICovCiAgICAgICAgICAudi1iYWRnZSB7IHBhZGRpbmc6IDNweCAxNHB4OyBib3JkZXItcmFkaXVzOiA2",
+            "cHg7IGZvbnQtd2VpZ2h0OiA3MDA7IGZvbnQtc2l6ZTogMTJweDsgbWFyZ2luLXJpZ2h0OiAxMHB4OyB3aGl0ZS1zcGFjZTogbm93cmFwOyB9CiAgICAgICAg",
+            "ICAudi10ZXh0IHsgZm9udC1zaXplOiAxM3B4OyBjb2xvcjogdmFyKC0tdGV4dCk7IG1hcmdpbi1yaWdodDogMTJweDsgd2hpdGUtc3BhY2U6IG5vd3JhcDsg",
+            "fQogICAgICAgIDwvc3R5bGU+CiAgICAgICAgPC9oZWFkPgogICAgICAgIDxib2R5PgogICAgICAgIDwhLS0gPT09PT0g5L6n6L655qCPID09PT09IC0tPgog",
+            "ICAgICAgIDxhc2lkZSBpZD0ic2lkZWJhciI+CiAgICAgICAgICA8ZGl2IGNsYXNzPSJsb2dvIj5NT0Q8c3Bhbj5QS0lDQTwvc3Bhbj48L2Rpdj4KICAgICAg",
+            "ICAgIDxuYXYgaWQ9Im5hdiI+CiAgICAgICAgICAgIDxhIGRhdGEtcGFnZT0iZGFzaGJvYXJkIiBjbGFzcz0iYWN0aXZlIj7ku6rooajnm5g8L2E+CiAgICAg",
+            "ICAgICAgIDxhIGRhdGEtcGFnZT0iY2VydHMiPuivgeS5puW6kzwvYT4KICAgICAgICAgICAgPGEgZGF0YS1wYWdlPSJtYWtlcm9vdCI+562+5Y+R5qC56K+B",
+            "5LmmPC9hPgogICAgICAgICAgICA8YSBkYXRhLXBhZ2U9InNpZ25jZXJ0Ij7nrb7lj5Hor4HkuaY8L2E+CiAgICAgICAgICAgIDxhIGRhdGEtcGFnZT0ib2Nz",
+            "cCI+T0NTUHxUU0Hnrb7lj5E8L2E+CiAgICAgICAgICAgIDxhIGRhdGEtcGFnZT0idGVtcGxhdGUiPuaooeadv+euoeeQhjwvYT4KICAgICAgICAgICAgPGEg",
+            "ZGF0YS1wYWdlPSJyZXZva2UiPuWQiumUgOivgeS5pjwvYT4KICAgICAgICAgICAgPGEgZGF0YS1wYWdlPSJ2ZXJpZnkiPuivgeS5pumqjOivgTwvYT4KICAg",
+            "ICAgICAgICAgPGEgZGF0YS1wYWdlPSJzaWduIj7nrb7lkI3kuJPljLo8L2E+CiAgICAgICAgICAgIDxhIGRhdGEtcGFnZT0iY3Rsb2ciPlNDVOacjeWKoeeu",
+            "oeeQhjwvYT4KICAgICAgICAgICAgPGEgZGF0YS1wYWdlPSJyYWRpdXMiPlJhZGl1c+acjeWKoeeuoeeQhjwvYT4KICAgICAgICAgICAgPGEgZGF0YS1wYWdl",
+            "PSJwcHBvZSI+UFBQb0XmnI3liqHnrqHnkIY8L2E+CiAgICAgICAgICAgIDxhIGRhdGEtcGFnZT0iaW5pdCI+5Yid5aeL5YyW546v5aKDPC9hPgogICAgICAg",
+            "ICAgICA8YSBkYXRhLXBhZ2U9InVzZXJzIj7nlKjmiLfnrqHnkIY8L2E+CiAgICAgICAgICAgIDxhIGRhdGEtcGFnZT0iY29uZmlnIj7ns7vnu5/phY3nva48",
+            "L2E+CiAgICAgICAgICAgIDxhIGRhdGEtcGFnZT0ibG9ncyI+5pON5L2c5pel5b+XPC9hPgogICAgICAgICAgPC9uYXY+CiAgICAgICAgICA8ZGl2IGNsYXNz",
+            "PSJzaWRlLWZvb3QiIGlkPSJzaWRlVmVyc2lvbiI+5Yqg6L295LitLi4uPC9kaXY+CiAgICAgICAgPC9hc2lkZT4KCiAgICAgICAgPCEtLSA9PT09PSDkuLvl",
+            "jLogPT09PT0gLS0+CiAgICAgICAgPGRpdiBpZD0ibWFpbiI+CiAgICAgICAgICA8aGVhZGVyIGlkPSJ0b3BiYXIiPgogICAgICAgICAgICA8aDEgaWQ9InBh",
+            "Z2VUaXRsZSI+5Luq6KGo55uYPC9oMT4KICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImJhZGdlIGRpbSIgaWQ9Im1haW5Qb3J0Ij5NQUlOOiAtLTwvc3Bhbj4K",
+            "ICAgICAgICAgICAgPHNwYW4gY2xhc3M9ImJhZGdlIG9rIiBpZD0ibWFpblN0YXRlIj4tLTwvc3Bhbj4KICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iZ2hv",
+            "c3QiIG9uY2xpY2s9ImxvYWRTdGF0dXMoKSI+5Yi35pawPC9idXR0b24+CiAgICAgICAgICA8L2hlYWRlcj4KCiAgICAgICAgICA8c2VjdGlvbiBpZD0iY29u",
+            "dGVudCI+CgogICAgICAgICAgICA8IS0tIOS7quihqOebmCAtLT4KICAgICAgICAgICAgPGRpdiBjbGFzcz0icGFnZSBhY3RpdmUiIGlkPSJwYWdlLWRhc2hi",
+            "b2FyZCI+CiAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iZ3JpZCI+CiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJzdGF0Ij48ZGl2IGNsYXNzPSJsYWJl",
+            "bCI+TUFJTiDmnI3liqHnq6/lj6M8L2Rpdj48ZGl2IGNsYXNzPSJ2YWx1ZSBvayIgaWQ9InN0UG9ydCI+LS08L2Rpdj48L2Rpdj4KICAgICAgICAgICAgICAg",
+            "IDxkaXYgY2xhc3M9InN0YXQiPjxkaXYgY2xhc3M9ImxhYmVsIj7mnI3liqHov5DooYzml7bplb88L2Rpdj48ZGl2IGNsYXNzPSJ2YWx1ZSIgaWQ9InN0VXB0",
+            "aW1lIj4tLTwvZGl2PjwvZGl2PgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0ic3RhdCI+PGRpdiBjbGFzcz0ibGFiZWwiPueuoeeQhueVjOmdouerr+WP",
+            "ozwvZGl2PjxkaXYgY2xhc3M9InZhbHVlIiBpZD0ic3RBZG1pbiI+LS08L2Rpdj48L2Rpdj4KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InN0YXQiPjxk",
+            "aXYgY2xhc3M9ImxhYmVsIj5BUEkg6LCD55So5qyh5pWwPC9kaXY+PGRpdiBjbGFzcz0idmFsdWUiIGlkPSJzdENhbGxzIj4tLTwvZGl2PjwvZGl2PgogICAg",
+            "ICAgICAgICAgICAgPGRpdiBjbGFzcz0ic3RhdCI+PGRpdiBjbGFzcz0ibGFiZWwiPuaXpeW/l+ihjOaVsDwvZGl2PjxkaXYgY2xhc3M9InZhbHVlIiBpZD0i",
+            "c3RMb2dzIj4tLTwvZGl2PjwvZGl2PgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0ic3RhdCBzdGF0LXdpZGUiPjxkaXYgY2xhc3M9ImxhYmVsIj7lt6Xk",
+            "vZznm67lvZU8L2Rpdj48ZGl2IGNsYXNzPSJ2YWx1ZSIgaWQ9InN0QmFzZSI+LS08L2Rpdj48L2Rpdj4KICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAg",
+            "ICAgICA8ZGl2IGNsYXNzPSJjYXJkIiBzdHlsZT0ibWFyZ2luLXRvcDoxNnB4Ij4KICAgICAgICAgICAgICAgIDxoMj7lv6vmjbfmk43kvZw8L2gyPgogICAg",
+            "ICAgICAgICAgICAgPGRpdiBjbGFzcz0idG9vbGJhciI+CiAgICAgICAgICAgICAgICAgIDxidXR0b24gb25jbGljaz0icXVpY2tBY3Rpb24oJy9hcGkvY3Js",
+            "JykiPuWIt+aWsOWFqOmDqCBDUkw8L2J1dHRvbj4KICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBvbmNsaWNrPSJxdWlja0FjdGlvbignL2FwaS9pbml0b2Nz",
+            "cCcpIj7nrb7lj5Hlhajpg6ggT0NTUDwvYnV0dG9uPgogICAgICAgICAgICAgICAgICA8YnV0dG9uIG9uY2xpY2s9InF1aWNrQWN0aW9uKCcvYXBpL2luaXR0",
+            "aW1lc3RhbXAnKSI+562+5Y+R5YWo6YOo5pe26Ze05oizPC9idXR0b24+CiAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgIDxwcmUgY2xh",
+            "c3M9Im91dCIgaWQ9ImRhc2hPdXQiIGhpZGRlbj48L3ByZT4KICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4K",
+            "ICAgICAgICAgICAgICAgIDxoMj7or4Hkuabpk77moJE8L2gyPgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0idG9vbGJhciI+CiAgICAgICAgICAgICAg",
+            "ICAgIDxzcGFuIHN0eWxlPSJjb2xvcjp2YXIoLS1kaW0pO2ZvbnQtc2l6ZToxMnB4Ij7moLkgUiDihpIg5Lit6Ze0IENBIEMg4oaSIOe7iOerryBF77yb6byg",
+            "5qCH5oKs5YGc6IqC54K55p+l55yL6K+B5Lmm5Y+C5pWwPC9zcGFuPgogICAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJnaG9zdCIgb25jbGljaz0i",
+            "bG9hZENoYWluKCkiPuWIt+aWsDwvYnV0dG9uPgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICA8ZGl2IGlkPSJjaGFpbkJveCIgc3R5",
+            "bGU9Im92ZXJmbG93OmF1dG87bWF4LWhlaWdodDo1MnZoO3BhZGRpbmc6MTBweCI+5Yqg6L295LitLi4uPC9kaXY+CiAgICAgICAgICAgICAgPC9kaXY+CiAg",
+            "ICAgICAgICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgICAgICAgICA8aDI+5pyA6L+R5pel5b+XPC9oMj4KICAgICAgICAgICAgICAgIDxwcmUg",
+            "Y2xhc3M9Im91dCIgaWQ9ImRhc2hMb2dzIiBzdHlsZT0ibWF4LWhlaWdodDoyNjBweCI+PC9wcmU+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAg",
+            "IDwvZGl2PgoKICAgICAgICAgICAgPCEtLSDor4HkuablupMgLS0+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9InBhZ2UiIGlkPSJwYWdlLWNlcnRzIj4KICAg",
+            "ICAgICAgICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImN0LXRhYnMiPgogICAgICAgICAgICAgICAgICA8YnV0",
+            "dG9uIGNsYXNzPSJjdC10YWIgYWN0aXZlIiBpZD0iY3NUYWJCdG5Mb2NhbCIgb25jbGljaz0iY3NTd2l0Y2hUYWIoJ2xvY2FsJykiPuivgeS5puW6kyBDRVJU",
+            "Uy50eHQ8L2J1dHRvbj4KICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iY3QtdGFiIiBpZD0iY3NUYWJCdG5DYSIgb25jbGljaz0iY3NTd2l0Y2hU",
+            "YWIoJ2NhY2VydHMnKSI+5Y+v5L+h5YWs572R6K+B5Lmm5bqTIGNhY2VydHM8L2J1dHRvbj4KICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iY3Qt",
+            "dGFiIiBpZD0iY3NUYWJCdG5NeSIgb25jbGljaz0iY3NTd2l0Y2hUYWIoJ215JykiPuaIkeeahOivgeS5pjwvYnV0dG9uPgogICAgICAgICAgICAgICAgPC9k",
+            "aXY+CiAgICAgICAgICAgICAgICA8ZGl2IGlkPSJjc1BhbmVMb2NhbCI+CiAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InRvb2xiYXIiPgogICAgICAg",
+            "ICAgICAgICAgICAgIDxpbnB1dCBpZD0iY2VydHNGaWx0ZXIiIHBsYWNlaG9sZGVyPSLnrZvpgInvvJrluo/liJflj7cgLyDnsbvlnosgLyDnirbmgIEgLyDn",
+            "rpfms5UiIHN0eWxlPSJmbGV4OjE7bWF4LXdpZHRoOjM2MHB4IiBvbmlucHV0PSJyZW5kZXJDZXJ0cygpIj4KICAgICAgICAgICAgICAgICAgICA8YnV0dG9u",
+            "IGNsYXNzPSJnaG9zdCIgb25jbGljaz0ibG9hZENlcnRzKCkiPuWIt+aWsOWIl+ihqDwvYnV0dG9uPgogICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAg",
+            "ICAgICAgICAgICAgPGRpdiBzdHlsZT0ib3ZlcmZsb3c6YXV0bzttYXgtaGVpZ2h0OjYwdmgiPgogICAgICAgICAgICAgICAgICAgIDx0YWJsZSBpZD0iY2Vy",
+            "dHNUYWJsZSI+CiAgICAgICAgICAgICAgICAgICAgICA8dGhlYWQ+PHRyPjx0aD7luo/liJflj7c8L3RoPjx0aD7nsbvlnos8L3RoPjx0aD7nirbmgIE8L3Ro",
+            "Pjx0aD7ljp/lm6A8L3RoPjx0aD7ml7bpl7Q8L3RoPjx0aD7pooHlj5HogIVJRDwvdGg+PHRoPueul+azlTwvdGg+PHRoPuaTjeS9nDwvdGg+PC90cj48L3Ro",
+            "ZWFkPgogICAgICAgICAgICAgICAgICAgICAgPHRib2R5PjwvdGJvZHk+CiAgICAgICAgICAgICAgICAgICAgPC90YWJsZT4KICAgICAgICAgICAgICAgICAg",
+            "PC9kaXY+CiAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgIDxkaXYgaWQ9ImNzUGFuZUNhIiBzdHlsZT0iZGlzcGxheTpub25lIj4KICAg",
+            "ICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iaGludCI+SkFWQSDnjq/looMgbGliL3NlY3VyaXR5L2NhY2VydHMg5Lit55qE5Y+v5L+h6K+B5Lmm77yI5Y+q",
+            "6K+75Y+C6ICD77yJ44CC54K55Ye7IuivpuaDhSLlj6/mn6XnnIsgUEVNIOivgeS5pue7k+aehO+8iEpTT07vvInjgILmnKzlnLDor4Hkuabmlofku7bpqozo",
+            "r4Hor7fliLAi6K+B5Lmm6aqM6K+BIumhtemdouS4iuS8oOOAgjwvZGl2PgogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJ0b29sYmFyIj4KICAgICAg",
+            "ICAgICAgICAgICAgICA8aW5wdXQgaWQ9ImNhRmlsdGVyIiBwbGFjZWhvbGRlcj0i562b6YCJ77ya5bqP5YiX5Y+3IC8g6aKB5Y+R6ICFIC8g566X5rOVIiBz",
+            "dHlsZT0iZmxleDoxO21heC13aWR0aDozNjBweCIgb25pbnB1dD0icmVuZGVyQ2FjZXJ0cygpIj4KICAgICAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNz",
+            "PSJnaG9zdCIgb25jbGljaz0ibG9hZENhY2VydHMoKSI+5Yi35paw5YiX6KGoPC9idXR0b24+CiAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAg",
+            "ICAgICAgICA8ZGl2IHN0eWxlPSJvdmVyZmxvdzphdXRvO21heC1oZWlnaHQ6NjB2aCI+CiAgICAgICAgICAgICAgICAgICAgPHRhYmxlIGlkPSJjYVRhYmxl",
+            "Ij4KICAgICAgICAgICAgICAgICAgICAgIDx0aGVhZD48dHI+PHRoPuW6j+WIl+WPtzwvdGg+PHRoPueul+azlTwvdGg+PHRoPueUn+aViOaXpeacnzwvdGg+",
+            "PHRoPuWkseaViOaXpeacnzwvdGg+PHRoPkRO5a2X5q61PC90aD48dGg+5pON5L2cPC90aD48L3RyPjwvdGhlYWQ+CiAgICAgICAgICAgICAgICAgICAgICA8",
+            "dGJvZHk+PC90Ym9keT4KICAgICAgICAgICAgICAgICAgICA8L3RhYmxlPgogICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgIDwvZGl2",
+            "PgogICAgICAgICAgICAgICAgPGRpdiBpZD0iY3NQYW5lTXkiIHN0eWxlPSJkaXNwbGF5Om5vbmUiPgogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJ0",
+            "b29sYmFyIj4KICAgICAgICAgICAgICAgICAgICA8aW5wdXQgaWQ9Im15RmlsdGVyIiBwbGFjZWhvbGRlcj0i562b6YCJ77ya5bqP5YiX5Y+3IC8g57G75Z6L",
+            "IC8g566X5rOVIiBzdHlsZT0iZmxleDoxO21heC13aWR0aDozNjBweCIgb25pbnB1dD0icmVuZGVyTXkoKSI+CiAgICAgICAgICAgICAgICAgICAgPGJ1dHRv",
+            "biBjbGFzcz0icHJpbWFyeSIgb25jbGljaz0iJCgnbXlGaWxlJykuY2xpY2soKSI+5a+85YWl6K+B5LmmPC9idXR0b24+CiAgICAgICAgICAgICAgICAgICAg",
+            "PGJ1dHRvbiBjbGFzcz0iZ2hvc3QiIG9uY2xpY2s9ImxvYWRNeSgpIj7liLfmlrDliJfooag8L2J1dHRvbj4KICAgICAgICAgICAgICAgICAgPC9kaXY+CiAg",
+            "ICAgICAgICAgICAgICAgIDxpbnB1dCB0eXBlPSJmaWxlIiBpZD0ibXlGaWxlIiBhY2NlcHQ9Ii5wZngsLnAxMiwuamtzLC5jZXIsLmNydCwucGVtIiBzdHls",
+            "ZT0iZGlzcGxheTpub25lIiBvbmNoYW5nZT0ibXlGaWxlQ2hvc2VuKCkiPgogICAgICAgICAgICAgICAgICA8ZGl2IGlkPSJteU1zZyIgY2xhc3M9ImhpbnQi",
+            "IHN0eWxlPSJtYXJnaW46NnB4IDA7Y29sb3I6dmFyKC0tZGltKSI+5LuO5pys5py65a+85YWl6K+B5Lmm77yIcGZ4IC8gcDEyIC8gamtzIOmcgOi+k+WFpeWv",
+            "huegge+8m2NlciAvIGNydCAvIHBlbSDnm7TmjqXlr7zlhaXvvIzlj6/lkKvnp4HpkqXvvInjgII8L2Rpdj4KICAgICAgICAgICAgICAgICAgPGRpdiBzdHls",
+            "ZT0ib3ZlcmZsb3c6YXV0bzttYXgtaGVpZ2h0OjYwdmgiPgogICAgICAgICAgICAgICAgICAgIDx0YWJsZSBpZD0ibXlUYWJsZSI+CiAgICAgICAgICAgICAg",
+            "ICAgICAgICA8dGhlYWQ+PHRyPjx0aD7luo/liJflj7c8L3RoPjx0aD7nsbvlnos8L3RoPjx0aD7nrpfms5U8L3RoPjx0aD7mmK/lkKblkKvmnInnp4HpkqU8",
+            "L3RoPjx0aD7nlJ/mlYjml6XmnJ88L3RoPjx0aD7lpLHmlYjml6XmnJ88L3RoPjx0aD7mk43kvZw8L3RoPjwvdHI+PC90aGVhZD4KICAgICAgICAgICAgICAg",
+            "ICAgICAgIDx0Ym9keT48L3Rib2R5PgogICAgICAgICAgICAgICAgICAgIDwvdGFibGU+CiAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAg",
+            "ICAgPC9kaXY+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgPCEtLSDnrb7lj5HmoLnor4HkuaYgLS0+CiAg",
+            "ICAgICAgICAgIDxkaXYgY2xhc3M9InBhZ2UiIGlkPSJwYWdlLW1ha2Vyb290Ij4KICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICAg",
+            "ICAgICAgIDxoMj7nrb7lj5HmoLnor4HkuabvvIhNYWtlUm9vdO+8iTwvaDI+CiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJyb3ciPgogICAgICAgICAg",
+            "ICAgICAgICA8ZGl2IHN0eWxlPSJncmlkLWNvbHVtbjoxLy0xIj48bGFiZWw+6K+B5LmmIERO77yI6YCX5Y+35YiG6ZqUIGtleT12YWx1Ze+8iTwvbGFiZWw+",
+            "PGlucHV0IGlkPSJta0RuIiBwbGFjZWhvbGRlcj0i5qC56K+B5LmmIERO77yIa2V5PXZhbHVlIOmAl+WPt+WIhumalO+8jGtleSDlj6/kuLrmoIflh4blsZ7m",
+            "gKfmiJYgT0lE77yJ77yM5aaCIENOPU15IFJvb3QgQ0EsTz1NeSBPcmcsQz1DTiI+PC9kaXY+CiAgICAgICAgICAgICAgICAgIDxkaXY+PGxhYmVsPuWvhumS",
+            "peeul+azlTwvbGFiZWw+PHNlbGVjdCBpZD0ibWtBbGdvIiBvbmNoYW5nZT0iZXh0QWxnb0NoYW5nZWQoJ21rJykiPjxvcHRpb24+UlNBPC9vcHRpb24+PG9w",
+            "dGlvbj5SU0EtUFNTPC9vcHRpb24+PG9wdGlvbj5FQ0M8L29wdGlvbj48b3B0aW9uPlNNMjwvb3B0aW9uPjxvcHRpb24+RFNBPC9vcHRpb24+PG9wdGlvbj5F",
+            "ZERTQTwvb3B0aW9uPjxvcHRpb24+UFFDPC9vcHRpb24+PC9zZWxlY3Q+PC9kaXY+CiAgICAgICAgICAgICAgICAgIDxkaXY+PGxhYmVsPuWTiOW4jOeul+az",
+            "lTwvbGFiZWw+PHNlbGVjdCBpZD0ibWtIYXNoIj48b3B0aW9uPnNoYTI1Njwvb3B0aW9uPjxvcHRpb24+c2hhMTwvb3B0aW9uPjxvcHRpb24+c2hhMzg0PC9v",
+            "cHRpb24+PG9wdGlvbj5zaGE1MTI8L29wdGlvbj48b3B0aW9uPlNIQTMtMjI0PC9vcHRpb24+PG9wdGlvbj5TSEEzLTI1Njwvb3B0aW9uPjxvcHRpb24+U0hB",
+            "My0zODQ8L29wdGlvbj48b3B0aW9uPlNIQTMtNTEyPC9vcHRpb24+PG9wdGlvbj5TTTM8L29wdGlvbj48b3B0aW9uPk5VTEw8L29wdGlvbj48L3NlbGVjdD48",
+            "L2Rpdj4KICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+5a+G6ZKl5L2N5pWwPC9sYWJlbD48c2VsZWN0IGlkPSJta0JpdHMiPjwvc2VsZWN0PjwvZGl2",
+            "PgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJmc2VjIiBzdHlsZT0ibWFyZ2luLXRvcDoxNHB4Ij4KICAgICAg",
+            "ICAgICAgICAgICAgPGRpdiBjbGFzcz0iZnNlYy10aXRsZSI+RE4g6L6F5Yqp57yW6L6RIOKAlCDln7rnoYDlrZfmrrUgLyBFViDms6jlhozlrZfmrrUgLyDo",
+            "h6rlrprkuYkgT0lEPC9kaXY+CiAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InJvdyI+CiAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+Q04g",
+            "6YCa55So5ZCN56ewPC9sYWJlbD48aW5wdXQgaWQ9Im1rRG5DbiIgcGxhY2Vob2xkZXI9IumAmueUqOWQjeensO+8iENO77yJ77yM5aaCIE15IFJvb3QgQ0Ei",
+            "IG9uaW5wdXQ9InN5bmNNa0RuKCkiPjwvZGl2PgogICAgICAgICAgICAgICAgICAgIDxkaXY+PGxhYmVsPk8g57uE57uHPC9sYWJlbD48aW5wdXQgaWQ9Im1r",
+            "RG5PIiBwbGFjZWhvbGRlcj0i57uE57uH77yIT++8ie+8jOWmgiBNeSBPcmciIG9uaW5wdXQ9InN5bmNNa0RuKCkiPjwvZGl2PgogICAgICAgICAgICAgICAg",
+            "ICAgIDxkaXY+PGxhYmVsPk9VIOe7hOe7h+WNleS9jTwvbGFiZWw+PGlucHV0IGlkPSJta0RuT3UiIHBsYWNlaG9sZGVyPSLnu4Tnu4fljZXkvY3vvIhPVe+8",
+            "ie+8jOWmgiBJVCBEZXB077yI5Y+v6YCJ77yJIiBvbmlucHV0PSJzeW5jTWtEbigpIj48L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD5D",
+            "IOWbveWutjwvbGFiZWw+PGlucHV0IGlkPSJta0RuQyIgcGxhY2Vob2xkZXI9IuWbveWutuS7o+egge+8iEPvvInvvIzlpoIgQ07vvIjkuKTkvY3vvIkiIG1h",
+            "eGxlbmd0aD0iMiIgb25pbnB1dD0ic3luY01rRG4oKSI+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+UyDnnIEv5beePC9sYWJlbD48",
+            "aW5wdXQgaWQ9Im1rRG5TIiBwbGFjZWhvbGRlcj0i55yBL+W3nu+8iFPvvInvvIzlpoIgR3Vhbmdkb25n77yI5Y+v6YCJ77yJIiBvbmlucHV0PSJzeW5jTWtE",
+            "bigpIj48L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD5MIOWfjuW4gjwvbGFiZWw+PGlucHV0IGlkPSJta0RuTCIgcGxhY2Vob2xkZXI9",
+            "IuWfjuW4gu+8iEzvvInvvIzlpoIgU2hlbnpoZW7vvIjlj6/pgInvvIkiIG9uaW5wdXQ9InN5bmNNa0RuKCkiPjwvZGl2PgogICAgICAgICAgICAgICAgICAg",
+            "IDxkaXY+PGxhYmVsPkUg6YKu566x77yIT0lEIOWtl+aute+8iTwvbGFiZWw+PGlucHV0IGlkPSJta0RuRSIgcGxhY2Vob2xkZXI9IumCrueuse+8iEXvvIxP",
+            "SUQgMS4yLjg0MC4xMTM1NDkuMS45LjHvvInvvIzlpoIgYWRtaW5AZXhhbXBsZS5jb20iIG9uaW5wdXQ9InN5bmNNa0RuKCkiPjwvZGl2PgogICAgICAgICAg",
+            "ICAgICAgICAgIDxkaXY+PGxhYmVsPuaYr+WQpiBFViDmianlsZXpqozor4E8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgPGxhYmVsIHN0eWxlPSJk",
+            "aXNwbGF5OmZsZXg7anVzdGlmeS1jb250ZW50OmZsZXgtc3RhcnQ7YWxpZ24taXRlbXM6Y2VudGVyO3dpZHRoOjEwMCU7aGVpZ2h0OjMycHg7Y3Vyc29yOnBv",
+            "aW50ZXI7bWFyZ2luOjAiPjxpbnB1dCB0eXBlPSJjaGVja2JveCIgaWQ9Im1rRG5FdlRvZ2dsZSIgb25jaGFuZ2U9InRvZ2dsZU1rRG5FdigpIiBzdHlsZT0i",
+            "bWFyZ2luOjA7ZmxleDpub25lIj48L2xhYmVsPgogICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAg",
+            "ICAgICAgICAgPGRpdiBpZD0ibWtEbkV2RmllbGRzIiBzdHlsZT0ibWFyZ2luLXRvcDoxNHB4O2Rpc3BsYXk6bm9uZSI+CiAgICAgICAgICAgICAgICAgICAg",
+            "PGRpdiBjbGFzcz0iZnNlYy10aXRsZSIgc3R5bGU9ImZvbnQtc2l6ZToxMnB4O21hcmdpbi1ib3R0b206OHB4Ij5FViDms6jlhozlrZfmrrXvvIhFViBHdWlk",
+            "ZWxpbmVzIOS4k+WxniBPSUTvvJvms6jlhoznsbvlnovlm5vpgInkuIDvvIzms6jlhozlj7floavokKXkuJrmiafnhacv57uf5LiA56S+5Lya5L+h55So5Luj",
+            "56CB77yJPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0icm93Ij4KICAgICAgICAgICAgICAgICAgICAgIDxkaXY+PGxhYmVsPuazqOWG",
+            "jOexu+Wei++8iGJ1c2luZXNzQ2F0ZWdvcnkgMi41LjQuMTXvvIk8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgICA8c2VsZWN0IGlkPSJta0RuQmMi",
+            "IG9uY2hhbmdlPSJzeW5jTWtEbigpIj4KICAgICAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSIiPu+8iOS4jeWhq++8iTwvb3B0aW9uPgog",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24+UHJpdmF0ZSBPcmdhbml6YXRpb248L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICAgICAgICA8",
+            "b3B0aW9uPkdvdmVybm1lbnQgRW50aXR5PC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbj5CdXNpbmVzcyBFbnRpdHk8L29wdGlv",
+            "bj4KICAgICAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9uPk5vbi1Db21tZXJjaWFsIEVudGl0eTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAg",
+            "ICA8L3NlbGVjdD4KICAgICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+5rOo5YaM5Y+377yIc2Vy",
+            "aWFsTnVtYmVyIDIuNS40LjXvvIk8L2xhYmVsPjxpbnB1dCBpZD0ibWtEblJlZyIgcGxhY2Vob2xkZXI9IuazqOWGjOWPt++8iHNlcmlhbE51bWJlciAyLjUu",
+            "NC4177yJ77yM5aaCIDkxMzEwMDAwTUE1WFhYWFhYWFgiIG9uaW5wdXQ9InN5bmNNa0RuKCkiPjwvZGl2PgogICAgICAgICAgICAgICAgICAgICAgPGRpdj48",
+            "bGFiZWw+5rOo5YaM5Zu95a6277yIanVyaXNkaWN0aW9uQ291bnRyee+8iTwvbGFiZWw+PGlucHV0IGlkPSJta0RuSmMiIHBsYWNlaG9sZGVyPSLms6jlhozl",
+            "m73lrrbvvIhqdXJpc2RpY3Rpb25Db3VudHJ577yJ77yM5aaCIENO77yI5Lik5L2N77yJIiBtYXhsZW5ndGg9IjIiIG9uaW5wdXQ9InN5bmNNa0RuKCkiPjwv",
+            "ZGl2PgogICAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+5rOo5YaM55yB77yIanVyaXNkaWN0aW9uU3RhdGVPclByb3ZpbmNl77yJPC9sYWJlbD48",
+            "aW5wdXQgaWQ9Im1rRG5KcyIgcGxhY2Vob2xkZXI9IuazqOWGjOecge+8iGp1cmlzZGljdGlvblN0YXRlT3JQcm92aW5jZe+8ie+8jOWmgiBHdWFuZ2Rvbmfv",
+            "vIjlj6/pgInvvIkiIG9uaW5wdXQ9InN5bmNNa0RuKCkiPjwvZGl2PgogICAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+5rOo5YaM5biC77yIanVy",
+            "aXNkaWN0aW9uTG9jYWxpdHnvvIk8L2xhYmVsPjxpbnB1dCBpZD0ibWtEbkpsIiBwbGFjZWhvbGRlcj0i5rOo5YaM5biC77yIanVyaXNkaWN0aW9uTG9jYWxp",
+            "dHnvvInvvIzlpoIgU2hlbnpoZW7vvIjlj6/pgInvvIkiIG9uaW5wdXQ9InN5bmNNa0RuKCkiPjwvZGl2PgogICAgICAgICAgICAgICAgICAgICAgPGRpdj48",
+            "bGFiZWw+5rOo5YaM5Zyw5Z2A77yIc3RyZWV0QWRkcmVzcyAyLjUuNC4577yJPC9sYWJlbD48aW5wdXQgaWQ9Im1rRG5BZGRyIiBwbGFjZWhvbGRlcj0i5rOo",
+            "5YaM5Zyw5Z2A77yIc3RyZWV0QWRkcmVzcyAyLjUuNC4577yJ77yM5aaCIE5vLjEgQmVpamluZyBSb2Fk77yI5Y+v6YCJ77yJIiBvbmlucHV0PSJzeW5jTWtE",
+            "bigpIj48L2Rpdj4KICAgICAgICAgICAgICAgICAgICAgIDxkaXY+PGxhYmVsPue7hOe7h+agh+ivhuespu+8iDIuNS40Ljk377yJPC9sYWJlbD48aW5wdXQg",
+            "aWQ9Im1rRG5PaSIgcGxhY2Vob2xkZXI9Iue7hOe7h+agh+ivhuespu+8iDIuNS40Ljk377yJ77yM5aaCIE5UUkNOLTkxMzEwMDAwTUE1WFhYWFhYWFgiIG9u",
+            "aW5wdXQ9InN5bmNNa0RuKCkiPjwvZGl2PgogICAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+57uE57uH5qCH6K+G56ym5omp5bGVIE9JRCDniYjm",
+            "nKw8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgICA8bGFiZWwgc3R5bGU9ImRpc3BsYXk6ZmxleDtqdXN0aWZ5LWNvbnRlbnQ6ZmxleC1zdGFydDth",
+            "bGlnbi1pdGVtczpjZW50ZXI7d2lkdGg6MTAwJTtoZWlnaHQ6MzJweDtjdXJzb3I6cG9pbnRlcjttYXJnaW46MCIgdGl0bGU9IuacquWLvumAiT3ml6fniYgg",
+            "MS4zLjYuMS40LjEuNTcyNjQuMS4477yIU0MyNy0yMDE577yJ77yb5Yu+6YCJPeaWsOeJiCAyLjIzLjE0MC4zLjHvvIhFVkcgMi4wLjHvvIkiPjxpbnB1dCB0",
+            "eXBlPSJjaGVja2JveCIgaWQ9Im1rRG5PaWROZXciIHN0eWxlPSJtYXJnaW46MDtmbGV4Om5vbmUiPjwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgICA8",
+            "L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgIDxkaXYgc3R5bGU9Im1h",
+            "cmdpbi10b3A6MTJweCI+CiAgICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iZnNlYy10aXRsZSIgc3R5bGU9ImZvbnQtc2l6ZToxMnB4O21hcmdpbi1i",
+            "b3R0b206OHB4Ij7oh6rlrprkuYnlrZfmrrXvvIhrZXkg5Y+v5YaZ5a2X5q615ZCN5oiW5a+56LGh5qCH6K+G56ymIE9JRO+8jOWmgiAyLjUuNC40Mj3lvKDk",
+            "uInjgIEyLjIzLjE0MC4xLjE9RVbvvIk8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2IGlkPSJta0RuT2lkUm93cyI+PC9kaXY+CiAgICAgICAgICAg",
+            "ICAgICAgICAgPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJnaG9zdCIgb25jbGljaz0iYWRkTWtEblJvdygnJywnJykiPisg5re75Yqg6Ieq5a6a5LmJ",
+            "5a2X5q61PC9idXR0b24+CiAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICA8ZGl2IHN0eWxlPSJtYXJnaW4tdG9wOjEycHg7ZGlz",
+            "cGxheTpmbGV4O2dhcDoxMHB4O2FsaWduLWl0ZW1zOmNlbnRlcjtmbGV4LXdyYXA6d3JhcCI+CiAgICAgICAgICAgICAgICAgICAgPGJ1dHRvbiB0eXBlPSJi",
+            "dXR0b24iIGNsYXNzPSJnaG9zdCIgb25jbGljaz0icGFyc2VNa0RuKCkiPuS7juS4iuaWuSBETiDop6PmnpDlm57loas8L2J1dHRvbj4KICAgICAgICAgICAg",
+            "ICAgICAgICA8c3BhbiBzdHlsZT0iY29sb3I6dmFyKC0tZGltKTtmb250LXNpemU6MTJweCI+6L6F5Yqp57yW6L6R5a6e5pe25ZCM5q2l5Yiw5LiK5pa5IERO",
+            "IOi+k+WFpeahhu+8m+S5n+WPr+ebtOaOpee8lui+kSBETiDlkI7ngrnigJzop6PmnpDlm57loavigJ3mi4bliIbliLDlkITlrZfmrrXjgII8L3NwYW4+CiAg",
+            "ICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICA8ZGl2IHN0eWxlPSJtYXJnaW4tdG9wOjE2cHgi",
+            "PjxidXR0b24gb25jbGljaz0icG9zdEZvcm0oJy9hcGkvbWFrZXJvb3QnLCB7ZG46dignbWtEbicpLGJpdHM6ZXh0Qml0c1ZhbCgnbWsnKSxoYXNoOnYoJ21r",
+            "SGFzaCcpLGFsZ286dignbWtBbGdvJyksZXZvaWQ6ICQoJ21rRG5PaWROZXcnKSAmJiAkKCdta0RuT2lkTmV3JykuY2hlY2tlZCA/ICduZXcnIDogJ29sZCd9",
+            "LCAnbWtPdXQnKSI+562+5Y+R5qC56K+B5LmmPC9idXR0b24+PC9kaXY+CiAgICAgICAgICAgICAgICA8cHJlIGNsYXNzPSJvdXQiIGlkPSJta091dCI+PC9w",
+            "cmU+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgPCEtLSDnrb7lj5Hor4HkuaYgLS0+CiAgICAgICAgICAg",
+            "IDxkaXYgY2xhc3M9InBhZ2UiIGlkPSJwYWdlLXNpZ25jZXJ0Ij4KICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICAgICAgICAgIDxo",
+            "Mj7nrb7lj5Hor4HkuabvvIhNYWtlQ2VydCDmma7pgJrmqKHlvI/vvIwxMiDlj4LmlbDvvIk8L2gyPgoKICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZz",
+            "ZWMiPjxkaXYgY2xhc3M9ImZzZWMtdGl0bGUiPuS4u+S9k+S/oeaBrzwvZGl2PgogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJyb3ciPgogICAgICAg",
+            "ICAgICAgICAgICAgIDxkaXYgc3R5bGU9ImdyaWQtY29sdW1uOjEvLTEiPjxsYWJlbD7or4HkuaYgRE7vvIhrZXk9dmFsdWUg6YCX5Y+35YiG6ZqU77yMa2V5",
+            "IOWPr+S4uuagh+WHhuWxnuaAp+aIliBPSUTvvIk8L2xhYmVsPjxpbnB1dCBpZD0ic2NEbiIgcGxhY2Vob2xkZXI9IuivgeS5piBETu+8iGtleT12YWx1ZSDp",
+            "gJflj7fliIbpmpTvvIxrZXkg5Y+v5Li65qCH5YeG5bGe5oCn5oiWIE9JRO+8ie+8jOWmgiBDTj13d3cudGVzdC5jb20sTz1NeSBPcmcsQz1DTiI+PC9kaXY+",
+            "CiAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgPC9kaXY+CgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iZnNlYyIgc3R5bGU9",
+            "Im1hcmdpbi10b3A6MTRweCI+CiAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZzZWMtdGl0bGUiPkROIOi+heWKqee8lui+kSDigJQg5Z+656GA5a2X",
+            "5q61IC8gRVYg5rOo5YaM5a2X5q61IC8g6Ieq5a6a5LmJIE9JRDwvZGl2PgogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJyb3ciPgogICAgICAgICAg",
+            "ICAgICAgICAgIDxkaXY+PGxhYmVsPkNOIOmAmueUqOWQjeensDwvbGFiZWw+PGlucHV0IGlkPSJzY0RuQ24iIHBsYWNlaG9sZGVyPSLpgJrnlKjlkI3np7Dv",
+            "vIhDTu+8ie+8jOWmgiB3d3cudGVzdC5jb20iIG9uaW5wdXQ9InN5bmNEbignc2MnKSI+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+",
+            "TyDnu4Tnu4c8L2xhYmVsPjxpbnB1dCBpZD0ic2NEbk8iIHBsYWNlaG9sZGVyPSLnu4Tnu4fvvIhP77yJ77yM5aaCIE15IE9yZyIgb25pbnB1dD0ic3luY0Ru",
+            "KCdzYycpIj48L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD5PVSDnu4Tnu4fljZXkvY08L2xhYmVsPjxpbnB1dCBpZD0ic2NEbk91IiBw",
+            "bGFjZWhvbGRlcj0i57uE57uH5Y2V5L2N77yIT1XvvInvvIzlpoIgSVQgRGVwdO+8iOWPr+mAie+8iSIgb25pbnB1dD0ic3luY0RuKCdzYycpIj48L2Rpdj4K",
+            "ICAgICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD5DIOWbveWutjwvbGFiZWw+PGlucHV0IGlkPSJzY0RuQyIgcGxhY2Vob2xkZXI9IuWbveWutuS7o+eg",
+            "ge+8iEPvvInvvIzlpoIgQ07vvIjkuKTkvY3vvIkiIG1heGxlbmd0aD0iMiIgb25pbnB1dD0ic3luY0RuKCdzYycpIj48L2Rpdj4KICAgICAgICAgICAgICAg",
+            "ICAgICA8ZGl2PjxsYWJlbD5TIOecgS/lt548L2xhYmVsPjxpbnB1dCBpZD0ic2NEblMiIHBsYWNlaG9sZGVyPSLnnIEv5bee77yIU++8ie+8jOWmgiBHdWFu",
+            "Z2RvbmfvvIjlj6/pgInvvIkiIG9uaW5wdXQ9InN5bmNEbignc2MnKSI+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+TCDln47luII8",
+            "L2xhYmVsPjxpbnB1dCBpZD0ic2NEbkwiIHBsYWNlaG9sZGVyPSLln47luILvvIhM77yJ77yM5aaCIFNoZW56aGVu77yI5Y+v6YCJ77yJIiBvbmlucHV0PSJz",
+            "eW5jRG4oJ3NjJykiPjwvZGl2PgogICAgICAgICAgICAgICAgICAgIDxkaXY+PGxhYmVsPkUg6YKu566x77yIT0lEIOWtl+aute+8iTwvbGFiZWw+PGlucHV0",
+            "IGlkPSJzY0RuRSIgcGxhY2Vob2xkZXI9IumCrueuse+8iEXvvIxPSUQgMS4yLjg0MC4xMTM1NDkuMS45LjHvvInvvIzlpoIgYWRtaW5AZXhhbXBsZS5jb20i",
+            "IG9uaW5wdXQ9InN5bmNEbignc2MnKSI+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+5piv5ZCmIEVWIOaJqeWxlemqjOivgTwvbGFi",
+            "ZWw+CiAgICAgICAgICAgICAgICAgICAgICA8bGFiZWwgc3R5bGU9ImRpc3BsYXk6ZmxleDtqdXN0aWZ5LWNvbnRlbnQ6ZmxleC1zdGFydDthbGlnbi1pdGVt",
+            "czpjZW50ZXI7d2lkdGg6MTAwJTtoZWlnaHQ6MzJweDtjdXJzb3I6cG9pbnRlcjttYXJnaW46MCI+PGlucHV0IHR5cGU9ImNoZWNrYm94IiBpZD0ic2NEbkV2",
+            "VG9nZ2xlIiBvbmNoYW5nZT0idG9nZ2xlRG5Fdignc2MnKSIgc3R5bGU9Im1hcmdpbjowO2ZsZXg6bm9uZSI+PC9sYWJlbD4KICAgICAgICAgICAgICAgICAg",
+            "ICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgIDxkaXYgaWQ9InNjRG5FdkZpZWxkcyIgc3R5bGU9Im1hcmdpbi10",
+            "b3A6MTRweDtkaXNwbGF5Om5vbmUiPgogICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZzZWMtdGl0bGUiIHN0eWxlPSJmb250LXNpemU6MTJweDtt",
+            "YXJnaW4tYm90dG9tOjhweCI+RVYg5rOo5YaM5a2X5q6177yIRVYgR3VpZGVsaW5lcyDkuJPlsZ4gT0lE77yb5rOo5YaM57G75Z6L5Zub6YCJ5LiA77yM5rOo",
+            "5YaM5Y+35aGr6JCl5Lia5omn54WnL+e7n+S4gOekvuS8muS/oeeUqOS7o+egge+8iTwvZGl2PgogICAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InJv",
+            "dyI+CiAgICAgICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD7ms6jlhoznsbvlnovvvIhidXNpbmVzc0NhdGVnb3J5IDIuNS40LjE177yJPC9sYWJlbD4K",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgPHNlbGVjdCBpZD0ic2NEbkJjIiBvbmNoYW5nZT0ic3luY0RuKCdzYycpIj4KICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgICA8b3B0aW9uIHZhbHVlPSIiPu+8iOS4jeWhq++8iTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24+UHJpdmF0ZSBPcmdh",
+            "bml6YXRpb248L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9uPkdvdmVybm1lbnQgRW50aXR5PC9vcHRpb24+CiAgICAgICAgICAg",
+            "ICAgICAgICAgICAgICAgPG9wdGlvbj5CdXNpbmVzcyBFbnRpdHk8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9uPk5vbi1Db21t",
+            "ZXJjaWFsIEVudGl0eTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICA8L3NlbGVjdD4KICAgICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAg",
+            "ICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+5rOo5YaM5Y+377yIc2VyaWFsTnVtYmVyIDIuNS40LjXvvIk8L2xhYmVsPjxpbnB1dCBpZD0ic2NEblJl",
+            "ZyIgcGxhY2Vob2xkZXI9IuazqOWGjOWPt++8iHNlcmlhbE51bWJlciAyLjUuNC4177yJ77yM5aaCIDkxMzEwMDAwTUE1WFhYWFhYWFgiIG9uaW5wdXQ9InN5",
+            "bmNEbignc2MnKSI+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD7ms6jlhozlm73lrrbvvIhqdXJpc2RpY3Rpb25Db3VudHJ577yJ",
+            "PC9sYWJlbD48aW5wdXQgaWQ9InNjRG5KYyIgcGxhY2Vob2xkZXI9IuazqOWGjOWbveWutu+8iGp1cmlzZGljdGlvbkNvdW50cnnvvInvvIzlpoIgQ07vvIjk",
+            "uKTkvY3vvIkiIG1heGxlbmd0aD0iMiIgb25pbnB1dD0ic3luY0RuKCdzYycpIj48L2Rpdj4KICAgICAgICAgICAgICAgICAgICAgIDxkaXY+PGxhYmVsPuaz",
+            "qOWGjOecge+8iGp1cmlzZGljdGlvblN0YXRlT3JQcm92aW5jZe+8iTwvbGFiZWw+PGlucHV0IGlkPSJzY0RuSnMiIHBsYWNlaG9sZGVyPSLms6jlhoznnIHv",
+            "vIhqdXJpc2RpY3Rpb25TdGF0ZU9yUHJvdmluY2XvvInvvIzlpoIgR3Vhbmdkb25n77yI5Y+v6YCJ77yJIiBvbmlucHV0PSJzeW5jRG4oJ3NjJykiPjwvZGl2",
+            "PgogICAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+5rOo5YaM5biC77yIanVyaXNkaWN0aW9uTG9jYWxpdHnvvIk8L2xhYmVsPjxpbnB1dCBpZD0i",
+            "c2NEbkpsIiBwbGFjZWhvbGRlcj0i5rOo5YaM5biC77yIanVyaXNkaWN0aW9uTG9jYWxpdHnvvInvvIzlpoIgU2hlbnpoZW7vvIjlj6/pgInvvIkiIG9uaW5w",
+            "dXQ9InN5bmNEbignc2MnKSI+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD7ms6jlhozlnLDlnYDvvIhzdHJlZXRBZGRyZXNzIDIu",
+            "NS40LjnvvIk8L2xhYmVsPjxpbnB1dCBpZD0ic2NEbkFkZHIiIHBsYWNlaG9sZGVyPSLms6jlhozlnLDlnYDvvIhzdHJlZXRBZGRyZXNzIDIuNS40LjnvvInv",
+            "vIzlpoIgTm8uMSBCZWlqaW5nIFJvYWTvvIjlj6/pgInvvIkiIG9uaW5wdXQ9InN5bmNEbignc2MnKSI+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgICA8",
+            "ZGl2PjxsYWJlbD7nu4Tnu4fmoIfor4bnrKbvvIgyLjUuNC45N++8iTwvbGFiZWw+PGlucHV0IGlkPSJzY0RuT2kiIHBsYWNlaG9sZGVyPSLnu4Tnu4fmoIfo",
+            "r4bnrKbvvIgyLjUuNC45N++8ie+8jOWmgiBOVFJDTi05MTMxMDAwME1BNVhYWFhYWFhYIiBvbmlucHV0PSJzeW5jRG4oJ3NjJykiPjwvZGl2PgogICAgICAg",
+            "ICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+57uE57uH5qCH6K+G56ym5omp5bGVIE9JRCDniYjmnKw8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAg",
+            "ICA8bGFiZWwgc3R5bGU9ImRpc3BsYXk6ZmxleDtqdXN0aWZ5LWNvbnRlbnQ6ZmxleC1zdGFydDthbGlnbi1pdGVtczpjZW50ZXI7d2lkdGg6MTAwJTtoZWln",
+            "aHQ6MzJweDtjdXJzb3I6cG9pbnRlcjttYXJnaW46MCIgdGl0bGU9IuacquWLvumAiT3ml6fniYggMS4zLjYuMS40LjEuNTcyNjQuMS4477yIU0MyNy0yMDE5",
+            "77yJ77yb5Yu+6YCJPeaWsOeJiCAyLjIzLjE0MC4zLjHvvIhFVkcgMi4wLjHvvIkiPjxpbnB1dCB0eXBlPSJjaGVja2JveCIgaWQ9InNjRG5PaWROZXciIHN0",
+            "eWxlPSJtYXJnaW46MDtmbGV4Om5vbmUiPjwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8L2Rpdj4K",
+            "ICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgIDxkaXYgc3R5bGU9Im1hcmdpbi10b3A6MTJweCI+CiAgICAgICAgICAgICAgICAg",
+            "ICAgPGRpdiBjbGFzcz0iZnNlYy10aXRsZSIgc3R5bGU9ImZvbnQtc2l6ZToxMnB4O21hcmdpbi1ib3R0b206OHB4Ij7oh6rlrprkuYnlrZfmrrXvvIhrZXkg",
+            "5Y+v5YaZ5a2X5q615ZCN5oiW5a+56LGh5qCH6K+G56ymIE9JRO+8jOWmgiAyLjUuNC40Mj3lvKDkuInjgIEyLjIzLjE0MC4xLjE9RVbvvIk8L2Rpdj4KICAg",
+            "ICAgICAgICAgICAgICAgICA8ZGl2IGlkPSJzY0RuT2lkUm93cyI+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNs",
+            "YXNzPSJnaG9zdCIgb25jbGljaz0iYWRkRG5Sb3coJ3NjJywnJywnJykiPisg5re75Yqg6Ieq5a6a5LmJ5a2X5q61PC9idXR0b24+CiAgICAgICAgICAgICAg",
+            "ICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICA8ZGl2IHN0eWxlPSJtYXJnaW4tdG9wOjEycHg7ZGlzcGxheTpmbGV4O2dhcDoxMHB4O2FsaWduLWl0ZW1z",
+            "OmNlbnRlcjtmbGV4LXdyYXA6d3JhcCI+CiAgICAgICAgICAgICAgICAgICAgPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJnaG9zdCIgb25jbGljaz0i",
+            "cGFyc2VEbignc2MnKSI+5LuO5LiK5pa5IEROIOino+aekOWbnuWhqzwvYnV0dG9uPgogICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAg",
+            "IDwvZGl2PgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iZnNlYyI+PGRpdiBjbGFzcz0iZnNlYy10aXRsZSI+5a+G6ZKl5LiO566X5rOVPC9kaXY+CiAg",
+            "ICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InJvdyI+CiAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+6K+B5Lmm57G75Z6LPC9sYWJlbD48c2Vs",
+            "ZWN0IGlkPSJzY0NhIiBvbmNoYW5nZT0ic2NDYUNoYW5nZWQoKSI+PG9wdGlvbiB2YWx1ZT0iMCI+57uI56uv6K+B5LmmPC9vcHRpb24+PG9wdGlvbiB2YWx1",
+            "ZT0iMSI+5Lit6Ze0IENBPC9vcHRpb24+PC9zZWxlY3Q+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdiBpZD0ic2NQYXRoTGVuV3JhcCIgc3R5bGU9",
+            "ImRpc3BsYXk6bm9uZSI+PGxhYmVsPui3r+W+hOmVv+W6pjwvbGFiZWw+PHNlbGVjdCBpZD0ic2NQYXRoTGVuIiB0aXRsZT0i5Lit6Ze0Q0Eg55qEIEJhc2lj",
+            "Q29uc3RyYWludHMgcGF0aExlbkNvbnN0cmFpbnTvvJtudWxsIOihqOekuuS4jemZkOWItiI+PG9wdGlvbiB2YWx1ZT0iIj5udWxsPC9vcHRpb24+PG9wdGlv",
+            "bj4wPC9vcHRpb24+PG9wdGlvbj4xPC9vcHRpb24+PG9wdGlvbj4yPC9vcHRpb24+PG9wdGlvbj4zPC9vcHRpb24+PG9wdGlvbj40PC9vcHRpb24+PG9wdGlv",
+            "bj41PC9vcHRpb24+PG9wdGlvbj42PC9vcHRpb24+PG9wdGlvbj43PC9vcHRpb24+PG9wdGlvbj44PC9vcHRpb24+PG9wdGlvbj45PC9vcHRpb24+PC9zZWxl",
+            "Y3Q+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+5a+G6ZKl566X5rOVPC9sYWJlbD48c2VsZWN0IGlkPSJzY0FsZ28iIG9uY2hhbmdl",
+            "PSJhbGdvQ2hhbmdlZCgpIj48b3B0aW9uPlJTQTwvb3B0aW9uPjxvcHRpb24+UlNBLVBTUzwvb3B0aW9uPjxvcHRpb24+RUNDPC9vcHRpb24+PG9wdGlvbj5T",
+            "TTI8L29wdGlvbj48b3B0aW9uPkRTQTwvb3B0aW9uPjxvcHRpb24+RWREU0E8L29wdGlvbj48b3B0aW9uPlBRQzwvb3B0aW9uPjwvc2VsZWN0PjwvZGl2Pgog",
+            "ICAgICAgICAgICAgICAgICAgIDxkaXY+PGxhYmVsPuWvhumSpeS9jeaVsDwvbGFiZWw+PHNlbGVjdCBpZD0ic2NCaXRzIj48L3NlbGVjdD48L2Rpdj4KICAg",
+            "ICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD7lk4jluIznrpfms5U8L2xhYmVsPjxzZWxlY3QgaWQ9InNjSGFzaCI+PG9wdGlvbj5zaGEyNTY8L29wdGlv",
+            "bj48b3B0aW9uPnNoYTE8L29wdGlvbj48b3B0aW9uPnNoYTM4NDwvb3B0aW9uPjxvcHRpb24+c2hhNTEyPC9vcHRpb24+PG9wdGlvbj5TSEEzLTIyNDwvb3B0",
+            "aW9uPjxvcHRpb24+U0hBMy0yNTY8L29wdGlvbj48b3B0aW9uPlNIQTMtMzg0PC9vcHRpb24+PG9wdGlvbj5TSEEzLTUxMjwvb3B0aW9uPjxvcHRpb24+U00z",
+            "PC9vcHRpb24+PG9wdGlvbj5OVUxMPC9vcHRpb24+PC9zZWxlY3Q+PC9kaXY+CiAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgPC9k",
+            "aXY+CgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iZnNlYyI+PGRpdiBjbGFzcz0iZnNlYy10aXRsZSI+5a+G6ZKl55So6YCUPC9kaXY+CiAgICAgICAg",
+            "ICAgICAgICAgIDxkaXYgY2xhc3M9InJvdyI+CiAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+S2V5VXNhZ2Ug57yW5Y+3PC9sYWJlbD4KICAgICAg",
+            "ICAgICAgICAgICAgICAgIDxzZWxlY3QgaWQ9InNjS3UiIG9uY2hhbmdlPSJrdVNlbENoYW5nZWQoKSI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxvcHRp",
+            "b24gdmFsdWU9IiI+77yI5pegIEtleVVzYWdlIOaJqeWxle+8iTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSIxIj4x",
+            "IC0g5pWw5a2X562+5ZCNK+S4jeWPr+WQpuiupCvlr4bpkqXliqDlr4Yr5pWw5o2u5Yqg5a+GK+WvhumSpeWNj+WVhu+8iOmAmueUqO+8iTwvb3B0aW9uPgog",
+            "ICAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSIyIj4yIC0g5pWw5a2X562+5ZCNK+S4jeWPr+WQpuiupCvor4Hkuabnrb7lkI0rQ1JM562+",
+            "5ZCN77yIQ0HnlKjpgJTvvIk8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iMyI+MyAtIOS7heWKoOWvhiBFbmNpcGhl",
+            "ciBPbmx5PC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IjQiPjQgLSDku4Xop6Plr4YgRGVjaXBoZXIgT25seTwvb3B0",
+            "aW9uPgogICAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSI1Ij41IC0g5pWw5a2X562+5ZCNK+S4jeWPr+WQpuiupO+8iOetvuWQjeeUqOmA",
+            "lO+8iTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSI2Ij42IC0g5pWw5o2u5Yqg5a+GIERhdGEgRW5jaXBoZXJtZW50",
+            "PC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IjciPjcgLSDlr4bpkqXliqDlr4YgS2V5IEVuY2lwaGVybWVudDwvb3B0",
+            "aW9uPgogICAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSI4Ij44IC0g5a+G6ZKl5Y2P5ZWGIEtleSBBZ3JlZW1lbnQ8L29wdGlvbj4KICAg",
+            "ICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iY3VzdG9tIj7oh6rlrprkuYnnu4TlkIjigKbvvIjlr4bpkqXnlKjms5XpgInmi6nlmajvvIk8",
+            "L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICAgIDwvc2VsZWN0PgogICAgICAgICAgICAgICAgICAgICAgPGRpdiBzdHlsZT0iZGlzcGxheTpmbGV4O2dh",
+            "cDo2cHg7YWxpZ24taXRlbXM6Y2VudGVyO21hcmdpbi10b3A6NnB4Ij4KICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IGlkPSJzY0t1Q3VzdG9tIiBw",
+            "bGFjZWhvbGRlcj0i6Ieq5a6a5LmJ5pWw5YC877ya5ZCE5L2N5YC855u45Yqg77yM5aaCIDU95pWw5a2X562+5ZCNMSvlr4bpkqXliqDlr4Y0IiBzdHlsZT0i",
+            "ZGlzcGxheTpub25lIj4KICAgICAgICAgICAgICAgICAgICAgICAgPGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJnaG9zdCIgb25jbGljaz0ib3Blbkt1",
+            "TW9kYWwoKSIgc3R5bGU9IndoaXRlLXNwYWNlOm5vd3JhcDtmbGV4Om5vbmUiPuWvhumSpeeUqOazleKApjwvYnV0dG9uPgogICAgICAgICAgICAgICAgICAg",
+            "ICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+RUtVIOe8luWPty9PSUTvvIjpgJfl",
+            "j7fliIbpmpTvvIk8L2xhYmVsPgogICAgICAgICAgICAgICAgICAgICAgPGRpdiBzdHlsZT0iZGlzcGxheTpmbGV4O2dhcDo2cHg7YWxpZ24taXRlbXM6Y2Vu",
+            "dGVyIj4KICAgICAgICAgICAgICAgICAgICAgICAgPGlucHV0IGlkPSJzY0V1IiB2YWx1ZT0iMSIgb25jbGljaz0ib3BlbkVrdU1vZGFsKCkiIHRpdGxlPSLn",
+            "grnlh7vovpPlhaXmoYbmiJblj7PkvqfmjInpkq7lvLnlh7ogRUtVIOmAieaLqeWZqCI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxidXR0b24gdHlwZT0i",
+            "YnV0dG9uIiBjbGFzcz0iZ2hvc3QiIG9uY2xpY2s9Im9wZW5Fa3VNb2RhbCgpIiBzdHlsZT0id2hpdGUtc3BhY2U6bm93cmFwO2ZsZXg6bm9uZSI+6YCJ5oup",
+            "4oCmPC9idXR0b24+CiAgICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgPC9k",
+            "aXY+CiAgICAgICAgICAgICAgICA8L2Rpdj4KCiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJmc2VjIiBpZD0ic2NQb2xXcmFwIiBzdHlsZT0iZGlzcGxh",
+            "eTpub25lIj48ZGl2IGNsYXNzPSJmc2VjLXRpdGxlIj7or4HkuabnrZbnlaXvvIjku4Xnu4jnq6/or4HkuabvvIzli77pgInnmoTnrZbnlaXmiY3lhpnlhaXo",
+            "r4HkuabnrZbnlaXmianlsZXvvIk8L2Rpdj4KICAgICAgICAgICAgICAgICAgPGRpdiBzdHlsZT0iZGlzcGxheTpncmlkO2dyaWQtdGVtcGxhdGUtY29sdW1u",
+            "czpyZXBlYXQoYXV0by1maWxsLG1pbm1heCgyMzVweCwxZnIpKTtnYXA6OHB4IDE2cHg7cGFkZGluZy10b3A6NnB4Ij4KICAgICAgICAgICAgICAgICAgICA8",
+            "bGFiZWwgc3R5bGU9ImRpc3BsYXk6ZmxleDthbGlnbi1pdGVtczpjZW50ZXI7Z2FwOjhweDtjdXJzb3I6cG9pbnRlciI+PGlucHV0IHR5cGU9ImNoZWNrYm94",
+            "IiBpZD0ic2NQb2xEdiI+PHNwYW4+U1NMIERW77yIMi4yMy4xNDAuMS4yLjHvvIk8L3NwYW4+PC9sYWJlbD4KICAgICAgICAgICAgICAgICAgICA8bGFiZWwg",
+            "c3R5bGU9ImRpc3BsYXk6ZmxleDthbGlnbi1pdGVtczpjZW50ZXI7Z2FwOjhweDtjdXJzb3I6cG9pbnRlciI+PGlucHV0IHR5cGU9ImNoZWNrYm94IiBpZD0i",
+            "c2NQb2xJdiI+PHNwYW4+U1NMIElW77yIMi4yMy4xNDAuMS4yLjPvvIk8L3NwYW4+PC9sYWJlbD4KICAgICAgICAgICAgICAgICAgICA8bGFiZWwgc3R5bGU9",
+            "ImRpc3BsYXk6ZmxleDthbGlnbi1pdGVtczpjZW50ZXI7Z2FwOjhweDtjdXJzb3I6cG9pbnRlciI+PGlucHV0IHR5cGU9ImNoZWNrYm94IiBpZD0ic2NQb2xP",
+            "diI+PHNwYW4+U1NMIE9W77yIMi4yMy4xNDAuMS4yLjLvvIk8L3NwYW4+PC9sYWJlbD4KICAgICAgICAgICAgICAgICAgICA8bGFiZWwgc3R5bGU9ImRpc3Bs",
+            "YXk6ZmxleDthbGlnbi1pdGVtczpjZW50ZXI7Z2FwOjhweDtjdXJzb3I6cG9pbnRlciI+PGlucHV0IHR5cGU9ImNoZWNrYm94IiBpZD0ic2NQb2xFdiI+PHNw",
+            "YW4+U1NMIEVW77yIMi4yMy4xNDAuMS4x77yJPC9zcGFuPjwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgPGxhYmVsIHN0eWxlPSJkaXNwbGF5OmZsZXg7",
+            "YWxpZ24taXRlbXM6Y2VudGVyO2dhcDo4cHg7Y3Vyc29yOnBvaW50ZXIiPjxpbnB1dCB0eXBlPSJjaGVja2JveCIgaWQ9InNjUG9sQ3NTdGQiPjxzcGFuPuS7",
+            "o+eggeetvuWQjS3moIflh4bvvIgyLjIzLjE0MC4xLjQuMe+8iTwvc3Bhbj48L2xhYmVsPgogICAgICAgICAgICAgICAgICAgIDxsYWJlbCBzdHlsZT0iZGlz",
+            "cGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtnYXA6OHB4O2N1cnNvcjpwb2ludGVyIj48aW5wdXQgdHlwZT0iY2hlY2tib3giIGlkPSJzY1BvbENzRXYi",
+            "PjxzcGFuPuS7o+eggeetvuWQjS1FVu+8iDIuMjMuMTQwLjEuM++8iTwvc3Bhbj48L2xhYmVsPgogICAgICAgICAgICAgICAgICAgIDxsYWJlbCBzdHlsZT0i",
+            "ZGlzcGxheTpmbGV4O2FsaWduLWl0ZW1zOmNlbnRlcjtnYXA6OHB4O2N1cnNvcjpwb2ludGVyIj48aW5wdXQgdHlwZT0iY2hlY2tib3giIGlkPSJzY1BvbERv",
+            "YyI+PHNwYW4+5paH5qGj562+5ZCN77yIMS4zLjYuMS41LjUuNy4zLjM277yJPC9zcGFuPjwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgPGxhYmVsIHN0",
+            "eWxlPSJkaXNwbGF5OmZsZXg7YWxpZ24taXRlbXM6Y2VudGVyO2dhcDo4cHg7Y3Vyc29yOnBvaW50ZXIiPjxpbnB1dCB0eXBlPSJjaGVja2JveCIgaWQ9InNj",
+            "UG9sVHNhIj48c3Bhbj5UU0Eg562W55Wl77yIMi4yMy4xNDAuMS40LjLvvIk8L3NwYW4+PC9sYWJlbD4KICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAg",
+            "ICAgICAgICAgICAgIDxkaXYgc3R5bGU9ImRpc3BsYXk6ZmxleDtnYXA6NnB4O2FsaWduLWl0ZW1zOmNlbnRlcjtwYWRkaW5nLXRvcDo4cHgiPgogICAgICAg",
+            "ICAgICAgICAgICAgIDxpbnB1dCBpZD0ic2NQb2xDdXN0b21PaWQiIHBsYWNlaG9sZGVyPSLoh6rlrprkuYnnrZbnlaUgT0lE77yM5aaCIDEuMi4zLjQuNSIg",
+            "c3R5bGU9ImZsZXg6MTttaW4td2lkdGg6MjIwcHgiIG9ua2V5ZG93bj0iaWYoZXZlbnQua2V5PT09J0VudGVyJylhZGRTY1BvbEN1c3RvbSgpIj4KICAgICAg",
+            "ICAgICAgICAgICAgICA8YnV0dG9uIHR5cGU9ImJ1dHRvbiIgb25jbGljaz0iYWRkU2NQb2xDdXN0b20oKSI+5re75Yqg6Ieq5a6a5LmJ562W55WlPC9idXR0",
+            "b24+CiAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICA8ZGl2IGlkPSJzY1BvbEN1c3RvbUJveCI+PC9kaXY+CiAgICAgICAgICAg",
+            "ICAgICA8L2Rpdj4KCiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJmc2VjIj48ZGl2IGNsYXNzPSJmc2VjLXRpdGxlIj7mnInmlYjmnJ88L2Rpdj4KICAg",
+            "ICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0icm93Ij4KICAgICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD7mnInmlYjmnJ/vvIjlubTmlbDmiJYg6LW3",
+            "5aeLVOaIquiHs++8iTwvbGFiZWw+CiAgICAgICAgICAgICAgICAgICAgICA8ZGl2IHN0eWxlPSJkaXNwbGF5OmZsZXg7Z2FwOjZweDthbGlnbi1pdGVtczpj",
+            "ZW50ZXIiPgogICAgICAgICAgICAgICAgICAgICAgICA8aW5wdXQgaWQ9InNjRGF5cyIgdmFsdWU9IjEiIHRpdGxlPSLmlbDlrZc95bm05pWw77yb5oiW5qC8",
+            "5byPIOi1t+Wni1TmiKroh7PvvIzlpoIgMjAyNi8wOS8xMi0xMDozMDowMFQyMDI3LzA5LzEyLTEwOjMwOjAwIj4KICAgICAgICAgICAgICAgICAgICAgICAg",
+            "PGJ1dHRvbiB0eXBlPSJidXR0b24iIGNsYXNzPSJnaG9zdCIgb25jbGljaz0ib3BlblZhbE1vZGFsKCkiIHN0eWxlPSJ3aGl0ZS1zcGFjZTpub3dyYXA7Zmxl",
+            "eDpub25lIj7pgInmi6nml6XmnJ/igKY8L2J1dHRvbj4KICAgICAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICAgIDwvZGl2Pgog",
+            "ICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImZzZWMiPjxkaXYgY2xh",
+            "c3M9ImZzZWMtdGl0bGUiPlNBTiDmianlsZU8L2Rpdj4KICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0icm93Ij4KICAgICAgICAgICAgICAgICAgICA8",
+            "ZGl2PjxsYWJlbD5TQU4g5Z+f5ZCN77yI6YCX5Y+35YiG6ZqU77yM5peg5YiZIG51bGzvvIk8L2xhYmVsPjxpbnB1dCBpZD0ic2NEbnMiIHZhbHVlPSJudWxs",
+            "Ij48L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD5TQU4gSVDvvIjpgJflj7fliIbpmpTvvIzml6DliJkgbnVsbO+8iTwvbGFiZWw+PGlu",
+            "cHV0IGlkPSJzY0lwcyIgdmFsdWU9Im51bGwiPjwvZGl2PgogICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgIDwvZGl2PgoKICAgICAg",
+            "ICAgICAgICAgIDxkaXYgY2xhc3M9ImZzZWMiPjxkaXYgY2xhc3M9ImZzZWMtdGl0bGUiPumigeWPkeiAhTwvZGl2PgogICAgICAgICAgICAgICAgICA8ZGl2",
+            "IGNsYXNzPSJyb3ciPgogICAgICAgICAgICAgICAgICAgIDxkaXYgc3R5bGU9ImdyaWQtY29sdW1uOjEvLTEiPjxsYWJlbD7pooHlj5HogIXor4HkuabvvIhD",
+            "RVJUUy50eHQg5LitIFIvQyDnsbvlnovluo/liJflj7fvvIzpvKDmoIfmgqzlgZzmmL7npLror6bmg4XvvIk8L2xhYmVsPgogICAgICAgICAgICAgICAgICAg",
+            "ICAgPHNlbGVjdCBpZD0ic2NJc3N1ZXIiIGNsYXNzPSJ0LWJveCIgb25jaGFuZ2U9InJlZnJlc2hJc3N1ZXJUaXAoKSI+PC9zZWxlY3Q+CiAgICAgICAgICAg",
+            "ICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgPC9kaXY+CgogICAgICAgICAgICAgICAgPGRpdiBzdHls",
+            "ZT0ibWFyZ2luLXRvcDoxNnB4Ij48YnV0dG9uIG9uY2xpY2s9InBvc3RGb3JtKCcvYXBpL3NpZ25jZXJ0Jywge2RuOnYoJ3NjRG4nKSxiaXRzOmJpdHNWYWwo",
+            "KSxoYXNoOnYoJ3NjSGFzaCcpLGtleXVzYWdlOmt1VmFsKCksZXh1c2FnZTp2KCdzY0V1JyksaXNjYTp2KCdzY0NhJyksZGF5czp2KCdzY0RheXMnKSxkbnM6",
+            "dignc2NEbnMnKSxpcHM6dignc2NJcHMnKSxpc3N1ZXI6dignc2NJc3N1ZXInKSxhbGdvOnYoJ3NjQWxnbycpLHBhdGhsZW46cGF0aExlblZhbCgpLHBvbGlj",
+            "eTpwb2xpY3lWYWwoKX0sICdzY091dCcpIj7nrb7lj5Hor4HkuaY8L2J1dHRvbj48L2Rpdj4KICAgICAgICAgICAgICAgIDxwcmUgY2xhc3M9Im91dCIgaWQ9",
+            "InNjT3V0Ij48L3ByZT4KICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgPC9kaXY+CgogICAgICAgICAgICA8IS0tIOWQiumUgOivgeS5piAtLT4K",
+            "ICAgICAgICAgICAgPGRpdiBjbGFzcz0icGFnZSIgaWQ9InBhZ2UtcmV2b2tlIj4KICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJjYXJkIj4KICAgICAgICAg",
+            "ICAgICAgIDxoMj7lkIrplIDor4HkuabvvIhSZXZva2VDRVJU77yJPC9oMj4KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImhpbnQiPuWQiumUgOWQjuiH",
+            "quWKqOWIt+aWsCBDUkwg5ZCK6ZSA5YiX6KGo44CC6K+35YWI5Zyo44CM6K+B5Lmm5bqT44CN5Lit56Gu6K6k5bqP5YiX5Y+344CCPC9kaXY+CiAgICAgICAg",
+            "ICAgICAgICA8ZGl2IGNsYXNzPSJyb3ciPgogICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD7or4Hkuabluo/liJflj7c8L2xhYmVsPjxpbnB1dCBpZD0i",
+            "cnZTZXJpYWwiIHBsYWNlaG9sZGVyPSLlpoIgMTNmYmU4NjU4NmJiMGE0Ij48L2Rpdj4KICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+5ZCK6ZSA5Y6f",
+            "5Zug57yW5Y+377yIMH4577yJPC9sYWJlbD48c2VsZWN0IGlkPSJydlJlYXNvbiI+CiAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iMCI+MCAt",
+            "IOacquaMh+Wumjwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IjEiPjEgLSDlr4bpkqXms4TpnLI8L29wdGlvbj48b3B0aW9uIHZhbHVlPSIyIj4yIC0gQ0Hms4Tp",
+            "nLI8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSIzIj4zIC0g5L+h5oGv5Y+Y5pu0PC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0i",
+            "NCI+NCAtIOiiq+abv+aNojwvb3B0aW9uPjxvcHRpb24gdmFsdWU9IjUiPjUgLSDmk43kvZznu4jmraI8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICA8",
+            "b3B0aW9uIHZhbHVlPSI2Ij42IC0g6K+B5Lmm5pqC5YGcPC9vcHRpb24+PG9wdGlvbiB2YWx1ZT0iOSI+OSAtIOWFtuWugzwvb3B0aW9uPgogICAgICAgICAg",
+            "ICAgICAgICA8L3NlbGVjdD48L2Rpdj4KICAgICAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgICAgIDxkaXYgc3R5bGU9Im1hcmdpbi10b3A6MTZw",
+            "eCI+PGJ1dHRvbiBjbGFzcz0iZGFuZ2VyIiBvbmNsaWNrPSJwb3N0Rm9ybSgnL2FwaS9yZXZva2UnLCB7c2VyaWFsOnYoJ3J2U2VyaWFsJykscmVhc29uOnYo",
+            "J3J2UmVhc29uJyl9LCAncnZPdXQnKSI+5ZCK6ZSA6K+l6K+B5LmmPC9idXR0b24+PC9kaXY+CiAgICAgICAgICAgICAgICA8cHJlIGNsYXNzPSJvdXQiIGlk",
+            "PSJydk91dCI+PC9wcmU+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgPCEtLSBPQ1NQfFRTQeetvuWPke+8",
+            "iOetvuWPkeivgeS5piArIOaooeaLn+ivt+axguiwg+ivlSDlkIjlubbpobXvvIkgLS0+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9InBhZ2UiIGlkPSJwYWdl",
+            "LW9jc3AiPgogICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImNhcmQiPgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0ic2lnLXRhYnMiIGlkPSJvY3NwVGFi",
+            "cyI+CiAgICAgICAgICAgICAgICAgIDxidXR0b24gY2xhc3M9InNpZy10YWIgYWN0aXZlIiBkYXRhLXRhYj0iaXNzdWUiIG9uY2xpY2s9Im9jc3BUYWIoJ2lz",
+            "c3VlJykiPk9DU1Dnrb7lj5E8L2J1dHRvbj4KICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0ic2lnLXRhYiIgZGF0YS10YWI9InRzYWlzc3VlIiBv",
+            "bmNsaWNrPSJvY3NwVGFiKCd0c2Fpc3N1ZScpIj5UU0Hnrb7lj5E8L2J1dHRvbj4KICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0ic2lnLXRhYiIg",
+            "ZGF0YS10YWI9ImRlYnVnb2NzcCIgb25jbGljaz0ib2NzcFRhYignZGVidWdvY3NwJykiPk9DU1DmqKHmi5/or7fmsYLosIPor5U8L2J1dHRvbj4KICAgICAg",
+            "ICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0ic2lnLXRhYiIgZGF0YS10YWI9ImRlYnVndHNhIiBvbmNsaWNrPSJvY3NwVGFiKCdkZWJ1Z3RzYScpIj5UU0Hm",
+            "qKHmi5/or7fmsYLosIPor5U8L2J1dHRvbj4KICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgPGRpdiBpZD0ib2NzcElzc3VlIj4KICAg",
+            "ICAgICAgICAgICAgICAgPGgyPuetvuWPkSBPQ1NQIOetvuWQjeivgeS5pu+8iGluaXRPQ1NQ77yJPC9oMj4KICAgICAgICAgICAgICAgICAgPHAgc3R5bGU9",
+            "ImNvbG9yOnZhcigtLWRpbSk7bWFyZ2luLWJvdHRvbToxNHB4Ij7kuLror4HkuablupPkuK3lhajpg6ggUu+8iOague+8iS8gQ++8iOS4remXtENB77yJ6K+B",
+            "5Lmm6YCQ5Liq55Sf5oiQIE9DU1Ag562+5ZCN6K+B5Lmm77yM6L6T5Ye65YiwIFBLSS9PQ1NQL+W6j+WIl+WPt19vY3NwLmNydHwua2V544CCPC9wPgogICAg",
+            "ICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJ0b29sYmFyIj4KICAgICAgICAgICAgICAgICAgICA8c2VsZWN0IGlkPSJvY0FsZ28iPjxvcHRpb24gdmFsdWU9",
+            "IiI+5YWo6YOo6K+B5Lmm77yI5oyJ5ZCE6Ieq566X5rOV77yJPC9vcHRpb24+PG9wdGlvbj5SU0E8L29wdGlvbj48b3B0aW9uPkVDQzwvb3B0aW9uPjxvcHRp",
+            "b24+U00yPC9vcHRpb24+PC9zZWxlY3Q+CiAgICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBvbmNsaWNrPSJwb3N0Rm9ybSgnL2FwaS9pbml0b2NzcCcsIHth",
+            "bGdvOnYoJ29jQWxnbycpfSwgJ29jT3V0JykiPuetvuWPkSBPQ1NQIOivgeS5pjwvYnV0dG9uPgogICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAg",
+            "ICAgICAgICAgPHByZSBjbGFzcz0ib3V0IiBpZD0ib2NPdXQiPjwvcHJlPgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICA8ZGl2IGlk",
+            "PSJ0c2FJc3N1ZSIgc3R5bGU9ImRpc3BsYXk6bm9uZSI+CiAgICAgICAgICAgICAgICAgIDxoMj7nrb7lj5Hml7bpl7TmiLPor4HkuabvvIhpbml0VElNU1RB",
+            "TVDvvIk8L2gyPgogICAgICAgICAgICAgICAgICA8cCBzdHlsZT0iY29sb3I6dmFyKC0tZGltKTttYXJnaW4tYm90dG9tOjE0cHgiPuS4uuWFqOmDqOagueiv",
+            "geS5pueUn+aIkOaXtumXtOaIs+ivgeS5pu+8mlJTQS9FQ0Mg4oaSIHJzYS9lY2Nfc2hhMSArIHJzYS9lY2Nfc2hhMjU277yMU00yIOKGkiBzbTJfc20z77yM",
+            "6L6T5Ye65YiwIFBLSS9USU1TVEFNUC/jgII8L3A+CiAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InRvb2xiYXIiPgogICAgICAgICAgICAgICAgICAg",
+            "IDxzZWxlY3QgaWQ9InRzSGFzaCI+PG9wdGlvbiB2YWx1ZT0iIj7lhajpg6jmoLnor4HkuabvvIjmjInlkIToh6rnrpfms5XvvIk8L29wdGlvbj48b3B0aW9u",
+            "PlNIQTE8L29wdGlvbj48b3B0aW9uPlNIQTI1Njwvb3B0aW9uPjxvcHRpb24+U00zPC9vcHRpb24+PC9zZWxlY3Q+CiAgICAgICAgICAgICAgICAgICAgPGJ1",
+            "dHRvbiBvbmNsaWNrPSJwb3N0Rm9ybSgnL2FwaS9pbml0dGltZXN0YW1wJywge2hhc2g6digndHNIYXNoJyl9LCAndHNPdXQnKSI+562+5Y+R5pe26Ze05oiz",
+            "6K+B5LmmPC9idXR0b24+CiAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICA8cHJlIGNsYXNzPSJvdXQiIGlkPSJ0c091dCI+PC9w",
+            "cmU+CiAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgIDxkaXYgaWQ9ImRiZ09jc3AiIHN0eWxlPSJkaXNwbGF5Om5vbmUiPgogICAgICAg",
+            "ICAgICAgICAgICA8aDI+5qih5oufIE9DU1Ag6K+35rGC77yIUkZDIDY5NjDvvIk8L2gyPgogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJoaW50Ij7m",
+            "jInmoIflh4bmnoTpgKAgQ2VydElE77yIaXNzdWVyTmFtZUhhc2gvaXNzdWVyS2V5SGFzaCDln7rkuo7nnJ/mraPpooHlj5HogIXor4HkuabvvIkrIE5vbmNl",
+            "IOaJqeWxle+8jFBPU1Qg5pys5py6IE1BSU4g55qEIC9PQ1NQ77yM6Kej5p6Q5ZON5bqU5bm26aqM6K+B562+5ZCN5LiOIE5vbmNlIOWbnuaYvuOAgjwvZGl2",
+            "PgogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJyb3ciPgogICAgICAgICAgICAgICAgICAgIDxkaXY+PGxhYmVsPuebruagh+ivgeS5puW6j+WIl+WP",
+            "t++8iOeVmeepuuiHquWKqOmAieesrOS4gOS4que7iOerr+ivgeS5pu+8iTwvbGFiZWw+PGlucHV0IGlkPSJkYmdPY3NwU2VyaWFsIiBwbGFjZWhvbGRlcj0i",
+            "5L6L5aaCIDExMzUyMjhhMiI+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdj48bGFiZWw+Q2VydElEIOWTiOW4jOeul+azlTwvbGFiZWw+PHNlbGVj",
+            "dCBpZD0iZGJnT2NzcEhhc2giPgogICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0ic2hhMjU2IiBzZWxlY3RlZD5TSEEyNTY8L29wdGlvbj4K",
+            "ICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9InNoYTEiPlNIQTE8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFs",
+            "dWU9InNoYTM4NCI+U0hBMzg0PC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJzaGE1MTIiPlNIQTUxMjwvb3B0aW9uPgog",
+            "ICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0ic2hhMy0yMjQiPlNIQTMtMjI0PC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAgICA8b3B0",
+            "aW9uIHZhbHVlPSJzaGEzLTI1NiI+U0hBMy0yNTY8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9InNoYTMtMzg0Ij5TSEEz",
+            "LTM4NDwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0ic2hhMy01MTIiPlNIQTMtNTEyPC9vcHRpb24+CiAgICAgICAgICAg",
+            "ICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJzbTMiPlNNMzwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgIDwvc2VsZWN0PjwvZGl2PgogICAgICAgICAg",
+            "ICAgICAgICAgIDxkaXYgc3R5bGU9ImFsaWduLXNlbGY6ZW5kIj48YnV0dG9uIG9uY2xpY2s9InNlbmREZWJ1Z09jc3AoKSI+5Y+R6YCB5qih5ouf6K+35rGC",
+            "PC9idXR0b24+PC9kaXY+CiAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICA8cHJlIGNsYXNzPSJvdXQiIGlkPSJkYmdPY3NwT3V0",
+            "IiBzdHlsZT0ibWF4LWhlaWdodDo1NnZoO292ZXJmbG93OmF1dG87d2hpdGUtc3BhY2U6cHJlO2ZvbnQtZmFtaWx5OnZhcigtLW1vbm8pO2ZvbnQtc2l6ZTox",
+            "MnB4O2xpbmUtaGVpZ2h0OjEuNTUiPjwvcHJlPgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICA8ZGl2IGlkPSJkYmdUc2EiIHN0eWxl",
+            "PSJkaXNwbGF5Om5vbmUiPgogICAgICAgICAgICAgICAgICA8aDI+5qih5ouf5pe26Ze05oiz6K+35rGC77yIUkZDIDMxNjHvvIk8L2gyPgogICAgICAgICAg",
+            "ICAgICAgICA8ZGl2IGNsYXNzPSJoaW50Ij7pmo/mnLrnlJ/miJAgMzIg5a2X6IqC5pWw5o2uIOKGkiDmjInmiYDpgInmkZjopoHnrpfms5XorqHnrpcgbWVz",
+            "c2FnZUltcHJpbnQg4oaSIOaehOmAoCBUaW1lU3RhbXBSZXHvvIjlkKsgTm9uY2XjgIFjZXJ0UmVxPXRydWXvvInihpIgUE9TVCDmnKzmnLogTUFJTiDnmoQg",
+            "L3JmYzMxNjEg4oaSIOino+aekCBUaW1lU3RhbXBSZXNwIOW5tumqjOivgeetvuWQjeOAgjwvZGl2PgogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJy",
+            "b3ciPgogICAgICAgICAgICAgICAgICAgIDxkaXY+PGxhYmVsPuaRmOimgeeul+azlTwvbGFiZWw+PHNlbGVjdCBpZD0iZGJnVHNhSGFzaCI+CiAgICAgICAg",
+            "ICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJzaGEyNTYiIHNlbGVjdGVkPlNIQTI1Njwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgPG9wdGlv",
+            "biB2YWx1ZT0ic2hhMSI+U0hBMTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0ic2hhMzg0Ij5TSEEzODQ8L29wdGlvbj4K",
+            "ICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9InNoYTUxMiI+U0hBNTEyPC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9u",
+            "IHZhbHVlPSJzaGEzLTIyNCI+U0hBMy0yMjQ8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9InNoYTMtMjU2Ij5TSEEzLTI1",
+            "Njwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0ic2hhMy0zODQiPlNIQTMtMzg0PC9vcHRpb24+CiAgICAgICAgICAgICAg",
+            "ICAgICAgICA8b3B0aW9uIHZhbHVlPSJzaGEzLTUxMiI+U0hBMy01MTI8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9InNt",
+            "MyI+U00zPC9vcHRpb24+CiAgICAgICAgICAgICAgICAgICAgPC9zZWxlY3Q+PC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGRpdiBzdHlsZT0iYWxpZ24t",
+            "c2VsZjplbmQiPjxidXR0b24gb25jbGljaz0ic2VuZERlYnVnVHNhKCkiPuWvuemaj+acuuaVsOaNruetvuWQjTwvYnV0dG9uPjwvZGl2PgogICAgICAgICAg",
+            "ICAgICAgICA8L2Rpdj4KICAgICAgICAgICAgICAgICAgPHByZSBjbGFzcz0ib3V0IiBpZD0iZGJnVHNhT3V0IiBzdHlsZT0ibWF4LWhlaWdodDo1NnZoO292",
+            "ZXJmbG93OmF1dG87d2hpdGUtc3BhY2U6cHJlO2ZvbnQtZmFtaWx5OnZhcigtLW1vbm8pO2ZvbnQtc2l6ZToxMnB4O2xpbmUtaGVpZ2h0OjEuNTUiPjwvcHJl",
+            "PgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgPCEtLSDor4Hkuabp",
+            "qozor4EgLS0+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9InBhZ2UiIGlkPSJwYWdlLXZlcmlmeSI+CiAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+",
+            "CiAgICAgICAgICAgICAgICA8aDI+6K+B5Lmm6aqM6K+B77yIQ2VydFZlcmlmee+8iTwvaDI+CiAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJ0b29sYmFy",
+            "Ij4KICAgICAgICAgICAgICAgICAgPGlucHV0IGlkPSJ2ZlRhcmdldCIgcGxhY2Vob2xkZXI9IuivgeS5puaWh+S7tui3r+W+hO+8jOaIluW6j+WIl+WPt++8",
+            "iOiHquWKqOafpSBQS0kvV2ViUHVibGljL0NSVC/luo/liJflj7cuY3J077yJIiBzdHlsZT0iZmxleDoxO21heC13aWR0aDo0MjBweCI+CiAgICAgICAgICAg",
+            "ICAgICAgIDxidXR0b24gb25jbGljaz0icG9zdEZvcm0oJy9hcGkvdmVyaWZ5Jywge3RhcmdldDp2KCd2ZlRhcmdldCcpfSwgJ3ZmT3V0JykiPumqjOivgTwv",
+            "YnV0dG9uPgogICAgICAgICAgICAgICAgICA8aW5wdXQgdHlwZT0iZmlsZSIgaWQ9InZmRmlsZSIgYWNjZXB0PSIuY2VyLC5jcnQsLnBlbSIgb25jaGFuZ2U9",
+            "InZlcmlmeUZpbGUoKSIgc3R5bGU9ImZsZXg6MTttYXgtd2lkdGg6MzIwcHgiPgogICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICA8cHJl",
+            "IGNsYXNzPSJvdXQiIGlkPSJ2Zk91dCI+PC9wcmU+CiAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgPCEtLSDm",
+            "qKHmnb/nrqHnkIYgLS0+CiAgICAgICAgICAgIDxkaXYgY2xhc3M9InBhZ2UiIGlkPSJwYWdlLXRlbXBsYXRlIj4KICAgICAgICAgICAgICA8ZGl2IGNsYXNz",
+            "PSJjYXJkIj4KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InRvb2xiYXIiPgogICAgICAgICAgICAgICAgICA8aDIgc3R5bGU9Im1hcmdpbjowIj7mqKHm",
+            "nb/nrqHnkIY8L2gyPgogICAgICAgICAgICAgICAgICA8c3BhbiBzdHlsZT0iY29sb3I6dmFyKC0tZGltKTtmb250LXNpemU6MTJweCI+5paH5Lu277yaUEtJ",
+            "L3RhbXBsYXRlL2RhdGEuanNvbjwvc3Bhbj4KICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBvbmNsaWNrPSJvcGVuVHBNb2RhbCgpIj4rIOa3u+WKoOaooead",
+            "vzwvYnV0dG9uPgogICAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJnaG9zdCIgb25jbGljaz0ibG9hZFRlbXBsYXRlcygpIj7liLfmlrA8L2J1dHRv",
+            "bj4KICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iaGludCI+5qih5p2/5L+d5a2Y562+5Y+R6K+B5Lmm55qE5YWo",
+            "6YOo5Y+C5pWw77yIRE4gLyDnrpfms5UgLyDlr4bpkqXnlKjpgJQgLyBFS1UgLyDnrZbnlaUgLyDmnInmlYjmnJ8gLyBTQU7vvInvvIznrb7nvbLml7bpgInm",
+            "i6kgUiDmiJYgQyDnsbvlnovpooHlj5HogIXkuIDplK7nrb7lj5HvvIzmk43kvZzlhajnqIvlhpnlhaUgbG9ncy5sb2fjgII8L2Rpdj4KICAgICAgICAgICAg",
+            "ICAgIDx0YWJsZSBjbGFzcz0idGJsIiBpZD0idHBsVGFibGUiPgogICAgICAgICAgICAgICAgICA8dGhlYWQ+PHRyPjx0aCBzdHlsZT0id2lkdGg6NjBweCI+",
+            "5bqP5Y+3PC90aD48dGggc3R5bGU9IndpZHRoOjExMHB4Ij7or4Hkuabnsbvlnos8L3RoPjx0aD5ETjwvdGg+PHRoIHN0eWxlPSJ3aWR0aDoxNTBweCI+5pe2",
+            "6Ze0PC90aD48dGggc3R5bGU9IndpZHRoOjIwMHB4Ij7mk43kvZw8L3RoPjwvdHI+PC90aGVhZD4KICAgICAgICAgICAgICAgICAgPHRib2R5PjwvdGJvZHk+",
+            "CiAgICAgICAgICAgICAgICA8L3RhYmxlPgogICAgICAgICAgICAgICAgPHByZSBjbGFzcz0ib3V0IiBpZD0idHBsTXNnIj48L3ByZT4KICAgICAgICAgICAg",
+            "ICA8L2Rpdj4KICAgICAgICAgICAgPC9kaXY+CgogICAgICAgICAgICA8IS0tIOetvuWQjeS4k+WMuiAtLT4KICAgICAgICAgICAgPGRpdiBjbGFzcz0icGFn",
+            "ZSIgaWQ9InBhZ2Utc2lnbiI+CiAgICAgICAgICAgICAgPGRpdiBjbGFzcz0iY2FyZCI+CiAgICAgICAgICAgICAgICA8aDI+562+5ZCN5LiT5Yy6PC9oMj4K",
+            "ICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InNpZy10YWJzIj4KICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0ic2lnLXRhYiBhY3RpdmUiIGlk",
+            "PSJzaWdUYWJCdG4tZXhlIiBvbmNsaWNrPSJzaWdUYWIoJ2V4ZScsdGhpcykiPuW+rui9r+S7o+eggeetvuWQjTwvYnV0dG9uPgogICAgICAgICAgICAgICAg",
+            "ICA8YnV0dG9uIGNsYXNzPSJzaWctdGFiIiBpZD0ic2lnVGFiQnRuLXBkZiIgb25jbGljaz0ic2lnVGFiKCdwZGYnLHRoaXMpIj5QREYg5paH5qGj562+5ZCN",
+            "PC9idXR0b24+CiAgICAgICAgICAgICAgICA8L2Rpdj4KCiAgICAgICAgICAgICAgICA8IS0tIOW+rui9r+S7o+eggeetvuWQje+8iOaJuemHjyArIOaLluaL",
+            "ve+8iSAtLT4KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InNpZy1wYW5lIiBpZD0ic2lnUGFuZS1leGUiPgogICAgICAgICAgICAgICAgICA8ZGl2IGNs",
+            "YXNzPSJoaW50Ij7mi5bmi73miJbmibnph4/pgInmi6kgUEUg5Y+v5omn6KGM5paH5Lu277yIZXhlIC8gZGxsIC8gc3lzIC8gY2FiIC8gY2F0IC8gbXNp77yJ",
+            "5Yqg5YWl5b6F562+5ZCN5YiX6KGo77yM5YaN6YCJ6K+B5Lmm5LiO5pe26Ze05oiz5Y+C5pWw5omn6KGM562+5ZCNIC8g6aqM6K+B44CC5pSv5oyBIFJTQSAv",
+            "IEVDQyAvIFNNMu+8iOaRmOimgeWIhuWIq+eUqCBTSEEyNTYgLyBTSEEyNTYgLyBTTTPvvInvvIzor4HkuabooajmjIkgTWljcm9zb2Z0IFBFL0NPRkYg6KeE",
+            "6IyD5bWM5YWl44CC5pe26Ze05oiz57G75Z6L5Y+v6YCJIFJGQzMxNjHvvIjmoIflh4YgVGltZVN0YW1wVG9rZW7vvInmiJYgQXV0aGVudGljb2Rl77yI5b6u",
+            "6L2v6ICB5byPIFBLQ1MjN++8ie+8m+WcsOWdgOWPr+aMh+WQkeacrOacuiBNQUlO77yI55WZ56m677yJ5oiW5Lu75oSP5aSW6YOoIFRTQeOAgjwvZGl2Pgog",
+            "ICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJyb3ciPgogICAgICAgICAgICAgICAgICAgIDxkaXY+PGxhYmVsPuetvuWQjeivgeS5pu+8iOS7o+eggeet",
+            "vuWQjSBFS1XvvIk8L2xhYmVsPjxzZWxlY3QgaWQ9InNnRXhlQ2VydCIgdGl0bGU9Ium8oOagh+aCrOWBnOafpeeci+ivgeS5pueugOS7iyI+PG9wdGlvbiB2",
+            "YWx1ZT0iIj7vvIjliqDovb3kuK0uLi7vvIk8L29wdGlvbj48L3NlbGVjdD48L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD7ml7bpl7Tm",
+            "iLPnsbvlnos8L2xhYmVsPjxzZWxlY3QgaWQ9InNnRXhlVHNUeXBlIj4KICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IlJGQzMxNjEiIHNl",
+            "bGVjdGVkPlJGQzMxNjHvvIjmoIflh4bvvIk8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9IkFVVEhFTlRJQ09ERSI+QXV0",
+            "aGVudGljb2Rl77yI6ICB5byPIFBLQ1MjN++8iTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgIDwvc2VsZWN0PjwvZGl2PgogICAgICAgICAgICAgICAg",
+            "ICAgIDxkaXYgc3R5bGU9ImdyaWQtY29sdW1uOjEvMiI+PGxhYmVsPuaXtumXtOaIs+ivt+axguWcsOWdgO+8iOeVmeepuiA9IOacrOacuiBNQUlO77yJPC9s",
+            "YWJlbD4KICAgICAgICAgICAgICAgICAgICAgIDxpbnB1dCBpZD0ic2dFeGVUc1VybCIgbGlzdD0idHNVcmxMaXN0IiBwbGFjZWhvbGRlcj0iaHR0cDovL3Rp",
+            "bWVzdGFtcC5kaWdpY2VydC5jb20iIHNwZWxsY2hlY2s9ImZhbHNlIj4KICAgICAgICAgICAgICAgICAgICAgIDxkYXRhbGlzdCBpZD0idHNVcmxMaXN0Ij4K",
+            "ICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iaHR0cDovL3RpbWVzdGFtcC5kaWdpY2VydC5jb20iPgogICAgICAgICAgICAgICAgICAg",
+            "ICAgICA8b3B0aW9uIHZhbHVlPSJodHRwOi8vc2hhMjU2dGltZXN0YW1wLndzLnN5bWFudGVjLmNvbS9zaGEyNTYvIj4KICAgICAgICAgICAgICAgICAgICAg",
+            "ICAgPG9wdGlvbiB2YWx1ZT0iaHR0cDovL3RpbWVzdGFtcC5jb21vZG9jYS5jb20iPgogICAgICAgICAgICAgICAgICAgICAgICA8b3B0aW9uIHZhbHVlPSJo",
+            "dHRwOi8vdGltZS5jZXJ0dW0ucGwiPgogICAgICAgICAgICAgICAgICAgICAgPC9kYXRhbGlzdD4KICAgICAgICAgICAgICAgICAgICA8L2Rpdj4KICAgICAg",
+            "ICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9ImRyb3B6b25lIiBpZD0iZXhlRHJvcCI+CiAgICAgICAgICAgICAgICAg",
+            "ICAgPGRpdiBzdHlsZT0iZm9udC1zaXplOjE2cHg7Zm9udC13ZWlnaHQ6NzAwO2NvbG9yOnZhcigtLXRleHQpIj7mi5bmi73lj6/miafooYzmlofku7bliLDm",
+            "raTlpIQ8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2IHN0eWxlPSJtYXJnaW4tdG9wOjZweDtjb2xvcjp2YXIoLS1kaW0pIj7mlK/mjIEgZXhlIC8g",
+            "ZGxsIC8gc3lzIC8gY2FiIC8gY2F0IC8gbXNp77yI5Y+v5aSa6YCJ77yJPC9kaXY+CiAgICAgICAgICAgICAgICAgICAgPGxhYmVsIGNsYXNzPSJmYWtlLWJ0",
+            "biIgc3R5bGU9Im1hcmdpbi10b3A6MTJweCI+6YCJ5oup5paH5Lu2PGlucHV0IHR5cGU9ImZpbGUiIGlkPSJzZ0V4ZUZpbGUiIG11bHRpcGxlIGFjY2VwdD0i",
+            "LmV4ZSwuZGxsLC5zeXMsLmNhYiwuY2F0LC5tc2ksYXBwbGljYXRpb24vb2N0ZXQtc3RyZWFtIiBoaWRkZW4+PC9sYWJlbD4KICAgICAgICAgICAgICAgICAg",
+            "PC9kaXY+CiAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InBkZi1saXN0LWhlYWQiPgogICAgICAgICAgICAgICAgICAgIDxzcGFuIHN0eWxlPSJmb250",
+            "LXdlaWdodDo3MDAiPuW+heetvuWQjeWIl+ihqO+8iDxiIGlkPSJleGVDb3VudCIgc3R5bGU9ImNvbG9yOnZhcigtLWFjY2VudCkiPjA8L2I+IOS4qu+8iTwv",
+            "c3Bhbj4KICAgICAgICAgICAgICAgICAgICA8YnV0dG9uIG9uY2xpY2s9ImV4ZVNpZ25BbGwoKSI+5om56YeP562+5ZCNPC9idXR0b24+CiAgICAgICAgICAg",
+            "ICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iZ2hvc3QiIG9uY2xpY2s9ImV4ZVZlcmlmeUFsbCgpIj7mibnph4/pqozor4E8L2J1dHRvbj4KICAgICAgICAgICAg",
+            "ICAgICAgICA8YnV0dG9uIGNsYXNzPSJnaG9zdCIgb25jbGljaz0iZXhlQ2xlYXIoKSI+5riF56m6PC9idXR0b24+CiAgICAgICAgICAgICAgICAgIDwvZGl2",
+            "PgogICAgICAgICAgICAgICAgICA8ZGl2IGlkPSJleGVMaXN0IiBjbGFzcz0icGRmLWxpc3QiPjwvZGl2PgogICAgICAgICAgICAgICAgICA8cHJlIGNsYXNz",
+            "PSJvdXQiIGlkPSJzZ0V4ZU91dCIgc3R5bGU9Im1heC1oZWlnaHQ6MzB2aDtvdmVyZmxvdzphdXRvO3doaXRlLXNwYWNlOnByZTtmb250LWZhbWlseTp2YXIo",
+            "LS1tb25vKTtmb250LXNpemU6MTJweDtsaW5lLWhlaWdodDoxLjU1Ij48L3ByZT4KICAgICAgICAgICAgICAgIDwvZGl2PgoKICAgICAgICAgICAgICAgIDwh",
+            "LS0gUERGIOaWh+aho+etvuWQje+8iOaJuemHjyArIOaLluaLve+8iSAtLT4KICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InNpZy1wYW5lIiBpZD0ic2ln",
+            "UGFuZS1wZGYiIHN0eWxlPSJkaXNwbGF5Om5vbmUiPgogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJoaW50Ij7mibnph4/pgInmi6nmiJbmi5bmi70g",
+            "UERGIOaWh+S7tuWKoOWFpeW+heetvuWQjeWIl+ihqO+8jOWGjemAieivgeS5puS4juetvueroOWPguaVsOaJp+ihjOetvuWQjSAvIOmqjOivgeOAguivgeS5",
+            "puetm+mAie+8muW+rui9r+aWh+aho+etvuWQjSBPSUTvvIgxLjMuNi4xLjQuMS4zMTEuMTAuMy4xMu+8ieaIlumAmueUqOaWh+aho+etvuWQjSBPSUTvvIgx",
+            "LjMuNi4xLjUuNS43LjMuMzbvvInku7vkuIDljbPlj6/jgII8YnI+562+56ug57G75Z6L77yaQWRvYmUg5qCH5YeG5paH5qGj562+5ZCN77yIYWRiZS5wa2Nz",
+            "Ny5kZXRhY2hlZO+8jFJTQS9FQ0MvU00yIOWdh+WPr++8ie+8m+WbveWvhiBHQi9UIDM1Mjc1LTIwMTfvvIhHTS5zbTJjbXMuZGV0YWNoZWTvvIzku4UgU00y",
+            "77yJ77yb5Zu95a+GIEdCL1QgMzg1NDAtMjAyMO+8iEdNLnNtMnNlYWzvvIzku4UgU00y77yM6ZyA562+56ug5Zu+54mH77yJ77yb5Zu95a+GIEdNL1QgMDAz",
+            "MS0yMDI177yIR00uc20yc2VhbO+8jOS7hSBTTTLvvIzpnIDnrb7nq6Dlm77niYfvvInjgII8L2Rpdj4KICAgICAgICAgICAgICAgICAgPGRpdiBjbGFzcz0i",
+            "cm93Ij4KICAgICAgICAgICAgICAgICAgICA8ZGl2PjxsYWJlbD7nrb7nq6Dlm77niYfvvIhwbmcvanBnL2JtcC9naWbvvIk8L2xhYmVsPjxpbnB1dCB0eXBl",
+            "PSJmaWxlIiBpZD0ic2dQZGZJbWFnZSIgYWNjZXB0PSJpbWFnZS9wbmcsaW1hZ2UvanBlZyxpbWFnZS9ibXAsaW1hZ2UvZ2lmIj48L2Rpdj4KICAgICAgICAg",
+            "ICAgICAgICAgICA8ZGl2PjxsYWJlbD7nrb7lkI3or4HkuabvvIjnlZnnqbogPSDku4XmlofmoaPml7bpl7TmiLPvvIk8L2xhYmVsPjxzZWxlY3QgaWQ9InNn",
+            "UGRmQ2VydCIgdGl0bGU9Ium8oOagh+aCrOWBnOafpeeci+ivgeS5pueugOS7i++8iOeVmeepuj3nuq/mlofmoaPml7bpl7TmiLPvvIzkuI3nrb7lkI3vvIki",
+            "PjxvcHRpb24gdmFsdWU9IiI+77yI5LiN562+5ZCN77yM5LuF5paH5qGj5pe26Ze05oiz77yJPC9vcHRpb24+PC9zZWxlY3Q+PC9kaXY+CiAgICAgICAgICAg",
+            "ICAgICAgICAgPGRpdj48bGFiZWw+562+56ug57G75Z6LPC9sYWJlbD48c2VsZWN0IGlkPSJzZ1BkZlNlYWwiPgogICAgICAgICAgICAgICAgICAgICAgPG9w",
+            "dGlvbiB2YWx1ZT0iQURPQkUiIHNlbGVjdGVkPkFkb2JlIOagh+WHhuaWh+aho+etvuWQjTwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgPG9wdGlv",
+            "biB2YWx1ZT0iR00zNTI3NSI+5Zu95a+GIEdCL1QgMzUyNzUtMjAxNzwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iR00z",
+            "ODU0MCI+5Zu95a+GIEdCL1QgMzg1NDAtMjAyMDwvb3B0aW9uPgogICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iR00wMDMxIj7lm73lr4Yg",
+            "R00vVCAwMDMxLTIwMjU8L29wdGlvbj4KICAgICAgICAgICAgICAgICAgICA8L3NlbGVjdD48L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8ZGl2IHN0eWxl",
+            "PSJncmlkLWNvbHVtbjoxLzMiPjxsYWJlbD7ml7bpl7TmiLPor7fmsYLlnLDlnYDvvIjnlZnnqbogPSDmnKzmnLogTUFJTu+8iTwvbGFiZWw+CiAgICAgICAg",
+            "ICAgICAgICAgICAgICA8aW5wdXQgaWQ9InNnUGRmVHNVcmwiIGxpc3Q9InRzVXJsTGlzdFBkZiIgcGxhY2Vob2xkZXI9Imh0dHA6Ly90aW1lc3RhbXAuZGln",
+            "aWNlcnQuY29tIiBzcGVsbGNoZWNrPSJmYWxzZSI+CiAgICAgICAgICAgICAgICAgICAgICA8ZGF0YWxpc3QgaWQ9InRzVXJsTGlzdFBkZiI+CiAgICAgICAg",
+            "ICAgICAgICAgICAgICAgIDxvcHRpb24gdmFsdWU9Imh0dHA6Ly90aW1lc3RhbXAuZGlnaWNlcnQuY29tIj4KICAgICAgICAgICAgICAgICAgICAgICAgPG9w",
+            "dGlvbiB2YWx1ZT0iaHR0cDovL3NoYTI1NnRpbWVzdGFtcC53cy5zeW1hbnRlYy5jb20vc2hhMjU2LyI+CiAgICAgICAgICAgICAgICAgICAgICAgIDxvcHRp",
+            "b24gdmFsdWU9Imh0dHA6Ly90aW1lc3RhbXAuY29tb2RvY2EuY29tIj4KICAgICAgICAgICAgICAgICAgICAgICAgPG9wdGlvbiB2YWx1ZT0iaHR0cDovL3Rp",
+            "bWUuY2VydHVtLnBsIj4KICAgICAgICAgICAgICAgICAgICAgIDwvZGF0YWxpc3Q+CiAgICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAg",
+            "ICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICA8ZGl2IGNsYXNzPSJkcm9wem9uZSIgaWQ9InBkZkRyb3AiPgogICAgICAgICAgICAgICAgICAgIDxkaXYg",
+            "c3R5bGU9ImZvbnQtc2l6ZToxNnB4O2ZvbnQtd2VpZ2h0OjcwMDtjb2xvcjp2YXIoLS10ZXh0KSI+5ouW5ou9IFBERiDmlofku7bliLDmraTlpIQ8L2Rpdj4K",
+            "ICAgICAgICAgICAgICAgICAgICA8ZGl2IHN0eWxlPSJtYXJnaW4tdG9wOjZweDtjb2xvcjp2YXIoLS1kaW0pIj7miJbngrnlh7vkuIvmlrnmjInpkq7pgInm",
+            "i6nmlofku7bvvIjlj6/lpJrpgInvvIk8L2Rpdj4KICAgICAgICAgICAgICAgICAgICA8bGFiZWwgY2xhc3M9ImZha2UtYnRuIiBzdHlsZT0ibWFyZ2luLXRv",
+            "cDoxMnB4Ij7pgInmi6kgUERGIOaWh+S7tjxpbnB1dCB0eXBlPSJmaWxlIiBpZD0ic2dQZGZGaWxlIiBtdWx0aXBsZSBhY2NlcHQ9Ii5wZGYsYXBwbGljYXRp",
+            "b24vcGRmIiBoaWRkZW4+PC9sYWJlbD4KICAgICAgICAgICAgICAgICAgPC9kaXY+CiAgICAgICAgICAgICAgICAgIDxkaXYgY2xhc3M9InBkZi1saXN0LWhl",
+            "YWQiPgogICAgICAgICAgICAgICAgICAgIDxzcGFuIHN0eWxlPSJmb250LXdlaWdodDo3MDAiPuW+heetvuWQjeWIl+ihqO+8iDxiIGlkPSJwZGZDb3VudCIg",
+            "c3R5bGU9ImNvbG9yOnZhcigtLWFjY2VudCkiPjA8L2I+IOS4qu+8iTwvc3Bhbj4KICAgICAgICAgICAgICAgICAgICA8YnV0dG9uIG9uY2xpY2s9InBkZlNp",
+            "Z25BbGwoKSI+5om56YeP562+5ZCNPC9idXR0b24+CiAgICAgICAgICAgICAgICAgICAgPGJ1dHRvbiBjbGFzcz0iZ2hvc3QiIG9uY2xpY2s9InBkZlZlcmlm",
+            "eUFsbCgpIj7mibnph4/pqozor4E8L2J1dHRvbj4KICAgICAgICAgICAgICAgICAgICA8YnV0dG9uIGNsYXNzPSJnaG9zdCIgb25jbGljaz0icGRmQ2xlYXIo",
+            "KSI+5riF56m6PC9idXR0b24+CiAgICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgICAgICA8ZGl2IGlkPSJwZGZMaXN0IiBjbGFzcz0icGRm",
+            "LWxpc3QiPjwvZGl2PgogICAgICAgICAgICAgICAgICA8cHJlIGNsYXNzPSJvdXQiIGlkPSJzZ1BkZk91dCIgc3R5bGU9Im1heC1oZWlnaHQ6MzB2aDtvdmVy",
+            "ZmxvdzphdXRvO3doaXRlLXNwYWNlOnByZTtmb250LWZhbWlseTp2YXIoLS1tb25vKTtmb250LXNpemU6MTJweDtsaW5lLWhlaWdodDoxLjU1Ij48L3ByZT4K",
+            "ICAgICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICAgIDwvZGl2PgogICAgICAgICAgICA8L2Rpdj4KCgo8c3R5bGU+Ci5jdHgtbWVudXtwb3NpdGlv",
+            "bjpmaXhlZDt6LWluZGV4Ojk5OTk5O2JhY2tncm91bmQ6dmFyKC0tcGFuZWwyKTtib3JkZXI6MXB4IHNvbGlkIHZhcigtLWJvcmRlcik7Ym9yZGVyLXJhZGl1",
+            "czo4cHg7Ym94LXNoYWRvdzowIDhweCAyOHB4IHJnYmEoMCwwLDAsLjQ1KTtwYWRkaW5nOjZweDttaW4td2lkdGg6MjI0cHg7dXNlci1zZWxlY3Q6bm9uZTtm",
+            "b250LXNpemU6MTNweH0KLmN0eC1pdGVte3BhZGRpbmc6OHB4IDEycHg7Ym9yZGVyLXJhZGl1czo2cHg7Y3Vyc29yOnBvaW50ZXI7d2hpdGUtc3BhY2U6bm93",
+            "cmFwO3Bvc2l0aW9uOnJlbGF0aXZlO2NvbG9yOnZhcigtLXRleHQpfQouY3R4LWl0ZW06aG92ZXJ7YmFja2dyb3VuZDp2YXIoLS1hY2NlbnQpO2NvbG9yOiMw",
+            "YjExMjB9Ci5jdHgtaXRlbS5kaXNhYmxlZHtjb2xvcjp2YXIoLS1kaW0pO2N1cnNvcjpub3QtYWxsb3dlZDtwb2ludGVyLWV2ZW50czpub25lO2JhY2tncm91",
+            "bmQ6dHJhbnNwYXJlbnR9Ci5jdHgtaXRlbS5oYXMtc3ViIC5jdHgtc3Vie2Rpc3BsYXk6bm9uZTtwb3NpdGlvbjphYnNvbHV0ZTtsZWZ0OjEwMCU7dG9wOjA7",
+            "YmFja2dyb3VuZDp2YXIoLS1wYW5lbDIpO2JvcmRlcjoxcHggc29saWQgdmFyKC0tYm9yZGVyKTtib3JkZXItcmFkaXVzOjhweDtib3gtc2hhZG93OjAgOHB4",
+            "IDI4cHggcmdiYSgwLDAsMCwuNDUpO3BhZGRpbmc6NnB4IDZweCA2cHggOHB4O21pbi13aWR0aDoyOTBweDt6LWluZGV4Ojk5OTk4fQouY3R4LWl0ZW0uaGFz",
+            "LXN1YiAuY3R4LXN1Yi5jdHgtc3ViLXVwe3RvcDphdXRvO2JvdHRvbTowfQouY3R4LXN1YiAuY3R4LWl0ZW17Zm9udC1zaXplOjEycHh9Cjwvc3R5bGU+Cjwh",
+            "LS0g6K+B5Lmm5bqT5Y+z6ZSu6I+c5Y2V77ya5LiL6L296K+B5LmmIC8g5a+85Ye66K+B5LmmIC0tPgo8ZGl2IGlkPSJjdHhNZW51IiBjbGFzcz0iY3R4LW1l",
+            "bnUiIHN0eWxlPSJkaXNwbGF5Om5vbmUiPgogIDxkaXYgY2xhc3M9ImN0eC1pdGVtIGhhcy1zdWIiPjxzcGFuPuS4i+i9veivgeS5pjwvc3Bhbj4KICAgIDxk",
+            "aXYgY2xhc3M9ImN0eC1zdWIiPgogICAgICA8ZGl2IGNsYXNzPSJjdHgtaXRlbSIgb25jbGljaz0iY3R4RG93bmxvYWQoJ3NpbmdsZV9jcnQnKSI+5LiL6L29",
+            "5Y2V6K+B5LmmKEVORC5jcnQpPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImN0eC1pdGVtIiBvbmNsaWNrPSJjdHhEb3dubG9hZCgnY2hhaW5fY3J0JykiPuS4",
+            "i+i9vee7hOWQiOivgeS5pumTvihFTkQrQ0ErUk9PVC5jcnQpPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImN0eC1pdGVtIiBvbmNsaWNrPSJjdHhEb3dubG9h",
+            "ZCgncDdiJykiPuS4i+i9vee7hOWQiOivgeS5pumTvihFTkQrQ0ErUk9PVC5wN2IpPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9ImN0eC1pdGVtIiBvbmNsaWNr",
+            "PSJjdHhEb3dubG9hZCgnaXNzdWVyX2NydCcpIj7kuIvovb3pooHlj5HogIXor4Hkuabpk74oQ0ErUk9PVC5jcnQpPC9kaXY+CiAgICAgIDxkaXYgY2xhc3M9",
+            "ImN0eC1pdGVtIiBkYXRhLW5lZWRrZXkgb25jbGljaz0iY3R4RG93bmxvYWQoJ2tleScpIj7kuIvovb3np4HpkqUoRU5ELmtleSk8L2Rpdj4KICAgICAgPGRp",
+            "diBjbGFzcz0iY3R4LWl0ZW0iIGRhdGEtbmVlZGtleSBvbmNsaWNrPSJjdHhEb3dubG9hZCgncGZ4JywxKSI+5LiL6L296K+B5LmmK+engemSpSgucGZ4KTwv",
+            "ZGl2PgogICAgICA8ZGl2IGNsYXNzPSJjdHgtaXRlbSIgZGF0YS1uZWVka2V5IG9uY2xpY2s9ImN0eERvd25sb2FkKCdqa3MnLDEpIj7kuIvovb3or4HkuaYr",
+            "56eB6ZKlKC5qa3MpPC9kaXY+CiAgICA8L2Rpdj4KICA8L2Rpdj4KICA8ZGl2IGNsYXNzPSJjdHgtaXRlbSBoYXMtc3ViIj48c3Bhbj7lr7zlh7ror4HkuaY8",
+            "L3NwYW4+CiAgICA8ZGl2IGNsYXNzPSJjdHgtc3ViIj4KICAgICAgPGRpdiBjbGFzcz0iY3R4LWl0ZW0iIG9uY2xpY2s9ImN0eEV4cG9ydCgnY2VydF9wZW0n",
+            "KSI+5a+85Ye65Y2V6K+B5Lmm5Yiw5Ymq6L6R5p2/KFBFTSk8L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0iY3R4LWl0ZW0iIG9uY2xpY2s9ImN0eEV4cG9ydCgn",
+            "Y2hhaW5fcGVtJykiPuWvvOWHuuivgeS5pumTvuWIsOWJqui+keadvyhQRU3vvJpFTkQrQ0ErUk9PVCk8L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0iY3R4LWl0",
+            "ZW0iIG9uY2xpY2s9ImN0eEV4cG9ydCgnaXNzdWVyX3BlbScpIj5QRU3pooHlj5HogIXor4Hkuabpk77liLDliarovpHmnb8oUEVN77yaQ0ErUk9PVCk8L2Rp",
+            "dj4KICAgICAgPGRpdiBjbGFzcz0iY3R4LWl0ZW0iIGRhdGEtbmVlZGtleSBvbmNsaWNrPSJjdHhFeHBvcnQoJ2tleV9wZW0nKSI+5a+85Ye656eB6ZKl5Yiw",
+            "5Ymq6L6R5p2/KFBFTSk8L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0iY3R4LWl0ZW0iIGRhdGEtbmVlZGtleSBvbmNsaWNrPSJjdHhFeHBvcnQoJ2tleV9oZXgn",
+            "KSI+5a+85Ye656eB6ZKl5Yiw5Ymq6L6R5p2/KEhFWCk8L2Rpdj4KICAgICAgPGRpdiBjbGFzcz0iY3R4LWl0ZW0iIGRhdGEtbmVlZGtleSBvbmNsaWNrPSJj",
+            "dHhFeHBvcnQoJ2tleV9iNjQnKSI+5a+85Ye656eB6ZKl5Yiw5Ymq6L6R5p2/KEJhc2U2NCk8L2Rpdj4KICAgIDwvZGl2PgogIDwvZGl2PgogIDxkaXYgY2xh",
+            "c3M9ImN0eC1pdGVtIiBkYXRhLWN0eHNyYz0iY2VydHMiIG9uY2xpY2s9ImN0eERlbGV0ZUNlcnQoKSIgc3R5bGU9ImNvbG9yOiNkYzI2MjY7Zm9udC13ZWln",
+            "aHQ6NzAwIj7liKDpmaTor4HkuaY8L2Rpdj4KPC9kaXY+CjwhLS0g6K+B5Lmm5bqT5Y+z6ZSu5LiL6L29IHBmeC9qa3PvvJrlr4bnoIHovpPlhaUgLS0+Cjxk",
+            "aXYgY2xhc3M9Im1vZGFsLW1hc2siIGlkPSJjdHhQd2RNb2RhbCIgc3R5bGU9ImRpc3BsYXk6bm9uZSIgb25jbGljaz0iaWYoZXZlbnQudGFyZ2V0PT09dGhp",
+            "cyljbG9zZUN0eFB3ZCgpIj4KICA8ZGl2IGNsYXNzPSJtb2RhbCIgc3R5bGU9IndpZHRoOm1pbig0NjBweCw5MnZ3KSI+CiAgICA8ZGl2IGNsYXNzPSJtb2Rh",
+            "bC1oZWFkIj4KICAgICAgPGgzPui+k+WFpeWvhumSpeW6k+WvhueggTwvaDM+CiAgICAgIDxidXR0b24gY2xhc3M9Imdob3N0IiBvbmNsaWNrPSJjbG9zZUN0",
+            "eFB3ZCgpIj7lj5bmtog8L2J1dHRvbj4KICAgIDwvZGl2PgogICAgPGRpdiBjbGFzcz0ibW9kYWwtYm9keSI+CiAgICAgIDxwIGNsYXNzPSJjZmctaGludCIg",
+            "aWQ9ImN0eFB3ZEZpbGUiIHN0eWxlPSJtYXJnaW4tYm90dG9tOjEwcHgiPjwvcD4KICAgICAgPGxhYmVsPuWvhueggTwvbGFiZWw+CiAgICAgIDxpbnB1dCB0",
+            "eXBlPSJwYXNzd29yZCIgaWQ9ImN0eFB3ZCIgcGxhY2Vob2xkZXI9Iuivt+i+k+WFpeWvvOWHuuWvhumSpeW6k+eahOWvhuegge+8iHBmeCAvIGprc++8iSIg",
+            "b25rZXlkb3duPSJpZihldmVudC5rZXk9PT0nRW50ZXInKWN0eFB3ZE9rKCkiPgogICAgPC9kaXY+CiAgICA8ZGl2IGNsYXNzPSJtb2RhbC1mb290Ij4KICAg",
+            "ICAgPGJ1dHRvbiBvbmNsaWNrPSJjdHhQd2RPaygpIj7noa7lrpo8L2J1dHRvbj4KICAgICAgPGJ1dHRvbiBjbGFzcz0iZ2hvc3QiIG9uY2xpY2s9ImNsb3Nl",
+            "Q3R4UHdkKCkiPuWPlua2iDwvYnV0dG9uPgogICAgPC9kaXY+CiAgPC9kaXY+CjwvZGl2Pgo8IS0tIOivgeS5puW6k+WvvOWHuu+8mua1j+iniOWZqOWJqui0",
+            "tOadv+aOiOadg+Wksei0peaXtueahOaJi+WKqOWkjeWItumdouadvyAtLT4KPGRpdiBjbGFzcz0ibW9kYWwtbWFzayIgaWQ9ImN0eENvcHlNb2RhbCIgc3R5",
+            "bGU9ImRpc3BsYXk6bm9uZSIgb25jbGljaz0iaWYoZXZlbnQudGFyZ2V0PT09dGhpcyljbG9zZUN0eENvcHkoKSI+CiAgPGRpdiBjbGFzcz0ibW9kYWwiIHN0",
+            "eWxlPSJ3aWR0aDptaW4oNjIwcHgsOTR2dykiPgogICAgPGRpdiBjbGFzcz0ibW9kYWwtaGVhZCI+CiAgICAgIDxoMz7lpI3liLbliLDliarotLTmnb88L2gz",
+            "PgogICAgICA8YnV0dG9uIGNsYXNzPSJnaG9zdCIgb25jbGljaz0iY2xvc2VDdHhDb3B5KCkiPuWPlua2iDwvYnV0dG9uPgogICAgPC9kaXY+CiAgICA8ZGl2",
+            "IGNsYXNzPSJtb2RhbC1ib2R5Ij4KICAgICAgPHAgY2xhc3M9ImNmZy1oaW50IiBzdHlsZT0ibWFyZ2luLWJvdHRvbTo4cHgiPua1j+iniOWZqOacquiHquWK",
+            "qOaOiOadg+WJqui0tOadv+WGmeWFpe+8jOWGheWuueW3sumihOmAie+8jOivt+eCueWHu+S4i+aWuSLlpI3liLYi5oyJ6ZKu77yI5oiW55u05o6l5oyJIEN0",
+            "cmwrQ++8ieOAgjwvcD4KICAgICAgPHRleHRhcmVhIGlkPSJjdHhDb3B5VGV4dCIgcmVhZG9ubHkgc3BlbGxjaGVjaz0iZmFsc2UiIHN0eWxlPSJ3aWR0aDox",
+            "MDAlO2hlaWdodDoxNTBweDtib3gtc2l6aW5nOmJvcmRlci1ib3g7Zm9udC1mYW1pbHk6dmFyKC0tbW9ubyk7Zm9udC1zaXplOjExcHg7YmFja2dyb3VuZDp2",
+            "YXIoLS1wYW5lbCk7Y29sb3I6dmFyKC0tdGV4dCk7Ym9yZGVyOjFweCBzb2xpZCB2YXIoLS1ib3JkZXIpO2JvcmRlci1yYWRpdXM6NnB4O3BhZGRpbmc6OHB4",
+            "O3doaXRlLXNwYWNlOnByZSI+PC90ZXh0YXJlYT4KICAgIDwvZGl2PgogICAgPGRpdiBjbGFzcz0ibW9kYWwtZm9vdCI+CiAgICAgIDxidXR0b24gb25jbGlj",
+            "az0iY3R4Q29weVRleHRhcmVhKCkiPuWkjeWItjwvYnV0dG9uPgogICAgICA8YnV0dG9uIGNsYXNzPSJnaG9zdCIgb25jbGljaz0iY2xvc2VDdHhDb3B5KCki",
+            "PuWFs+mXrTwvYnV0dG9uPgogICAgPC9kaXY+CiAgPC9kaXY+CjwvZGl2Pgo8IS0tIOivgeS5puW6kyBDRVJUUy50eHTvvJrlj7PplK7liKDpmaTor4Hkuabv",
+            "vIjms6jph4rooYzlv73nlaXvvInnoa7orqQgLS0+CjxkaXYgY2xhc3M9Im1vZGFsLW1hc2siIGlkPSJjdHhEZWxNb2RhbCIgc3R5bGU9ImRpc3BsYXk6bm9u",
+            "ZSIgb25jbGljaz0iaWYoZXZlbnQudGFyZ2V0PT09dGhpcyljdHhEZWxDYW5jZWwoKSI+CiAgPGRpdiBjbGFzcz0ibW9kYWwiIHN0eWxlPSJ3aWR0aDptaW4o",
+            "NDYwcHgsOTJ2dykiPgogICAgPGRpdiBjbGFzcz0ibW9kYWwtaGVhZCI+PGgzPuWIoOmZpOivgeS5pjwvaDM+PGJ1dHRvbiBjbGFzcz0iZ2hvc3QiIG9uY2xp",
+            "Y2s9ImN0eERlbENhbmNlbCgpIj7lj5bmtog8L2J1dHRvbj48L2Rpdj4KICAgIDxkaXYgY2xhc3M9Im1vZGFsLWJvZHkiPgogICAgICA8cCBjbGFzcz0iY2Zn",
+            "LWhpbnQiIHN0eWxlPSJtYXJnaW4tYm90dG9tOjZweCI+5piv5ZCm5Yig6Zmk6YCJ5Lit5b2T5YmN6KGM5bqP5YiX5Y+35Li6IDxiIGlkPSJjdHhEZWxTZXJp",
+            "YWwiIHN0eWxlPSJjb2xvcjojZGMyNjI2Ij48L2I+IOeahOivgeS5pu+8nzwvcD4KICAgICAgPHAgY2xhc3M9ImNmZy1oaW50Ij7noa7lrprlkI7lsIblnKgg",
+            "Q0VSVFMudHh0IOS4reS4uuivpeihjOa3u+WKoCAjIOazqOmHiu+8iOS7o+ihqOW/veeVpeatpOihjOaVsOaNru+8ie+8jOeUn+aIkCBDUkwgLyBPQ1NQIOiv",
+            "geS5puaXtuWwhuiHquWKqOi3s+i/h+OAgjwvcD4KICAgIDwvZGl2PgogICAgPGRpdiBjbGFzcz0ibW9kYWwtZm9vdCI+CiAgICAgIDxidXR0b24gb25jbGlj",
+            "az0iY3R4RGVsT2soKSI+56Gu5a6aPC9idXR0b24+CiAgICAgIDxidXR0b24gY2xhc3M9Imdob3N0IiBvbmNsaWNrPSJjdHhEZWxDYW5jZWwoKSI+5Y+W5raI",
+            "PC9idXR0b24+CiAgICA8L2Rpdj4KICA8L2Rpdj4KPC9kaXY+Cg=="
+    });
 
-        <!-- ===== 主区 ===== -->
-        <div id="main">
-          <header id="topbar">
-            <h1 id="pageTitle">仪表盘</h1>
-            <span class="badge dim" id="mainPort">MAIN: --</span>
-            <span class="badge ok" id="mainState">--</span>
-            <button class="ghost" onclick="loadStatus()">刷新</button>
-          </header>
-
-          <section id="content">
-
-            <!-- 仪表盘 -->
-            <div class="page active" id="page-dashboard">
-              <div class="grid">
-                <div class="stat"><div class="label">MAIN 服务端口</div><div class="value ok" id="stPort">--</div></div>
-                <div class="stat"><div class="label">服务运行时长</div><div class="value" id="stUptime">--</div></div>
-                <div class="stat"><div class="label">管理界面端口</div><div class="value" id="stAdmin">--</div></div>
-                <div class="stat"><div class="label">API 调用次数</div><div class="value" id="stCalls">--</div></div>
-                <div class="stat"><div class="label">日志行数</div><div class="value" id="stLogs">--</div></div>
-                <div class="stat stat-wide"><div class="label">工作目录</div><div class="value" id="stBase">--</div></div>
-              </div>
-              <div class="card" style="margin-top:16px">
-                <h2>快捷操作</h2>
-                <div class="toolbar">
-                  <button onclick="quickAction('/api/crl')">刷新全部 CRL</button>
-                  <button onclick="quickAction('/api/initocsp')">签发全部 OCSP</button>
-                  <button onclick="quickAction('/api/inittimestamp')">签发全部时间戳</button>
-                </div>
-                <pre class="out" id="dashOut" hidden></pre>
-              </div>
-              <div class="card">
-                <h2>证书链树</h2>
-                <div class="toolbar">
-                  <span style="color:var(--dim);font-size:12px">根 R → 中间 CA C → 终端 E；鼠标悬停节点查看证书参数</span>
-                  <button class="ghost" onclick="loadChain()">刷新</button>
-                </div>
-                <div id="chainBox" style="overflow:auto;max-height:52vh;padding:10px">加载中...</div>
-              </div>
-              <div class="card">
-                <h2>最近日志</h2>
-                <pre class="out" id="dashLogs" style="max-height:260px"></pre>
-              </div>
-            </div>
-
-            <!-- 证书库 -->
-            <div class="page" id="page-certs">
-              <div class="card">
-                <div class="ct-tabs">
-                  <button class="ct-tab active" id="csTabBtnLocal" onclick="csSwitchTab('local')">证书库 CERTS.txt</button>
-                  <button class="ct-tab" id="csTabBtnCa" onclick="csSwitchTab('cacerts')">可信公网证书库 cacerts</button>
-                  <button class="ct-tab" id="csTabBtnMy" onclick="csSwitchTab('my')">我的证书</button>
-                </div>
-                <div id="csPaneLocal">
-                  <div class="toolbar">
-                    <input id="certsFilter" placeholder="筛选：序列号 / 类型 / 状态 / 算法" style="flex:1;max-width:360px" oninput="renderCerts()">
-                    <button class="ghost" onclick="loadCerts()">刷新列表</button>
-                  </div>
-                  <div style="overflow:auto;max-height:60vh">
-                    <table id="certsTable">
-                      <thead><tr><th>序列号</th><th>类型</th><th>状态</th><th>原因</th><th>时间</th><th>颁发者ID</th><th>算法</th><th>操作</th></tr></thead>
-                      <tbody></tbody>
-                    </table>
-                  </div>
-                </div>
-                <div id="csPaneCa" style="display:none">
-                  <div class="hint">JAVA 环境 lib/security/cacerts 中的可信证书（只读参考）。点击"详情"可查看 PEM 证书结构（JSON）。本地证书文件验证请到"证书验证"页面上传。</div>
-                  <div class="toolbar">
-                    <input id="caFilter" placeholder="筛选：序列号 / 颁发者 / 算法" style="flex:1;max-width:360px" oninput="renderCacerts()">
-                    <button class="ghost" onclick="loadCacerts()">刷新列表</button>
-                  </div>
-                  <div style="overflow:auto;max-height:60vh">
-                    <table id="caTable">
-                      <thead><tr><th>序列号</th><th>算法</th><th>生效日期</th><th>失效日期</th><th>DN字段</th><th>操作</th></tr></thead>
-                      <tbody></tbody>
-                    </table>
-                  </div>
-                </div>
-                <div id="csPaneMy" style="display:none">
-                  <div class="toolbar">
-                    <input id="myFilter" placeholder="筛选：序列号 / 类型 / 算法" style="flex:1;max-width:360px" oninput="renderMy()">
-                    <button class="primary" onclick="$('myFile').click()">导入证书</button>
-                    <button class="ghost" onclick="loadMy()">刷新列表</button>
-                  </div>
-                  <input type="file" id="myFile" accept=".pfx,.p12,.jks,.cer,.crt,.pem" style="display:none" onchange="myFileChosen()">
-                  <div id="myMsg" class="hint" style="margin:6px 0;color:var(--dim)">从本机导入证书（pfx / p12 / jks 需输入密码；cer / crt / pem 直接导入，可含私钥）。</div>
-                  <div style="overflow:auto;max-height:60vh">
-                    <table id="myTable">
-                      <thead><tr><th>序列号</th><th>类型</th><th>算法</th><th>是否含有私钥</th><th>生效日期</th><th>失效日期</th><th>操作</th></tr></thead>
-                      <tbody></tbody>
-                    </table>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <!-- 签发根证书 -->
-            <div class="page" id="page-makeroot">
-              <div class="card">
-                <h2>签发根证书（MakeRoot）</h2>
-                <div class="row">
-                  <div style="grid-column:1/-1"><label>证书 DN（逗号分隔 key=value）</label><input id="mkDn" placeholder="根证书 DN（key=value 逗号分隔，key 可为标准属性或 OID），如 CN=My Root CA,O=My Org,C=CN"></div>
-                  <div><label>密钥算法</label><select id="mkAlgo" onchange="extAlgoChanged('mk')"><option>RSA</option><option>RSA-PSS</option><option>ECC</option><option>SM2</option><option>DSA</option><option>EdDSA</option><option>PQC</option></select></div>
-                  <div><label>哈希算法</label><select id="mkHash"><option>sha256</option><option>sha1</option><option>sha384</option><option>sha512</option><option>SHA3-224</option><option>SHA3-256</option><option>SHA3-384</option><option>SHA3-512</option><option>SM3</option><option>NULL</option></select></div>
-                  <div><label>密钥位数</label><select id="mkBits"></select></div>
-                </div>
-                <div class="fsec" style="margin-top:14px">
-                  <div class="fsec-title">DN 辅助编辑 — 基础字段 / EV 注册字段 / 自定义 OID</div>
-                  <div class="row">
-                    <div><label>CN 通用名称</label><input id="mkDnCn" placeholder="通用名称（CN），如 My Root CA" oninput="syncMkDn()"></div>
-                    <div><label>O 组织</label><input id="mkDnO" placeholder="组织（O），如 My Org" oninput="syncMkDn()"></div>
-                    <div><label>OU 组织单位</label><input id="mkDnOu" placeholder="组织单位（OU），如 IT Dept（可选）" oninput="syncMkDn()"></div>
-                    <div><label>C 国家</label><input id="mkDnC" placeholder="国家代码（C），如 CN（两位）" maxlength="2" oninput="syncMkDn()"></div>
-                    <div><label>S 省/州</label><input id="mkDnS" placeholder="省/州（S），如 Guangdong（可选）" oninput="syncMkDn()"></div>
-                    <div><label>L 城市</label><input id="mkDnL" placeholder="城市（L），如 Shenzhen（可选）" oninput="syncMkDn()"></div>
-                    <div><label>E 邮箱（OID 字段）</label><input id="mkDnE" placeholder="邮箱（E，OID 1.2.840.113549.1.9.1），如 admin@example.com" oninput="syncMkDn()"></div>
-                    <div><label>是否 EV 扩展验证</label>
-                      <label style="display:flex;justify-content:flex-start;align-items:center;width:100%;height:32px;cursor:pointer;margin:0"><input type="checkbox" id="mkDnEvToggle" onchange="toggleMkDnEv()" style="margin:0;flex:none"></label>
-                    </div>
-                  </div>
-                  <div id="mkDnEvFields" style="margin-top:14px;display:none">
-                    <div class="fsec-title" style="font-size:12px;margin-bottom:8px">EV 注册字段（EV Guidelines 专属 OID；注册类型四选一，注册号填营业执照/统一社会信用代码）</div>
-                    <div class="row">
-                      <div><label>注册类型（businessCategory 2.5.4.15）</label>
-                        <select id="mkDnBc" onchange="syncMkDn()">
-                          <option value="">（不填）</option>
-                          <option>Private Organization</option>
-                          <option>Government Entity</option>
-                          <option>Business Entity</option>
-                          <option>Non-Commercial Entity</option>
-                        </select>
-                      </div>
-                      <div><label>注册号（serialNumber 2.5.4.5）</label><input id="mkDnReg" placeholder="注册号（serialNumber 2.5.4.5），如 91310000MA5XXXXXXXX" oninput="syncMkDn()"></div>
-                      <div><label>注册国家（jurisdictionCountry）</label><input id="mkDnJc" placeholder="注册国家（jurisdictionCountry），如 CN（两位）" maxlength="2" oninput="syncMkDn()"></div>
-                      <div><label>注册省（jurisdictionStateOrProvince）</label><input id="mkDnJs" placeholder="注册省（jurisdictionStateOrProvince），如 Guangdong（可选）" oninput="syncMkDn()"></div>
-                      <div><label>注册市（jurisdictionLocality）</label><input id="mkDnJl" placeholder="注册市（jurisdictionLocality），如 Shenzhen（可选）" oninput="syncMkDn()"></div>
-                      <div><label>注册地址（streetAddress 2.5.4.9）</label><input id="mkDnAddr" placeholder="注册地址（streetAddress 2.5.4.9），如 No.1 Beijing Road（可选）" oninput="syncMkDn()"></div>
-                      <div><label>组织标识符（2.5.4.97）</label><input id="mkDnOi" placeholder="组织标识符（2.5.4.97），如 NTRCN-91310000MA5XXXXXXXX" oninput="syncMkDn()"></div>
-                      <div><label>组织标识符扩展 OID 版本</label>
-                        <label style="display:flex;justify-content:flex-start;align-items:center;width:100%;height:32px;cursor:pointer;margin:0" title="未勾选=旧版 1.3.6.1.4.1.57264.1.8（SC27-2019）；勾选=新版 2.23.140.3.1（EVG 2.0.1）"><input type="checkbox" id="mkDnOidNew" style="margin:0;flex:none"></label>
-                      </div>
-                    </div>
-                  </div>
-                  <div style="margin-top:12px">
-                    <div class="fsec-title" style="font-size:12px;margin-bottom:8px">自定义字段（key 可写字段名或对象标识符 OID，如 2.5.4.42=张三、2.23.140.1.1=EV）</div>
-                    <div id="mkDnOidRows"></div>
-                    <button type="button" class="ghost" onclick="addMkDnRow('','')">+ 添加自定义字段</button>
-                  </div>
-                  <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                    <button type="button" class="ghost" onclick="parseMkDn()">从上方 DN 解析回填</button>
-                    <span style="color:var(--dim);font-size:12px">辅助编辑实时同步到上方 DN 输入框；也可直接编辑 DN 后点“解析回填”拆分到各字段。</span>
-                  </div>
-                </div>
-                <div style="margin-top:16px"><button onclick="postForm('/api/makeroot', {dn:v('mkDn'),bits:extBitsVal('mk'),hash:v('mkHash'),algo:v('mkAlgo'),evoid: $('mkDnOidNew') && $('mkDnOidNew').checked ? 'new' : 'old'}, 'mkOut')">签发根证书</button></div>
-                <pre class="out" id="mkOut"></pre>
-              </div>
-            </div>
-
-            <!-- 签发证书 -->
-            <div class="page" id="page-signcert">
-              <div class="card">
-                <h2>签发证书（MakeCert 普通模式，12 参数）</h2>
-
-                <div class="fsec"><div class="fsec-title">主体信息</div>
-                  <div class="row">
-                    <div style="grid-column:1/-1"><label>证书 DN（key=value 逗号分隔，key 可为标准属性或 OID）</label><input id="scDn" placeholder="证书 DN（key=value 逗号分隔，key 可为标准属性或 OID），如 CN=www.test.com,O=My Org,C=CN"></div>
-                  </div>
-                </div>
-
-                <div class="fsec" style="margin-top:14px">
-                  <div class="fsec-title">DN 辅助编辑 — 基础字段 / EV 注册字段 / 自定义 OID</div>
-                  <div class="row">
-                    <div><label>CN 通用名称</label><input id="scDnCn" placeholder="通用名称（CN），如 www.test.com" oninput="syncDn('sc')"></div>
-                    <div><label>O 组织</label><input id="scDnO" placeholder="组织（O），如 My Org" oninput="syncDn('sc')"></div>
-                    <div><label>OU 组织单位</label><input id="scDnOu" placeholder="组织单位（OU），如 IT Dept（可选）" oninput="syncDn('sc')"></div>
-                    <div><label>C 国家</label><input id="scDnC" placeholder="国家代码（C），如 CN（两位）" maxlength="2" oninput="syncDn('sc')"></div>
-                    <div><label>S 省/州</label><input id="scDnS" placeholder="省/州（S），如 Guangdong（可选）" oninput="syncDn('sc')"></div>
-                    <div><label>L 城市</label><input id="scDnL" placeholder="城市（L），如 Shenzhen（可选）" oninput="syncDn('sc')"></div>
-                    <div><label>E 邮箱（OID 字段）</label><input id="scDnE" placeholder="邮箱（E，OID 1.2.840.113549.1.9.1），如 admin@example.com" oninput="syncDn('sc')"></div>
-                    <div><label>是否 EV 扩展验证</label>
-                      <label style="display:flex;justify-content:flex-start;align-items:center;width:100%;height:32px;cursor:pointer;margin:0"><input type="checkbox" id="scDnEvToggle" onchange="toggleDnEv('sc')" style="margin:0;flex:none"></label>
-                    </div>
-                  </div>
-                  <div id="scDnEvFields" style="margin-top:14px;display:none">
-                    <div class="fsec-title" style="font-size:12px;margin-bottom:8px">EV 注册字段（EV Guidelines 专属 OID；注册类型四选一，注册号填营业执照/统一社会信用代码）</div>
-                    <div class="row">
-                      <div><label>注册类型（businessCategory 2.5.4.15）</label>
-                        <select id="scDnBc" onchange="syncDn('sc')">
-                          <option value="">（不填）</option>
-                          <option>Private Organization</option>
-                          <option>Government Entity</option>
-                          <option>Business Entity</option>
-                          <option>Non-Commercial Entity</option>
-                        </select>
-                      </div>
-                      <div><label>注册号（serialNumber 2.5.4.5）</label><input id="scDnReg" placeholder="注册号（serialNumber 2.5.4.5），如 91310000MA5XXXXXXXX" oninput="syncDn('sc')"></div>
-                      <div><label>注册国家（jurisdictionCountry）</label><input id="scDnJc" placeholder="注册国家（jurisdictionCountry），如 CN（两位）" maxlength="2" oninput="syncDn('sc')"></div>
-                      <div><label>注册省（jurisdictionStateOrProvince）</label><input id="scDnJs" placeholder="注册省（jurisdictionStateOrProvince），如 Guangdong（可选）" oninput="syncDn('sc')"></div>
-                      <div><label>注册市（jurisdictionLocality）</label><input id="scDnJl" placeholder="注册市（jurisdictionLocality），如 Shenzhen（可选）" oninput="syncDn('sc')"></div>
-                      <div><label>注册地址（streetAddress 2.5.4.9）</label><input id="scDnAddr" placeholder="注册地址（streetAddress 2.5.4.9），如 No.1 Beijing Road（可选）" oninput="syncDn('sc')"></div>
-                      <div><label>组织标识符（2.5.4.97）</label><input id="scDnOi" placeholder="组织标识符（2.5.4.97），如 NTRCN-91310000MA5XXXXXXXX" oninput="syncDn('sc')"></div>
-                      <div><label>组织标识符扩展 OID 版本</label>
-                        <label style="display:flex;justify-content:flex-start;align-items:center;width:100%;height:32px;cursor:pointer;margin:0" title="未勾选=旧版 1.3.6.1.4.1.57264.1.8（SC27-2019）；勾选=新版 2.23.140.3.1（EVG 2.0.1）"><input type="checkbox" id="scDnOidNew" style="margin:0;flex:none"></label>
-                      </div>
-                    </div>
-                  </div>
-                  <div style="margin-top:12px">
-                    <div class="fsec-title" style="font-size:12px;margin-bottom:8px">自定义字段（key 可写字段名或对象标识符 OID，如 2.5.4.42=张三、2.23.140.1.1=EV）</div>
-                    <div id="scDnOidRows"></div>
-                    <button type="button" class="ghost" onclick="addDnRow('sc','','')">+ 添加自定义字段</button>
-                  </div>
-                  <div style="margin-top:12px;display:flex;gap:10px;align-items:center;flex-wrap:wrap">
-                    <button type="button" class="ghost" onclick="parseDn('sc')">从上方 DN 解析回填</button>
-                  </div>
-                </div>
-                <div class="fsec"><div class="fsec-title">密钥与算法</div>
-                  <div class="row">
-                    <div><label>证书类型</label><select id="scCa" onchange="scCaChanged()"><option value="0">终端证书</option><option value="1">中间 CA</option></select></div>
-                    <div id="scPathLenWrap" style="display:none"><label>路径长度</label><select id="scPathLen" title="中间CA 的 BasicConstraints pathLenConstraint；null 表示不限制"><option value="">null</option><option>0</option><option>1</option><option>2</option><option>3</option><option>4</option><option>5</option><option>6</option><option>7</option><option>8</option><option>9</option></select></div>
-                    <div><label>密钥算法</label><select id="scAlgo" onchange="algoChanged()"><option>RSA</option><option>RSA-PSS</option><option>ECC</option><option>SM2</option><option>DSA</option><option>EdDSA</option><option>PQC</option></select></div>
-                    <div><label>密钥位数</label><select id="scBits"></select></div>
-                    <div><label>哈希算法</label><select id="scHash"><option>sha256</option><option>sha1</option><option>sha384</option><option>sha512</option><option>SHA3-224</option><option>SHA3-256</option><option>SHA3-384</option><option>SHA3-512</option><option>SM3</option><option>NULL</option></select></div>
-                  </div>
-                </div>
-
-                <div class="fsec"><div class="fsec-title">密钥用途</div>
-                  <div class="row">
-                    <div><label>KeyUsage 编号</label>
-                      <select id="scKu" onchange="kuSelChanged()">
-                        <option value="">（无 KeyUsage 扩展）</option>
-                        <option value="1">1 - 数字签名+不可否认+密钥加密+数据加密+密钥协商（通用）</option>
-                        <option value="2">2 - 数字签名+不可否认+证书签名+CRL签名（CA用途）</option>
-                        <option value="3">3 - 仅加密 Encipher Only</option>
-                        <option value="4">4 - 仅解密 Decipher Only</option>
-                        <option value="5">5 - 数字签名+不可否认（签名用途）</option>
-                        <option value="6">6 - 数据加密 Data Encipherment</option>
-                        <option value="7">7 - 密钥加密 Key Encipherment</option>
-                        <option value="8">8 - 密钥协商 Key Agreement</option>
-                        <option value="custom">自定义组合…（密钥用法选择器）</option>
-                      </select>
-                      <div style="display:flex;gap:6px;align-items:center;margin-top:6px">
-                        <input id="scKuCustom" placeholder="自定义数值：各位值相加，如 5=数字签名1+密钥加密4" style="display:none">
-                        <button type="button" class="ghost" onclick="openKuModal()" style="white-space:nowrap;flex:none">密钥用法…</button>
-                      </div>
-                    </div>
-                    <div><label>EKU 编号/OID（逗号分隔）</label>
-                      <div style="display:flex;gap:6px;align-items:center">
-                        <input id="scEu" value="1" onclick="openEkuModal()" title="点击输入框或右侧按钮弹出 EKU 选择器">
-                        <button type="button" class="ghost" onclick="openEkuModal()" style="white-space:nowrap;flex:none">选择…</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="fsec" id="scPolWrap" style="display:none"><div class="fsec-title">证书策略（仅终端证书，勾选的策略才写入证书策略扩展）</div>
-                  <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(235px,1fr));gap:8px 16px;padding-top:6px">
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="scPolDv"><span>SSL DV（2.23.140.1.2.1）</span></label>
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="scPolIv"><span>SSL IV（2.23.140.1.2.3）</span></label>
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="scPolOv"><span>SSL OV（2.23.140.1.2.2）</span></label>
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="scPolEv"><span>SSL EV（2.23.140.1.1）</span></label>
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="scPolCsStd"><span>代码签名-标准（2.23.140.1.4.1）</span></label>
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="scPolCsEv"><span>代码签名-EV（2.23.140.1.3）</span></label>
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="scPolDoc"><span>文档签名（1.3.6.1.5.5.7.3.36）</span></label>
-                    <label style="display:flex;align-items:center;gap:8px;cursor:pointer"><input type="checkbox" id="scPolTsa"><span>TSA 策略（2.23.140.1.4.2）</span></label>
-                  </div>
-                  <div style="display:flex;gap:6px;align-items:center;padding-top:8px">
-                    <input id="scPolCustomOid" placeholder="自定义策略 OID，如 1.2.3.4.5" style="flex:1;min-width:220px" onkeydown="if(event.key==='Enter')addScPolCustom()">
-                    <button type="button" onclick="addScPolCustom()">添加自定义策略</button>
-                  </div>
-                  <div id="scPolCustomBox"></div>
-                </div>
-
-                <div class="fsec"><div class="fsec-title">有效期</div>
-                  <div class="row">
-                    <div><label>有效期（年数或 起始T截至）</label>
-                      <div style="display:flex;gap:6px;align-items:center">
-                        <input id="scDays" value="1" title="数字=年数；或格式 起始T截至，如 2026/09/12-10:30:00T2027/09/12-10:30:00">
-                        <button type="button" class="ghost" onclick="openValModal()" style="white-space:nowrap;flex:none">选择日期…</button>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="fsec"><div class="fsec-title">SAN 扩展</div>
-                  <div class="row">
-                    <div><label>SAN 域名（逗号分隔，无则 null）</label><input id="scDns" value="null"></div>
-                    <div><label>SAN IP（逗号分隔，无则 null）</label><input id="scIps" value="null"></div>
-                  </div>
-                </div>
-
-                <div class="fsec"><div class="fsec-title">颁发者</div>
-                  <div class="row">
-                    <div style="grid-column:1/-1"><label>颁发者证书（CERTS.txt 中 R/C 类型序列号，鼠标悬停显示详情）</label>
-                      <select id="scIssuer" class="t-box" onchange="refreshIssuerTip()"></select>
-                    </div>
-                  </div>
-                </div>
-
-                <div style="margin-top:16px"><button onclick="postForm('/api/signcert', {dn:v('scDn'),bits:bitsVal(),hash:v('scHash'),keyusage:kuVal(),exusage:v('scEu'),isca:v('scCa'),days:v('scDays'),dns:v('scDns'),ips:v('scIps'),issuer:v('scIssuer'),algo:v('scAlgo'),pathlen:pathLenVal(),policy:policyVal()}, 'scOut')">签发证书</button></div>
-                <pre class="out" id="scOut"></pre>
-              </div>
-            </div>
-
-            <!-- 吊销证书 -->
-            <div class="page" id="page-revoke">
-              <div class="card">
-                <h2>吊销证书（RevokeCERT）</h2>
-                <div class="hint">吊销后自动刷新 CRL 吊销列表。请先在「证书库」中确认序列号。</div>
-                <div class="row">
-                  <div><label>证书序列号</label><input id="rvSerial" placeholder="如 13fbe86586bb0a4"></div>
-                  <div><label>吊销原因编号（0~9）</label><select id="rvReason">
-                    <option value="0">0 - 未指定</option><option value="1">1 - 密钥泄露</option><option value="2">2 - CA泄露</option>
-                    <option value="3">3 - 信息变更</option><option value="4">4 - 被替换</option><option value="5">5 - 操作终止</option>
-                    <option value="6">6 - 证书暂停</option><option value="9">9 - 其它</option>
-                  </select></div>
-                </div>
-
-                <div style="margin-top:16px"><button class="danger" onclick="postForm('/api/revoke', {serial:v('rvSerial'),reason:v('rvReason')}, 'rvOut')">吊销该证书</button></div>
-                <pre class="out" id="rvOut"></pre>
-              </div>
-            </div>
-
-            <!-- OCSP|TSA签发（签发证书 + 模拟请求调试 合并页） -->
-            <div class="page" id="page-ocsp">
-              <div class="card">
-                <div class="sig-tabs" id="ocspTabs">
-                  <button class="sig-tab active" data-tab="issue" onclick="ocspTab('issue')">OCSP签发</button>
-                  <button class="sig-tab" data-tab="tsaissue" onclick="ocspTab('tsaissue')">TSA签发</button>
-                  <button class="sig-tab" data-tab="debugocsp" onclick="ocspTab('debugocsp')">OCSP模拟请求调试</button>
-                  <button class="sig-tab" data-tab="debugtsa" onclick="ocspTab('debugtsa')">TSA模拟请求调试</button>
-                </div>
-                <div id="ocspIssue">
-                  <h2>签发 OCSP 签名证书（initOCSP）</h2>
-                  <p style="color:var(--dim);margin-bottom:14px">为证书库中全部 R（根）/ C（中间CA）证书逐个生成 OCSP 签名证书，输出到 PKI/OCSP/序列号_ocsp.crt|.key。</p>
-                  <div class="toolbar">
-                    <select id="ocAlgo"><option value="">全部证书（按各自算法）</option><option>RSA</option><option>ECC</option><option>SM2</option></select>
-                    <button onclick="postForm('/api/initocsp', {algo:v('ocAlgo')}, 'ocOut')">签发 OCSP 证书</button>
-                  </div>
-                  <pre class="out" id="ocOut"></pre>
-                </div>
-                <div id="tsaIssue" style="display:none">
-                  <h2>签发时间戳证书（initTIMSTAMP）</h2>
-                  <p style="color:var(--dim);margin-bottom:14px">为全部根证书生成时间戳证书：RSA/ECC → rsa/ecc_sha1 + rsa/ecc_sha256，SM2 → sm2_sm3，输出到 PKI/TIMSTAMP/。</p>
-                  <div class="toolbar">
-                    <select id="tsHash"><option value="">全部根证书（按各自算法）</option><option>SHA1</option><option>SHA256</option><option>SM3</option></select>
-                    <button onclick="postForm('/api/inittimestamp', {hash:v('tsHash')}, 'tsOut')">签发时间戳证书</button>
-                  </div>
-                  <pre class="out" id="tsOut"></pre>
-                </div>
-                <div id="dbgOcsp" style="display:none">
-                  <h2>模拟 OCSP 请求（RFC 6960）</h2>
-                  <div class="hint">按标准构造 CertID（issuerNameHash/issuerKeyHash 基于真正颁发者证书）+ Nonce 扩展，POST 本机 MAIN 的 /OCSP，解析响应并验证签名与 Nonce 回显。</div>
-                  <div class="row">
-                    <div><label>目标证书序列号（留空自动选第一个终端证书）</label><input id="dbgOcspSerial" placeholder="例如 1135228a2"></div>
-                    <div><label>CertID 哈希算法</label><select id="dbgOcspHash">
-                      <option value="sha256" selected>SHA256</option>
-                      <option value="sha1">SHA1</option>
-                      <option value="sha384">SHA384</option>
-                      <option value="sha512">SHA512</option>
-                      <option value="sha3-224">SHA3-224</option>
-                      <option value="sha3-256">SHA3-256</option>
-                      <option value="sha3-384">SHA3-384</option>
-                      <option value="sha3-512">SHA3-512</option>
-                      <option value="sm3">SM3</option>
-                    </select></div>
-                    <div style="align-self:end"><button onclick="sendDebugOcsp()">发送模拟请求</button></div>
-                  </div>
-                  <pre class="out" id="dbgOcspOut" style="max-height:56vh;overflow:auto;white-space:pre;font-family:var(--mono);font-size:12px;line-height:1.55"></pre>
-                </div>
-                <div id="dbgTsa" style="display:none">
-                  <h2>模拟时间戳请求（RFC 3161）</h2>
-                  <div class="hint">随机生成 32 字节数据 → 按所选摘要算法计算 messageImprint → 构造 TimeStampReq（含 Nonce、certReq=true）→ POST 本机 MAIN 的 /rfc3161 → 解析 TimeStampResp 并验证签名。</div>
-                  <div class="row">
-                    <div><label>摘要算法</label><select id="dbgTsaHash">
-                      <option value="sha256" selected>SHA256</option>
-                      <option value="sha1">SHA1</option>
-                      <option value="sha384">SHA384</option>
-                      <option value="sha512">SHA512</option>
-                      <option value="sha3-224">SHA3-224</option>
-                      <option value="sha3-256">SHA3-256</option>
-                      <option value="sha3-384">SHA3-384</option>
-                      <option value="sha3-512">SHA3-512</option>
-                      <option value="sm3">SM3</option>
-                    </select></div>
-                    <div style="align-self:end"><button onclick="sendDebugTsa()">对随机数据签名</button></div>
-                  </div>
-                  <pre class="out" id="dbgTsaOut" style="max-height:56vh;overflow:auto;white-space:pre;font-family:var(--mono);font-size:12px;line-height:1.55"></pre>
-                </div>
-              </div>
-            </div>
-
-            <!-- 证书验证 -->
-            <div class="page" id="page-verify">
-              <div class="card">
-                <h2>证书验证（CertVerify）</h2>
-                <div class="toolbar">
-                  <input id="vfTarget" placeholder="证书文件路径，或序列号（自动查 PKI/WebPublic/CRT/序列号.crt）" style="flex:1;max-width:420px">
-                  <button onclick="postForm('/api/verify', {target:v('vfTarget')}, 'vfOut')">验证</button>
-                  <input type="file" id="vfFile" accept=".cer,.crt,.pem" onchange="verifyFile()" style="flex:1;max-width:320px">
-                </div>
-                <pre class="out" id="vfOut"></pre>
-              </div>
-            </div>
-
-            <!-- 模板管理 -->
-            <div class="page" id="page-template">
-              <div class="card">
-                <div class="toolbar">
-                  <h2 style="margin:0">模板管理</h2>
-                  <span style="color:var(--dim);font-size:12px">文件：PKI/tamplate/data.json</span>
-                  <button onclick="openTpModal()">+ 添加模板</button>
-                  <button class="ghost" onclick="loadTemplates()">刷新</button>
-                </div>
-                <div class="hint">模板保存签发证书的全部参数（DN / 算法 / 密钥用途 / EKU / 策略 / 有效期 / SAN），签署时选择 R 或 C 类型颁发者一键签发，操作全程写入 logs.log。</div>
-                <table class="tbl" id="tplTable">
-                  <thead><tr><th style="width:60px">序号</th><th style="width:110px">证书类型</th><th>DN</th><th style="width:150px">时间</th><th style="width:200px">操作</th></tr></thead>
-                  <tbody></tbody>
-                </table>
-                <pre class="out" id="tplMsg"></pre>
-              </div>
-            </div>
-
-            <!-- 签名专区 -->
-            <div class="page" id="page-sign">
-              <div class="card">
-                <h2>签名专区</h2>
-                <div class="sig-tabs">
-                  <button class="sig-tab active" id="sigTabBtn-exe" onclick="sigTab('exe',this)">微软代码签名</button>
-                  <button class="sig-tab" id="sigTabBtn-pdf" onclick="sigTab('pdf',this)">PDF 文档签名</button>
-                </div>
-
-                <!-- 微软代码签名（批量 + 拖拽） -->
-                <div class="sig-pane" id="sigPane-exe">
-                  <div class="hint">拖拽或批量选择 PE 可执行文件（exe / dll / sys / cab / cat / msi）加入待签名列表，再选证书与时间戳参数执行签名 / 验证。支持 RSA / ECC / SM2（摘要分别用 SHA256 / SHA256 / SM3），证书表按 Microsoft PE/COFF 规范嵌入。时间戳类型可选 RFC3161（标准 TimeStampToken）或 Authenticode（微软老式 PKCS#7）；地址可指向本机 MAIN（留空）或任意外部 TSA。</div>
-                  <div class="row">
-                    <div><label>签名证书（代码签名 EKU）</label><select id="sgExeCert" title="鼠标悬停查看证书简介"><option value="">（加载中...）</option></select></div>
-                    <div><label>时间戳类型</label><select id="sgExeTsType">
-                      <option value="RFC3161" selected>RFC3161（标准）</option>
-                      <option value="AUTHENTICODE">Authenticode（老式 PKCS#7）</option>
-                    </select></div>
-                    <div style="grid-column:1/2"><label>时间戳请求地址（留空 = 本机 MAIN）</label>
-                      <input id="sgExeTsUrl" list="tsUrlList" placeholder="http://timestamp.digicert.com" spellcheck="false">
-                      <datalist id="tsUrlList">
-                        <option value="http://timestamp.digicert.com">
-                        <option value="http://sha256timestamp.ws.symantec.com/sha256/">
-                        <option value="http://timestamp.comodoca.com">
-                        <option value="http://time.certum.pl">
-                      </datalist>
-                    </div>
-                  </div>
-                  <div class="dropzone" id="exeDrop">
-                    <div style="font-size:16px;font-weight:700;color:var(--text)">拖拽可执行文件到此处</div>
-                    <div style="margin-top:6px;color:var(--dim)">支持 exe / dll / sys / cab / cat / msi（可多选）</div>
-                    <label class="fake-btn" style="margin-top:12px">选择文件<input type="file" id="sgExeFile" multiple accept=".exe,.dll,.sys,.cab,.cat,.msi,application/octet-stream" hidden></label>
-                  </div>
-                  <div class="pdf-list-head">
-                    <span style="font-weight:700">待签名列表（<b id="exeCount" style="color:var(--accent)">0</b> 个）</span>
-                    <button onclick="exeSignAll()">批量签名</button>
-                    <button class="ghost" onclick="exeVerifyAll()">批量验证</button>
-                    <button class="ghost" onclick="exeClear()">清空</button>
-                  </div>
-                  <div id="exeList" class="pdf-list"></div>
-                  <pre class="out" id="sgExeOut" style="max-height:30vh;overflow:auto;white-space:pre;font-family:var(--mono);font-size:12px;line-height:1.55"></pre>
-                </div>
-
-                <!-- PDF 文档签名（批量 + 拖拽） -->
-                <div class="sig-pane" id="sigPane-pdf" style="display:none">
-                  <div class="hint">批量选择或拖拽 PDF 文件加入待签名列表，再选证书与签章参数执行签名 / 验证。证书筛选：微软文档签名 OID（1.3.6.1.4.1.311.10.3.12）或通用文档签名 OID（1.3.6.1.5.5.7.3.36）任一即可。<br>签章类型：Adobe 标准文档签名（adbe.pkcs7.detached，RSA/ECC/SM2 均可）；国密 GB/T 35275-2017（GM.sm2cms.detached，仅 SM2）；国密 GB/T 38540-2020（GM.sm2seal，仅 SM2，需签章图片）；国密 GM/T 0031-2025（GM.sm2seal，仅 SM2，需签章图片）。</div>
-                  <div class="row">
-                    <div><label>签章图片（png/jpg/bmp/gif）</label><input type="file" id="sgPdfImage" accept="image/png,image/jpeg,image/bmp,image/gif"></div>
-                    <div><label>签名证书（留空 = 仅文档时间戳）</label><select id="sgPdfCert" title="鼠标悬停查看证书简介（留空=纯文档时间戳，不签名）"><option value="">（不签名，仅文档时间戳）</option></select></div>
-                    <div><label>签章类型</label><select id="sgPdfSeal">
-                      <option value="ADOBE" selected>Adobe 标准文档签名</option>
-                      <option value="GM35275">国密 GB/T 35275-2017</option>
-                      <option value="GM38540">国密 GB/T 38540-2020</option>
-                      <option value="GM0031">国密 GM/T 0031-2025</option>
-                    </select></div>
-                    <div style="grid-column:1/3"><label>时间戳请求地址（留空 = 本机 MAIN）</label>
-                      <input id="sgPdfTsUrl" list="tsUrlListPdf" placeholder="http://timestamp.digicert.com" spellcheck="false">
-                      <datalist id="tsUrlListPdf">
-                        <option value="http://timestamp.digicert.com">
-                        <option value="http://sha256timestamp.ws.symantec.com/sha256/">
-                        <option value="http://timestamp.comodoca.com">
-                        <option value="http://time.certum.pl">
-                      </datalist>
-                    </div>
-                  </div>
-                  <div class="dropzone" id="pdfDrop">
-                    <div style="font-size:16px;font-weight:700;color:var(--text)">拖拽 PDF 文件到此处</div>
-                    <div style="margin-top:6px;color:var(--dim)">或点击下方按钮选择文件（可多选）</div>
-                    <label class="fake-btn" style="margin-top:12px">选择 PDF 文件<input type="file" id="sgPdfFile" multiple accept=".pdf,application/pdf" hidden></label>
-                  </div>
-                  <div class="pdf-list-head">
-                    <span style="font-weight:700">待签名列表（<b id="pdfCount" style="color:var(--accent)">0</b> 个）</span>
-                    <button onclick="pdfSignAll()">批量签名</button>
-                    <button class="ghost" onclick="pdfVerifyAll()">批量验证</button>
-                    <button class="ghost" onclick="pdfClear()">清空</button>
-                  </div>
-                  <div id="pdfList" class="pdf-list"></div>
-                  <pre class="out" id="sgPdfOut" style="max-height:30vh;overflow:auto;white-space:pre;font-family:var(--mono);font-size:12px;line-height:1.55"></pre>
-                </div>
-              </div>
-            </div>
-
-
-<style>
-.ctx-menu{position:fixed;z-index:99999;background:var(--panel2);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.45);padding:6px;min-width:224px;user-select:none;font-size:13px}
-.ctx-item{padding:8px 12px;border-radius:6px;cursor:pointer;white-space:nowrap;position:relative;color:var(--text)}
-.ctx-item:hover{background:var(--accent);color:#0b1120}
-.ctx-item.disabled{color:var(--dim);cursor:not-allowed;pointer-events:none;background:transparent}
-.ctx-item.has-sub .ctx-sub{display:none;position:absolute;left:100%;top:0;background:var(--panel2);border:1px solid var(--border);border-radius:8px;box-shadow:0 8px 28px rgba(0,0,0,.45);padding:6px 6px 6px 8px;min-width:290px;z-index:99998}
-.ctx-item.has-sub .ctx-sub.ctx-sub-up{top:auto;bottom:0}
-.ctx-sub .ctx-item{font-size:12px}
-</style>
-<!-- 证书库右键菜单：下载证书 / 导出证书 -->
-<div id="ctxMenu" class="ctx-menu" style="display:none">
-  <div class="ctx-item has-sub"><span>下载证书</span>
-    <div class="ctx-sub">
-      <div class="ctx-item" onclick="ctxDownload('single_crt')">下载单证书(END.crt)</div>
-      <div class="ctx-item" onclick="ctxDownload('chain_crt')">下载组合证书链(END+CA+ROOT.crt)</div>
-      <div class="ctx-item" onclick="ctxDownload('p7b')">下载组合证书链(END+CA+ROOT.p7b)</div>
-      <div class="ctx-item" onclick="ctxDownload('issuer_crt')">下载颁发者证书链(CA+ROOT.crt)</div>
-      <div class="ctx-item" data-needkey onclick="ctxDownload('key')">下载私钥(END.key)</div>
-      <div class="ctx-item" data-needkey onclick="ctxDownload('pfx',1)">下载证书+私钥(.pfx)</div>
-      <div class="ctx-item" data-needkey onclick="ctxDownload('jks',1)">下载证书+私钥(.jks)</div>
-    </div>
-  </div>
-  <div class="ctx-item has-sub"><span>导出证书</span>
-    <div class="ctx-sub">
-      <div class="ctx-item" onclick="ctxExport('cert_pem')">导出单证书到剪辑板(PEM)</div>
-      <div class="ctx-item" onclick="ctxExport('chain_pem')">导出证书链到剪辑板(PEM：END+CA+ROOT)</div>
-      <div class="ctx-item" onclick="ctxExport('issuer_pem')">PEM颁发者证书链到剪辑板(PEM：CA+ROOT)</div>
-      <div class="ctx-item" data-needkey onclick="ctxExport('key_pem')">导出私钥到剪辑板(PEM)</div>
-      <div class="ctx-item" data-needkey onclick="ctxExport('key_hex')">导出私钥到剪辑板(HEX)</div>
-      <div class="ctx-item" data-needkey onclick="ctxExport('key_b64')">导出私钥到剪辑板(Base64)</div>
-    </div>
-  </div>
-  <div class="ctx-item" data-ctxsrc="certs" onclick="ctxDeleteCert()" style="color:#dc2626;font-weight:700">删除证书</div>
-</div>
-<!-- 证书库右键下载 pfx/jks：密码输入 -->
-<div class="modal-mask" id="ctxPwdModal" style="display:none" onclick="if(event.target===this)closeCtxPwd()">
-  <div class="modal" style="width:min(460px,92vw)">
-    <div class="modal-head">
-      <h3>输入密钥库密码</h3>
-      <button class="ghost" onclick="closeCtxPwd()">取消</button>
-    </div>
-    <div class="modal-body">
-      <p class="cfg-hint" id="ctxPwdFile" style="margin-bottom:10px"></p>
-      <label>密码</label>
-      <input type="password" id="ctxPwd" placeholder="请输入导出密钥库的密码（pfx / jks）" onkeydown="if(event.key==='Enter')ctxPwdOk()">
-    </div>
-    <div class="modal-foot">
-      <button onclick="ctxPwdOk()">确定</button>
-      <button class="ghost" onclick="closeCtxPwd()">取消</button>
-    </div>
-  </div>
-</div>
-<!-- 证书库导出：浏览器剪贴板授权失败时的手动复制面板 -->
-<div class="modal-mask" id="ctxCopyModal" style="display:none" onclick="if(event.target===this)closeCtxCopy()">
-  <div class="modal" style="width:min(620px,94vw)">
-    <div class="modal-head">
-      <h3>复制到剪贴板</h3>
-      <button class="ghost" onclick="closeCtxCopy()">取消</button>
-    </div>
-    <div class="modal-body">
-      <p class="cfg-hint" style="margin-bottom:8px">浏览器未自动授权剪贴板写入，内容已预选，请点击下方"复制"按钮（或直接按 Ctrl+C）。</p>
-      <textarea id="ctxCopyText" readonly spellcheck="false" style="width:100%;height:150px;box-sizing:border-box;font-family:var(--mono);font-size:11px;background:var(--panel);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:8px;white-space:pre"></textarea>
-    </div>
-    <div class="modal-foot">
-      <button onclick="ctxCopyTextarea()">复制</button>
-      <button class="ghost" onclick="closeCtxCopy()">关闭</button>
-    </div>
-  </div>
-</div>
-<!-- 证书库 CERTS.txt：右键删除证书（注释行忽略）确认 -->
-<div class="modal-mask" id="ctxDelModal" style="display:none" onclick="if(event.target===this)ctxDelCancel()">
-  <div class="modal" style="width:min(460px,92vw)">
-    <div class="modal-head"><h3>删除证书</h3><button class="ghost" onclick="ctxDelCancel()">取消</button></div>
-    <div class="modal-body">
-      <p class="cfg-hint" style="margin-bottom:6px">是否删除选中当前行序列号为 <b id="ctxDelSerial" style="color:#dc2626"></b> 的证书？</p>
-      <p class="cfg-hint">确定后将在 CERTS.txt 中为该行添加 # 注释（代表忽略此行数据），生成 CRL / OCSP 证书时将自动跳过。</p>
-    </div>
-    <div class="modal-foot">
-      <button onclick="ctxDelOk()">确定</button>
-      <button class="ghost" onclick="ctxDelCancel()">取消</button>
-    </div>
-  </div>
-</div>
-    """;
     private static final String PAGE_P1B = """
             <!-- 初始化环境 -->
             <div class="page" id="page-init">
@@ -6546,752 +6490,459 @@ public final class WebAdmin {
             </div>
 """;
     @SuppressWarnings("text-blocks")
-    private static final String PAGE_P2 = """
-        <script>
-        // ===== 工具 =====
-                window.addEventListener('error', function(e){ var d=document.getElementById('jsErr'); if(!d){ d=document.createElement('div'); d.id='jsErr'; d.style.cssText='position:fixed;bottom:10px;right:10px;background:#7f1d1d;color:#fecaca;padding:8px 12px;border-radius:8px;font-size:12px;z-index:99999;max-width:60vw;white-space:pre-wrap'; document.body.appendChild(d); } d.textContent='JS Error: '+(e.message||e); setTimeout(function(){d.remove()},8000); });
-const $ = id => document.getElementById(id);
-        const v = id => $(id).value.trim();
-        const TITLES = { dashboard:'仪表盘', certs:'证书库', makeroot:'签发根证书', signcert:'签发证书', revoke:'吊销证书', ocsp:'OCSP|TSA签发', verify:'证书验证', template:'模板管理', ctlog:'SCT服务管理', sign:'签名专区', init:'初始化环境', users:'用户管理', radius:'Radius服务管理', config:'系统配置', logs:'操作日志' };
+    private static final String PAGE_P2 = decodeBase64Parts(new String[]{
+            "ICAgICAgICA8c2NyaXB0PgogICAgICAgIC8vID09PT09IOW3peWFtyA9PT09PQogICAgICAgICAgICAgICAgd2luZG93LmFkZEV2ZW50TGlzdGVuZXIoJ2Vy",
+            "cm9yJywgZnVuY3Rpb24oZSl7IHZhciBkPWRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdqc0VycicpOyBpZighZCl7IGQ9ZG9jdW1lbnQuY3JlYXRlRWxlbWVu",
+            "dCgnZGl2Jyk7IGQuaWQ9J2pzRXJyJzsgZC5zdHlsZS5jc3NUZXh0PSdwb3NpdGlvbjpmaXhlZDtib3R0b206MTBweDtyaWdodDoxMHB4O2JhY2tncm91bmQ6",
+            "IzdmMWQxZDtjb2xvcjojZmVjYWNhO3BhZGRpbmc6OHB4IDEycHg7Ym9yZGVyLXJhZGl1czo4cHg7Zm9udC1zaXplOjEycHg7ei1pbmRleDo5OTk5OTttYXgt",
+            "d2lkdGg6NjB2dzt3aGl0ZS1zcGFjZTpwcmUtd3JhcCc7IGRvY3VtZW50LmJvZHkuYXBwZW5kQ2hpbGQoZCk7IH0gZC50ZXh0Q29udGVudD0nSlMgRXJyb3I6",
+            "ICcrKGUubWVzc2FnZXx8ZSk7IHNldFRpbWVvdXQoZnVuY3Rpb24oKXtkLnJlbW92ZSgpfSw4MDAwKTsgfSk7CmNvbnN0ICQgPSBpZCA9PiBkb2N1bWVudC5n",
+            "ZXRFbGVtZW50QnlJZChpZCk7CiAgICAgICAgY29uc3QgdiA9IGlkID0+ICQoaWQpLnZhbHVlLnRyaW0oKTsKICAgICAgICBjb25zdCBUSVRMRVMgPSB7IGRh",
+            "c2hib2FyZDon5Luq6KGo55uYJywgY2VydHM6J+ivgeS5puW6kycsIG1ha2Vyb290Oifnrb7lj5HmoLnor4HkuaYnLCBzaWduY2VydDon562+5Y+R6K+B5Lmm",
+            "JywgcmV2b2tlOiflkIrplIDor4HkuaYnLCBvY3NwOidPQ1NQfFRTQeetvuWPkScsIHZlcmlmeTon6K+B5Lmm6aqM6K+BJywgdGVtcGxhdGU6J+aooeadv+eu",
+            "oeeQhicsIGN0bG9nOidTQ1TmnI3liqHnrqHnkIYnLCBzaWduOifnrb7lkI3kuJPljLonLCBpbml0OifliJ3lp4vljJbnjq/looMnLCB1c2Vyczon55So5oi3",
+            "566h55CGJywgcmFkaXVzOidSYWRpdXPmnI3liqHnrqHnkIYnLCBjb25maWc6J+ezu+e7n+mFjee9ricsIGxvZ3M6J+aTjeS9nOaXpeW/lycgfTsKCiAgICAg",
+            "ICAgYXN5bmMgZnVuY3Rpb24gYXBpKHBhdGgsIGJvZHkpIHsKICAgICAgICAgIGNvbnN0IG9wdCA9IHsgbWV0aG9kOiBib2R5ID8gJ1BPU1QnIDogJ0dFVCcs",
+            "IGhlYWRlcnM6IHt9IH07CiAgICAgICAgICBpZiAoYm9keSAhPT0gdW5kZWZpbmVkKSB7IG9wdC5oZWFkZXJzWydDb250ZW50LVR5cGUnXSA9ICdhcHBsaWNh",
+            "dGlvbi9qc29uJzsgb3B0LmJvZHkgPSBKU09OLnN0cmluZ2lmeShib2R5KTsgfQogICAgICAgICAgY29uc3QgciA9IGF3YWl0IGZldGNoKHBhdGgsIG9wdCk7",
+            "CiAgICAgICAgICByZXR1cm4gci5qc29uKCk7CiAgICAgICAgfQoKICAgICAgICBmdW5jdGlvbiBzaG93T3V0KGlkLCB0ZXh0LCBvaykgewogICAgICAgICAg",
+            "Y29uc3QgZWwgPSAkKGlkKTsKICAgICAgICAgIGVsLmhpZGRlbiA9IGZhbHNlOwogICAgICAgICAgZWwudGV4dENvbnRlbnQgPSB0ZXh0IHx8ICco5peg6L6T",
+            "5Ye6KSc7CiAgICAgICAgICBlbC5jbGFzc05hbWUgPSAnb3V0ICcgKyAob2sgPyAnb2snIDogJ2VycicpOwogICAgICAgIH0KCiAgICAgICAgLy8g6K+B5Lmm",
+            "6aqM6K+B77ya5LiK5Lyg5pys5ZywIGNlci9jcnQvcGVtIOaWh+S7tumqjOivgQogICAgICAgIGFzeW5jIGZ1bmN0aW9uIHZlcmlmeUZpbGUoKSB7CiAgICAg",
+            "ICAgICBjb25zdCBpbnAgPSAkKCd2ZkZpbGUnKTsKICAgICAgICAgIGlmICghaW5wLmZpbGVzIHx8ICFpbnAuZmlsZXMubGVuZ3RoKSB7IHNob3dPdXQoJ3Zm",
+            "T3V0JywgJ+ivt+WFiOmAieaLqeivgeS5puaWh+S7tu+8iGNlciAvIGNydCAvIHBlbe+8iScsIGZhbHNlKTsgcmV0dXJuOyB9CiAgICAgICAgICBjb25zdCBm",
+            "ZCA9IG5ldyBGb3JtRGF0YSgpOwogICAgICAgICAgZmQuYXBwZW5kKCdmaWxlJywgaW5wLmZpbGVzWzBdKTsKICAgICAgICAgIHNob3dPdXQoJ3ZmT3V0Jywg",
+            "J+mqjOivgeS4rS4uLicsIHRydWUpOwogICAgICAgICAgdHJ5IHsKICAgICAgICAgICAgY29uc3QgcmVzcCA9IGF3YWl0IGZldGNoKCcvYXBpL3ZlcmlmeS9m",
+            "aWxlJywgeyBtZXRob2Q6ICdQT1NUJywgYm9keTogZmQgfSk7CiAgICAgICAgICAgIGNvbnN0IGogPSBhd2FpdCByZXNwLmpzb24oKTsKICAgICAgICAgICAg",
+            "aWYgKGoub2spIHNob3dPdXQoJ3ZmT3V0Jywgai5tZXNzYWdlIHx8ICco5peg6L6T5Ye6KScsIHRydWUpOwogICAgICAgICAgICBlbHNlIHNob3dPdXQoJ3Zm",
+            "T3V0JywgJ+mqjOivgeWksei0pTogJyArIChqLm1lc3NhZ2UgfHwgJycpLCBmYWxzZSk7CiAgICAgICAgICB9IGNhdGNoIChlKSB7IHNob3dPdXQoJ3ZmT3V0",
+            "JywgJ+ivt+axguW8guW4uDogJyArIGUsIGZhbHNlKTsgfQogICAgICAgIH0KCiAgICAgICAgYXN5bmMgZnVuY3Rpb24gcG9zdEZvcm0ocGF0aCwgcGFyYW1z",
+            "LCBvdXRJZCwgYnRuKSB7CiAgICAgICAgICBjb25zdCBlbCA9ICQob3V0SWQpOwogICAgICAgICAgZWwuaGlkZGVuID0gZmFsc2U7IGVsLmNsYXNzTmFtZSA9",
+            "ICdvdXQnOyBlbC50ZXh0Q29udGVudCA9ICfmiafooYzkuK0uLi4nOwogICAgICAgICAgaWYgKGJ0bikgYnRuLmRpc2FibGVkID0gdHJ1ZTsKICAgICAgICAg",
+            "IHRyeSB7CiAgICAgICAgICAgIGNvbnN0IHIgPSBhd2FpdCBhcGkocGF0aCwgcGFyYW1zKTsKICAgICAgICAgICAgc2hvd091dChvdXRJZCwgci5tZXNzYWdl",
+            "IHx8ICdPSycsICEhci5vayk7CiAgICAgICAgICB9IGNhdGNoIChlKSB7CiAgICAgICAgICAgIHNob3dPdXQob3V0SWQsICfor7fmsYLlpLHotKU6ICcgKyBl",
+            "LCBmYWxzZSk7CiAgICAgICAgICB9IGZpbmFsbHkgewogICAgICAgICAgICBpZiAoYnRuKSBidG4uZGlzYWJsZWQgPSBmYWxzZTsKICAgICAgICAgIH0KICAg",
+            "ICAgICB9CgogICAgICAgIC8vID09PT09IOetvuWPkeagueivgeS5pu+8mkROIOi+heWKqee8lui+kSA9PT09PQogICAgICAgIC8vIOWfuuehgOWtl+auteaY",
+            "oOWwhCBb6L6T5YWl5qGGaWQsIEROIGtleV3vvJvovpPlh7rpobrluo/mjIkgQ0EvQiBGb3J1bSDluLjop4Egc3ViamVjdCBETiDpobrluo/vvIhDLFMsTCxP",
+            "LE9VLENOLEXvvInjgIIKICAgICAgICAvLyBFIOmCrueuseWQjuerr+aMiSBPSUQgMS4yLjg0MC4xMTM1NDkuMS45LjEg5aSE55CG44CCCiAgICAgICAgLy8g",
+            "PT09PT0g6YCa55SoIEROIOi+heWKqee8lui+ke+8iG1rIOetvuWPkeagueivgeS5piAvIHNjIOetvuWPkeivgeS5piAvIGluIOWIneWni+WMlueOr+WigyDl",
+            "hbHnlKjvvIk9PT09PQogICAgICAgIC8vIOWfuuehgOWtl+autSBb5ZCO57yALCBETiBrZXld77yM6L6T5Ye66aG65bqPIEMsUyxMLE8sT1UsQ04sRe+8m0Ug",
+            "6YKu566x5ZCO56uv5oyJIE9JRCAxLjIuODQwLjExMzU0OS4xLjkuMSDlpITnkIYKICAgICAgICBjb25zdCBETl9TVERfUEFUID0gW1snQycsJ0MnXSxbJ1Mn",
+            "LCdTJ10sWydMJywnTCddLFsnTycsJ08nXSxbJ091JywnT1UnXSxbJ0NuJywnQ04nXSxbJ0UnLCcxLjIuODQwLjExMzU0OS4xLjkuMSddXTsKICAgICAgICBj",
+            "b25zdCBETl9FVl9QQVQgPSBbWydSZWcnLCcyLjUuNC41J10sWydCYycsJzIuNS40LjE1J10sCiAgICAgICAgICBbJ0pjJywnMS4zLjYuMS40LjEuMzExLjYw",
+            "LjIuMS4zJ10sWydKcycsJzEuMy42LjEuNC4xLjMxMS42MC4yLjEuMiddLFsnSmwnLCcxLjMuNi4xLjQuMS4zMTEuNjAuMi4xLjEnXSwKICAgICAgICAgIFsn",
+            "QWRkcicsJzIuNS40LjknXSxbJ09pJywnMi41LjQuOTcnXV07CiAgICAgICAgZnVuY3Rpb24gZG5GKHAsbil7IHJldHVybiBwICsgJ0RuJyArIG47IH0KICAg",
+            "ICAgICBmdW5jdGlvbiBkblN0ZChwKXsgcmV0dXJuIEROX1NURF9QQVQubWFwKGZ1bmN0aW9uKHgpeyByZXR1cm4gW2RuRihwLHhbMF0pLCB4WzFdXTsgfSk7",
+            "IH0KICAgICAgICBmdW5jdGlvbiBkbkV2RmllbGRzKHApeyByZXR1cm4gRE5fRVZfUEFULm1hcChmdW5jdGlvbih4KXsgcmV0dXJuIFtkbkYocCx4WzBdKSwg",
+            "eFsxXV07IH0pOyB9CiAgICAgICAgZnVuY3Rpb24gZG5Fdk9uKHApeyBjb25zdCBlbCA9ICQoZG5GKHAsJ0V2VG9nZ2xlJykpOyByZXR1cm4gZWwgJiYgZWwu",
+            "Y2hlY2tlZDsgfQogICAgICAgIGZ1bmN0aW9uIHN5bmNEbihwKSB7CiAgICAgICAgICBjb25zdCBwYXJ0cyA9IFtdOwogICAgICAgICAgY29uc3QgYWxsID0g",
+            "ZG5TdGQocCkuY29uY2F0KGRuRXZPbihwKSA/IGRuRXZGaWVsZHMocCkgOiBbXSk7CiAgICAgICAgICBhbGwuZm9yRWFjaChmdW5jdGlvbihwYSl7CiAgICAg",
+            "ICAgICAgIGNvbnN0IGVsID0gJChwYVswXSk7IGlmICghZWwpIHJldHVybjsKICAgICAgICAgICAgY29uc3QgdmFsID0gZWwudmFsdWUudHJpbSgpOwogICAg",
+            "ICAgICAgICBpZiAodmFsKSBwYXJ0cy5wdXNoKHBhWzFdICsgJz0nICsgdmFsKTsKICAgICAgICAgIH0pOwogICAgICAgICAgZG9jdW1lbnQucXVlcnlTZWxl",
+            "Y3RvckFsbCgnIycgKyBwICsgJ0RuT2lkUm93cyAuZG4tb2lkLXJvdycpLmZvckVhY2goZnVuY3Rpb24ocm93KXsKICAgICAgICAgICAgY29uc3QgayA9IHJv",
+            "dy5xdWVyeVNlbGVjdG9yKCcuZG4ta2V5JykudmFsdWUudHJpbSgpOwogICAgICAgICAgICBjb25zdCB2YWwgPSByb3cucXVlcnlTZWxlY3RvcignLmRuLXZh",
+            "bCcpLnZhbHVlLnRyaW0oKTsKICAgICAgICAgICAgaWYgKGsgJiYgdmFsKSBwYXJ0cy5wdXNoKGsgKyAnPScgKyB2YWwpOwogICAgICAgICAgfSk7CiAgICAg",
+            "ICAgICAkKHAgKyAnRG4nKS52YWx1ZSA9IHBhcnRzLmpvaW4oJywnKTsKICAgICAgICB9CiAgICAgICAgZnVuY3Rpb24gdG9nZ2xlRG5FdihwKSB7CiAgICAg",
+            "ICAgICBjb25zdCBvbiA9IGRuRXZPbihwKTsKICAgICAgICAgICQocCArICdEbkV2RmllbGRzJykuc3R5bGUuZGlzcGxheSA9IG9uID8gJycgOiAnbm9uZSc7",
+            "CiAgICAgICAgICBzeW5jRG4ocCk7CiAgICAgICAgfQogICAgICAgIGZ1bmN0aW9uIGFkZERuUm93KHAsIGtleSwgdmFsKSB7CiAgICAgICAgICBjb25zdCBk",
+            "aXYgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdkaXYnKTsKICAgICAgICAgIGRpdi5jbGFzc05hbWUgPSAnZG4tb2lkLXJvdyc7CiAgICAgICAgICBkaXYu",
+            "c3R5bGUuY3NzVGV4dCA9ICdkaXNwbGF5OmZsZXg7Z2FwOjZweDttYXJnaW4tYm90dG9tOjZweDthbGlnbi1pdGVtczpjZW50ZXInOwogICAgICAgICAgY29u",
+            "c3QgZXNjID0gcyA9PiBTdHJpbmcocyB8fCAnJykucmVwbGFjZSgvIi9nLCAnJnF1b3Q7Jyk7CiAgICAgICAgICBkaXYuaW5uZXJIVE1MID0gJzxpbnB1dCBj",
+            "bGFzcz0iZG4ta2V5IiBwbGFjZWhvbGRlcj0i5a2X5q615ZCN5oiWIE9JRO+8iOWmgiAyLjUuNC40Mu+8iSIgc3R5bGU9ImZsZXg6MS4yO21heC13aWR0aDoz",
+            "MjBweCIgdmFsdWU9IicgKyBlc2Moa2V5KSArICciIG9uaW5wdXQ9InN5bmNEbihcJycgKyBwICsgJ1wnKSI+JwogICAgICAgICAgICArICc8aW5wdXQgY2xh",
+            "c3M9ImRuLXZhbCIgcGxhY2Vob2xkZXI9IuWAvCIgc3R5bGU9ImZsZXg6MS41IiB2YWx1ZT0iJyArIGVzYyh2YWwpICsgJyIgb25pbnB1dD0ic3luY0RuKFwn",
+            "JyArIHAgKyAnXCcpIj4nCiAgICAgICAgICAgICsgJzxidXR0b24gdHlwZT0iYnV0dG9uIiBjbGFzcz0iZ2hvc3QiIHN0eWxlPSJmbGV4Om5vbmUiIG9uY2xp",
+            "Y2s9InRoaXMucGFyZW50Tm9kZS5yZW1vdmUoKTtzeW5jRG4oXCcnICsgcCArICdcJykiPuKclTwvYnV0dG9uPic7CiAgICAgICAgICAkKHAgKyAnRG5PaWRS",
+            "b3dzJykuYXBwZW5kQ2hpbGQoZGl2KTsKICAgICAgICB9CiAgICAgICAgZnVuY3Rpb24gcGFyc2VEbihwKSB7CiAgICAgICAgICBjb25zdCBkbiA9ICQocCAr",
+            "ICdEbicpLnZhbHVlLnRyaW0oKTsKICAgICAgICAgIGlmICghZG4pIHJldHVybjsKICAgICAgICAgICQocCArICdEbk9pZFJvd3MnKS5pbm5lckhUTUwgPSAn",
+            "JzsKICAgICAgICAgIGNvbnN0IGFsbCA9IGRuU3RkKHApLmNvbmNhdChkbkV2RmllbGRzKHApKTsKICAgICAgICAgIGFsbC5mb3JFYWNoKGZ1bmN0aW9uKHBh",
+            "KXsgJChwYVswXSkudmFsdWUgPSAnJzsgfSk7CiAgICAgICAgICBsZXQgZXZIaXQgPSBmYWxzZTsKICAgICAgICAgIGRuLnNwbGl0KCcsJykuZm9yRWFjaChm",
+            "dW5jdGlvbihzZWcpewogICAgICAgICAgICBzZWcgPSBzZWcudHJpbSgpOyBpZiAoIXNlZykgcmV0dXJuOwogICAgICAgICAgICBjb25zdCBpID0gc2VnLmlu",
+            "ZGV4T2YoJz0nKTsgaWYgKGkgPCAwKSByZXR1cm47CiAgICAgICAgICAgIGNvbnN0IGsgPSBzZWcuc2xpY2UoMCwgaSkudHJpbSgpLCB2YWwgPSBzZWcuc2xp",
+            "Y2UoaSArIDEpLnRyaW0oKTsKICAgICAgICAgICAgY29uc3QgaGl0ID0gYWxsLmZpbmQoZnVuY3Rpb24ocGEpeyByZXR1cm4gcGFbMV0udG9VcHBlckNhc2Uo",
+            "KSA9PT0gay50b1VwcGVyQ2FzZSgpOyB9KTsKICAgICAgICAgICAgaWYgKGhpdCkgewogICAgICAgICAgICAgICQoaGl0WzBdKS52YWx1ZSA9IHZhbDsKICAg",
+            "ICAgICAgICAgICBpZiAoZG5FdkZpZWxkcyhwKS5pbmRleE9mKGhpdCkgPj0gMCkgZXZIaXQgPSB0cnVlOwogICAgICAgICAgICB9IGVsc2UgYWRkRG5Sb3co",
+            "cCwgaywgdmFsKTsKICAgICAgICAgIH0pOwogICAgICAgICAgaWYgKGV2SGl0KSB7ICQoZG5GKHAsJ0V2VG9nZ2xlJykpLmNoZWNrZWQgPSB0cnVlOyAkKHAg",
+            "KyAnRG5FdkZpZWxkcycpLnN0eWxlLmRpc3BsYXkgPSAnJzsgfQogICAgICAgIH0KICAgICAgICAvLyBtayDlhbzlrrnljIXoo4XvvIjnrb7lj5HmoLnor4Hk",
+            "uabljp/mnInlh73mlbDlkI3kuI3lj5jvvIkKICAgICAgICBmdW5jdGlvbiBta0RuRXZPbigpeyByZXR1cm4gZG5Fdk9uKCdtaycpOyB9CiAgICAgICAgZnVu",
+            "Y3Rpb24gc3luY01rRG4oKXsgcmV0dXJuIHN5bmNEbignbWsnKTsgfQogICAgICAgIGZ1bmN0aW9uIHRvZ2dsZU1rRG5FdigpeyByZXR1cm4gdG9nZ2xlRG5F",
+            "dignbWsnKTsgfQogICAgICAgIGZ1bmN0aW9uIGFkZE1rRG5Sb3coayx2KXsgcmV0dXJuIGFkZERuUm93KCdtaycsayx2KTsgfQogICAgICAgIGZ1bmN0aW9u",
+            "IHBhcnNlTWtEbigpeyByZXR1cm4gcGFyc2VEbignbWsnKTsgfQogICAgICAgIC8vIOmhtemdouWwsee7qu+8muaKiuWQhOmhtem7mOiupCBETiDmi4bliIbl",
+            "iLDovoXliqnlrZfmrrUKICAgICAgICBwYXJzZU1rRG4oKTsgcGFyc2VEbignc2MnKTsgcGFyc2VEbignaW4nKTsKCgogICAgICAgIGFzeW5jIGZ1bmN0aW9u",
+            "IHF1aWNrQWN0aW9uKHBhdGgpIHsKICAgICAgICAgIHBvc3RGb3JtKHBhdGgsIHt9LCAnZGFzaE91dCcpOwogICAgICAgIH0KCiAgICAgICAgLy8gPT09PT0g",
+            "562+5ZCN5LiT5Yy677ya5b6u6L2v5Luj56CB562+5ZCNIC8gUERGIOaWh+aho+etvuWQjSA9PT09PQogICAgICAgIGFzeW5jIGZ1bmN0aW9uIGxvYWRTaWdu",
+            "Q2VydHMoKSB7CiAgICAgICAgICB0cnkgewogICAgICAgICAgICBjb25zdCByZSA9IGF3YWl0IGFwaSgnL2FwaS9zaWduY2VydHM/a2luZD1leGUnKTsKICAg",
+            "ICAgICAgICAgY29uc3QgcnAgPSBhd2FpdCBhcGkoJy9hcGkvc2lnbmNlcnRzP2tpbmQ9cGRmJyk7CiAgICAgICAgICAgIGZpbGxTaWduU2VsKCQoJ3NnRXhl",
+            "Q2VydCcpLCAocmUuZGF0YSB8fCBbXSkubGVuZ3RoID8gcmUuZGF0YSA6IG51bGwsICdleGUnKTsKICAgICAgICAgICAgZmlsbFNpZ25TZWwoJCgnc2dQZGZD",
+            "ZXJ0JyksIChycC5kYXRhIHx8IFtdKS5sZW5ndGggPyBycC5kYXRhIDogbnVsbCwgJ3BkZicpOwogICAgICAgICAgfSBjYXRjaCAoZSkgewogICAgICAgICAg",
+            "ICAkKCdzZ0V4ZUNlcnQnKS5pbm5lckhUTUwgPSAnPG9wdGlvbiB2YWx1ZT0iIj7vvIjliqDovb3lpLHotKU6ICcgKyBlICsgJ++8iTwvb3B0aW9uPic7CiAg",
+            "ICAgICAgICAgICQoJ3NnUGRmQ2VydCcpLmlubmVySFRNTCA9ICc8b3B0aW9uIHZhbHVlPSIiPu+8iOWKoOi9veWksei0pTogJyArIGUgKyAn77yJPC9vcHRp",
+            "b24+JzsKICAgICAgICAgIH0KICAgICAgICB9CiAgICAgICAgZnVuY3Rpb24gZmlsbFNpZ25TZWwoc2VsLCBsaXN0LCBraW5kKSB7CiAgICAgICAgICBpZiAo",
+            "IWxpc3QpIHsKICAgICAgICAgICAgc2VsLmlubmVySFRNTCA9IGtpbmQgPT09ICdwZGYnCiAgICAgICAgICAgICAgPyAnPG9wdGlvbiB2YWx1ZT0iIj7vvIjk",
+            "uI3nrb7lkI3vvIzku4XmlofmoaPml7bpl7TmiLPvvIk8L29wdGlvbj4nCiAgICAgICAgICAgICAgOiAnPG9wdGlvbiB2YWx1ZT0iIj7vvIjml6Dlj6/nlKjo",
+            "r4HkuabvvIk8L29wdGlvbj4nOwogICAgICAgICAgICByZXR1cm47CiAgICAgICAgICB9CiAgICAgICAgICBjb25zdCBoaW50ID0ga2luZCA9PT0gJ2V4ZScg",
+            "PyAn5Luj56CB562+5ZCNIEVLVScgOiAn5paH5qGj562+5ZCNIEVLVSc7CiAgICAgICAgICBzZWwuaW5uZXJIVE1MID0ga2luZCA9PT0gJ3BkZicKICAgICAg",
+            "ICAgICAgPyAnPG9wdGlvbiB2YWx1ZT0iIj7vvIjkuI3nrb7lkI3vvIzku4XmlofmoaPml7bpl7TmiLPvvIk8L29wdGlvbj4nCiAgICAgICAgICAgIDogJzxv",
+            "cHRpb24gdmFsdWU9IiI+77yI6K+36YCJ5oupICcgKyBoaW50ICsgJyDor4HkuabvvIk8L29wdGlvbj4nOwogICAgICAgICAgbGlzdC5mb3JFYWNoKGMgPT4g",
+            "ewogICAgICAgICAgICBjb25zdCBvID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnb3B0aW9uJyk7CiAgICAgICAgICAgIG8udmFsdWUgPSBjLnNlcmlhbDsK",
+            "ICAgICAgICAgICAgby50ZXh0Q29udGVudCA9IChjLnNyYyA9PT0gJ215JyA/ICfjgJTmiJHnmoTjgJUgJyA6ICcnKSArIGMuc2VyaWFsICsgJyDvvZwgJyAr",
+            "IChjLmFsZ28gfHwgJycpICsgKGMuYml0cyA/ICcgJyArIGMuYml0cyA6ICcnKSArICcg772cICcgKyBjLmRuOwogICAgICAgICAgICBvLnRpdGxlID0gJ+W6",
+            "j+WIl+WPtzogJyArIGMuc2VyaWFsICsgJ1xu566X5rOVOiAnICsgKGMuYWxnbyB8fCAnJykgKyAoYy5iaXRzID8gJyAnICsgYy5iaXRzICsgJyDkvY0nIDog",
+            "JycpICsKICAgICAgICAgICAgICAnXG7pooHlj5HogIU6ICcgKyAoYy5pc3N1ZXIgfHwgJycpICsgJ1xu5pyJ5pWI5pyfOiAnICsgKGMudmFsaWRGcm9tIHx8",
+            "ICcnKSArICcgfiAnICsgKGMudmFsaWRUbyB8fCAnJykgKwogICAgICAgICAgICAgICdcbueKtuaAgTogJyArIChjLnN0YXR1cyA9PT0gJ1YnID8gJ+ato+W4",
+            "uCcgOiBjLnN0YXR1cyA9PT0gJ1InID8gJ+W3suWQiumUgCcgOiAn5pyq55+lJykgKwogICAgICAgICAgICAgICdcbkVLVTogJyArICgoYy5la3VzIHx8IFtd",
+            "KS5qb2luKCcsICcpIHx8ICfvvIjml6DvvIknKSArCiAgICAgICAgICAgICAgJ1xuRE46ICcgKyBjLmRuOwogICAgICAgICAgICBzZWwuYXBwZW5kQ2hpbGQo",
+            "byk7CiAgICAgICAgICB9KTsKICAgICAgICB9CiAgICAgICAgLy8gPT09PT0g5b6u6L2v5Luj56CB562+5ZCN5om56YeP5b6F562+5ZCN6Zif5YiX77yI5aSa",
+            "6YCJICsg5ouW5ou977yJID09PT09CiAgICAgICAgY29uc3QgZXhlSm9icyA9IFtdOwogICAgICAgIGZ1bmN0aW9uIGFkZEV4ZUZpbGVzKGZpbGVzKSB7CiAg",
+            "ICAgICAgICBsZXQgYWRkZWQgPSAwOwogICAgICAgICAgWy4uLmZpbGVzXS5mb3JFYWNoKGYgPT4gewogICAgICAgICAgICBpZiAoIS9cLihleGV8ZGxsfHN5",
+            "c3xjYWJ8Y2F0fG1zaSkkL2kudGVzdChmLm5hbWUpKSByZXR1cm47CiAgICAgICAgICAgIGlmIChleGVKb2JzLnNvbWUoaiA9PiBqLmZpbGUubmFtZSA9PT0g",
+            "Zi5uYW1lICYmIGouZmlsZS5zaXplID09PSBmLmZpbGUuc2l6ZSkpIHJldHVybjsKICAgICAgICAgICAgZXhlSm9icy5wdXNoKHsgZmlsZTogZiwgc3RhdGU6",
+            "ICd3YWl0JywgbXNnOiAn5b6F5aSE55CGJywgYjY0OiBudWxsLCBuYW1lOiBudWxsIH0pOwogICAgICAgICAgICBhZGRlZCsrOwogICAgICAgICAgfSk7CiAg",
+            "ICAgICAgICByZW5kZXJFeGVMaXN0KCk7CiAgICAgICAgICByZXR1cm4gYWRkZWQ7CiAgICAgICAgfQogICAgICAgIGZ1bmN0aW9uIHJlbmRlckV4ZUxpc3Qo",
+            "KSB7CiAgICAgICAgICBjb25zdCBib3ggPSAkKCdleGVMaXN0Jyk7CiAgICAgICAgICBib3guaW5uZXJIVE1MID0gJyc7CiAgICAgICAgICBleGVKb2JzLmZv",
+            "ckVhY2goKGosIGkpID0+IHsKICAgICAgICAgICAgY29uc3Qgcm93ID0gZG9jdW1lbnQuY3JlYXRlRWxlbWVudCgnZGl2Jyk7CiAgICAgICAgICAgIHJvdy5j",
+            "bGFzc05hbWUgPSAncGRmLXJvdyc7CiAgICAgICAgICAgIHJvdy5pbm5lckhUTUwgPSAnPHNwYW4gY2xhc3M9Im5tIiB0aXRsZT0iJyArIGVzYyhqLmZpbGUu",
+            "bmFtZSkgKyAnIj4nICsgZXNjKGouZmlsZS5uYW1lKSArICfvvIgnICsgZm10U2l6ZShqLmZpbGUuc2l6ZSkgKyAn77yJPC9zcGFuPicKICAgICAgICAgICAg",
+            "ICArICc8c3BhbiBjbGFzcz0ic3QgJyArIChqLnN0YXRlID09PSAnb2snID8gJ29rJyA6IGouc3RhdGUgPT09ICdlcnInID8gJ2VycicgOiAnJykgKyAnIj4n",
+            "ICsgZXNjKGoubXNnKSArICc8L3NwYW4+JwogICAgICAgICAgICAgICsgKGouc3RhdGUgPT09ICdvaycgJiYgai5iNjQgPyAnPGEgY2xhc3M9ImRsIiBocmVm",
+            "PSJkYXRhOmFwcGxpY2F0aW9uL29jdGV0LXN0cmVhbTtiYXNlNjQsJyArIGouYjY0ICsgJyIgZG93bmxvYWQ9IicgKyBlc2Moai5uYW1lKSArICciPuKshyDk",
+            "uIvovb08L2E+JyA6ICcnKQogICAgICAgICAgICAgICsgJzxidXR0b24gb25jbGljaz0iZXhlU2lnbk9uZSgnICsgaSArICcpIj7nrb7lkI08L2J1dHRvbj4n",
+            "CiAgICAgICAgICAgICAgKyAnPGJ1dHRvbiBjbGFzcz0iZ2hvc3QiIG9uY2xpY2s9ImV4ZVZlcmlmeU9uZSgnICsgaSArICcpIj7pqozor4E8L2J1dHRvbj4n",
+            "CiAgICAgICAgICAgICAgKyAnPGJ1dHRvbiBjbGFzcz0iZ2hvc3QiIG9uY2xpY2s9ImV4ZVJlbW92ZSgnICsgaSArICcpIj7np7vpmaQ8L2J1dHRvbj4nOwog",
+            "ICAgICAgICAgICBib3guYXBwZW5kQ2hpbGQocm93KTsKICAgICAgICAgIH0pOwogICAgICAgICAgJCgnZXhlQ291bnQnKS50ZXh0Q29udGVudCA9IGV4ZUpv",
+            "YnMubGVuZ3RoOwogICAgICAgIH0KICAgICAgICBmdW5jdGlvbiBleGVSZW1vdmUoaSkgeyBleGVKb2JzLnNwbGljZShpLCAxKTsgcmVuZGVyRXhlTGlzdCgp",
+            "OyB9CiAgICAgICAgZnVuY3Rpb24gZXhlQ2xlYXIoKSB7IGV4ZUpvYnMubGVuZ3RoID0gMDsgcmVuZGVyRXhlTGlzdCgpOyAkKCdzZ0V4ZU91dCcpLmhpZGRl",
+            "biA9IHRydWU7IH0KICAgICAgICBmdW5jdGlvbiBleGVQYXJhbXMoKSB7CiAgICAgICAgICBjb25zdCBmZCA9IG5ldyBGb3JtRGF0YSgpOwogICAgICAgICAg",
+            "ZmQuYXBwZW5kKCdzZXJpYWwnLCAkKCdzZ0V4ZUNlcnQnKS52YWx1ZSk7CiAgICAgICAgICBmZC5hcHBlbmQoJ3RzVHlwZScsICQoJ3NnRXhlVHNUeXBlJyku",
+            "dmFsdWUpOwogICAgICAgICAgZmQuYXBwZW5kKCd0c1VybCcsICQoJ3NnRXhlVHNVcmwnKS52YWx1ZSk7CiAgICAgICAgICByZXR1cm4gZmQ7CiAgICAgICAg",
+            "fQogICAgICAgIGZ1bmN0aW9uIGV4ZVByZUNoZWNrKCkgewogICAgICAgICAgaWYgKCEkKCdzZ0V4ZUNlcnQnKS52YWx1ZSkgcmV0dXJuICfor7flhYjpgInm",
+            "i6nnrb7lkI3or4HkuaYnOwogICAgICAgICAgcmV0dXJuIG51bGw7CiAgICAgICAgfQogICAgICAgIGFzeW5jIGZ1bmN0aW9uIGV4ZVNpZ25PbmUoaSkgewog",
+            "ICAgICAgICAgY29uc3QgaiA9IGV4ZUpvYnNbaV07CiAgICAgICAgICBpZiAoIWopIHJldHVybjsKICAgICAgICAgIGNvbnN0IGVyciA9IGV4ZVByZUNoZWNr",
+            "KCk7CiAgICAgICAgICBpZiAoZXJyKSB7IGouc3RhdGUgPSAnZXJyJzsgai5tc2cgPSBlcnI7IHJlbmRlckV4ZUxpc3QoKTsgcmV0dXJuOyB9CiAgICAgICAg",
+            "ICBqLnN0YXRlID0gJ3NpZ25pbmcnOyBqLm1zZyA9ICfnrb7lkI3kuK0uLi4nOyByZW5kZXJFeGVMaXN0KCk7CiAgICAgICAgICBjb25zdCBmZCA9IGV4ZVBh",
+            "cmFtcygpOwogICAgICAgICAgZmQuYXBwZW5kKCduYW1lJywgai5maWxlLm5hbWUpOwogICAgICAgICAgZmQuYXBwZW5kKCdmaWxlJywgai5maWxlKTsKICAg",
+            "ICAgICAgIHRyeSB7CiAgICAgICAgICAgIGNvbnN0IHJlc3AgPSBhd2FpdCBmZXRjaCgnL2FwaS9zaWduL2V4ZScsIHsgbWV0aG9kOiAnUE9TVCcsIGJvZHk6",
+            "IGZkIH0pOwogICAgICAgICAgICBjb25zdCByID0gYXdhaXQgcmVzcC5qc29uKCk7CiAgICAgICAgICAgIGouc3RhdGUgPSByLm9rID8gJ29rJyA6ICdlcnIn",
+            "OwogICAgICAgICAgICBqLm1zZyA9IChyLm9rID8gJ+KckyDnrb7lkI3miJDlip8nIDogJ+KclyAnICsgKHIubWVzc2FnZSB8fCAn5aSx6LSlJykpLnN1YnN0",
+            "cmluZygwLCAxMjApOwogICAgICAgICAgICBqLmI2NCA9IHIub2sgPyAoci5iNjQgfHwgbnVsbCkgOiBudWxsOwogICAgICAgICAgICBqLm5hbWUgPSByLm9r",
+            "ID8gKHIubmFtZSB8fCAnc2lnbmVkXycgKyBqLmZpbGUubmFtZSkgOiBudWxsOwogICAgICAgICAgICBqLmxhc3REZXRhaWwgPSByLm1lc3NhZ2UgfHwgJyc7",
+            "CiAgICAgICAgICB9IGNhdGNoIChlKSB7CiAgICAgICAgICAgIGouc3RhdGUgPSAnZXJyJzsgai5tc2cgPSAn6K+35rGC5aSx6LSlOiAnICsgZTsgai5sYXN0",
+            "RGV0YWlsID0gJyc7CiAgICAgICAgICB9CiAgICAgICAgICByZW5kZXJFeGVMaXN0KCk7CiAgICAgICAgICAkKCdzZ0V4ZU91dCcpLmhpZGRlbiA9IGZhbHNl",
+            "OwogICAgICAgICAgJCgnc2dFeGVPdXQnKS5jbGFzc05hbWUgPSAnb3V0ICcgKyAoai5zdGF0ZSA9PT0gJ29rJyA/ICdvaycgOiAnZXJyJyk7CiAgICAgICAg",
+            "ICAkKCdzZ0V4ZU91dCcpLnRleHRDb250ZW50ID0gJ1snICsgai5maWxlLm5hbWUgKyAnXSAnICsgKGoubGFzdERldGFpbCB8fCBqLm1zZyk7CiAgICAgICAg",
+            "fQogICAgICAgIGFzeW5jIGZ1bmN0aW9uIGV4ZVZlcmlmeU9uZShpKSB7CiAgICAgICAgICBjb25zdCBqID0gZXhlSm9ic1tpXTsKICAgICAgICAgIGlmICgh",
+            "aikgcmV0dXJuOwogICAgICAgICAgai5zdGF0ZSA9ICdzaWduaW5nJzsgai5tc2cgPSAn6aqM6K+B5LitLi4uJzsgcmVuZGVyRXhlTGlzdCgpOwogICAgICAg",
+            "ICAgY29uc3QgZmQgPSBuZXcgRm9ybURhdGEoKTsKICAgICAgICAgIGZkLmFwcGVuZCgnZmlsZScsIGouZmlsZSk7CiAgICAgICAgICB0cnkgewogICAgICAg",
+            "ICAgICBjb25zdCByZXNwID0gYXdhaXQgZmV0Y2goJy9hcGkvdmVyaWZ5L2V4ZScsIHsgbWV0aG9kOiAnUE9TVCcsIGJvZHk6IGZkIH0pOwogICAgICAgICAg",
+            "ICBjb25zdCByID0gYXdhaXQgcmVzcC5qc29uKCk7CiAgICAgICAgICAgIGouc3RhdGUgPSByLm9rID8gJ29rJyA6ICdlcnInOwogICAgICAgICAgICBqLm1z",
+            "ZyA9IChyLm9rID8gJ+KckyDpqozor4HlrozmiJAnIDogJ+KclyDpqozor4HlpLHotKUnKS5zdWJzdHJpbmcoMCwgMTIwKTsKICAgICAgICAgICAgai5sYXN0",
+            "RGV0YWlsID0gci5tZXNzYWdlIHx8ICcnOwogICAgICAgICAgfSBjYXRjaCAoZSkgewogICAgICAgICAgICBqLnN0YXRlID0gJ2Vycic7IGoubXNnID0gJ+iv",
+            "t+axguWksei0pTogJyArIGU7IGoubGFzdERldGFpbCA9ICcnOwogICAgICAgICAgfQogICAgICAgICAgcmVuZGVyRXhlTGlzdCgpOwogICAgICAgICAgJCgn",
+            "c2dFeGVPdXQnKS5oaWRkZW4gPSBmYWxzZTsKICAgICAgICAgICQoJ3NnRXhlT3V0JykuY2xhc3NOYW1lID0gJ291dCAnICsgKGouc3RhdGUgPT09ICdvaycg",
+            "PyAnb2snIDogJ2VycicpOwogICAgICAgICAgJCgnc2dFeGVPdXQnKS50ZXh0Q29udGVudCA9ICdbJyArIGouZmlsZS5uYW1lICsgJ10gJyArIChqLmxhc3RE",
+            "ZXRhaWwgfHwgai5tc2cpOwogICAgICAgIH0KICAgICAgICBhc3luYyBmdW5jdGlvbiBleGVTaWduQWxsKCkgewogICAgICAgICAgY29uc3Qgb3V0ID0gJCgn",
+            "c2dFeGVPdXQnKTsKICAgICAgICAgIGlmICghZXhlSm9icy5sZW5ndGgpIHsgb3V0LmhpZGRlbiA9IGZhbHNlOyBvdXQuY2xhc3NOYW1lID0gJ291dCBlcnIn",
+            "OyBvdXQudGV4dENvbnRlbnQgPSAn5b6F562+5ZCN5YiX6KGo5Li656m677yM6K+35YWI5re75Yqg5paH5Lu2JzsgcmV0dXJuOyB9CiAgICAgICAgICBsZXQg",
+            "b2tOID0gMCwgZXJyTiA9IDA7IGNvbnN0IGxpbmVzID0gW107CiAgICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IGV4ZUpvYnMubGVuZ3RoOyBpKyspIHsK",
+            "ICAgICAgICAgICAgY29uc3QgaiA9IGV4ZUpvYnNbaV07CiAgICAgICAgICAgIGNvbnN0IGVyciA9IGV4ZVByZUNoZWNrKCk7CiAgICAgICAgICAgIGlmIChl",
+            "cnIpIHsgai5zdGF0ZSA9ICdlcnInOyBqLm1zZyA9IGVycjsgZXJyTisrOyBsaW5lcy5wdXNoKCfinJcgJyArIGouZmlsZS5uYW1lICsgJyDihpIgJyArIGVy",
+            "cik7IHJlbmRlckV4ZUxpc3QoKTsgY29udGludWU7IH0KICAgICAgICAgICAgai5zdGF0ZSA9ICdzaWduaW5nJzsgai5tc2cgPSAn562+5ZCN5LitLi4uJzsg",
+            "cmVuZGVyRXhlTGlzdCgpOwogICAgICAgICAgICBjb25zdCBmZCA9IGV4ZVBhcmFtcygpOwogICAgICAgICAgICBmZC5hcHBlbmQoJ25hbWUnLCBqLmZpbGUu",
+            "bmFtZSk7CiAgICAgICAgICAgIGZkLmFwcGVuZCgnZmlsZScsIGouZmlsZSk7CiAgICAgICAgICAgIHRyeSB7CiAgICAgICAgICAgICAgY29uc3QgcmVzcCA9",
+            "IGF3YWl0IGZldGNoKCcvYXBpL3NpZ24vZXhlJywgeyBtZXRob2Q6ICdQT1NUJywgYm9keTogZmQgfSk7CiAgICAgICAgICAgICAgY29uc3QgciA9IGF3YWl0",
+            "IHJlc3AuanNvbigpOwogICAgICAgICAgICAgIGouc3RhdGUgPSByLm9rID8gJ29rJyA6ICdlcnInOwogICAgICAgICAgICAgIGoubXNnID0gci5vayA/ICfi",
+            "nJMg562+5ZCN5oiQ5YqfJyA6ICgn4pyXICcgKyAoci5tZXNzYWdlIHx8ICflpLHotKUnKSkuc3Vic3RyaW5nKDAsIDEwMCk7CiAgICAgICAgICAgICAgai5i",
+            "NjQgPSByLm9rID8gKHIuYjY0IHx8IG51bGwpIDogbnVsbDsKICAgICAgICAgICAgICBqLm5hbWUgPSByLm9rID8gKHIubmFtZSB8fCAnc2lnbmVkXycgKyBq",
+            "LmZpbGUubmFtZSkgOiBudWxsOwogICAgICAgICAgICAgIGlmIChyLm9rKSBva04rKzsgZWxzZSB7IGVyck4rKzsgbGluZXMucHVzaCgn4pyXICcgKyBqLmZp",
+            "bGUubmFtZSArICcg4oaSICcgKyAoci5tZXNzYWdlIHx8ICflpLHotKUnKSk7IH0KICAgICAgICAgICAgfSBjYXRjaCAoZSkgewogICAgICAgICAgICAgIGou",
+            "c3RhdGUgPSAnZXJyJzsgai5tc2cgPSAn6K+35rGC5aSx6LSlOiAnICsgZTsgZXJyTisrOyBsaW5lcy5wdXNoKCfinJcgJyArIGouZmlsZS5uYW1lICsgJyDi",
+            "hpIgJyArIGUpOwogICAgICAgICAgICB9CiAgICAgICAgICAgIHJlbmRlckV4ZUxpc3QoKTsKICAgICAgICAgIH0KICAgICAgICAgIG91dC5oaWRkZW4gPSBm",
+            "YWxzZTsKICAgICAgICAgIG91dC5jbGFzc05hbWUgPSAnb3V0ICcgKyAoZXJyTiA/ICdlcnInIDogJ29rJyk7CiAgICAgICAgICBvdXQudGV4dENvbnRlbnQg",
+            "PSAn5om56YeP562+5ZCN5a6M5oiQ77ya5oiQ5YqfICcgKyBva04gKyAnIOS4qu+8jOWksei0pSAnICsgZXJyTiArICcg5LiqJyArIChsaW5lcy5sZW5ndGgg",
+            "PyAnXG4nICsgbGluZXMuam9pbignXG4nKSA6ICcnKTsKICAgICAgICB9CiAgICAgICAgYXN5bmMgZnVuY3Rpb24gZXhlVmVyaWZ5QWxsKCkgewogICAgICAg",
+            "ICAgY29uc3Qgb3V0ID0gJCgnc2dFeGVPdXQnKTsKICAgICAgICAgIGlmICghZXhlSm9icy5sZW5ndGgpIHsgb3V0LmhpZGRlbiA9IGZhbHNlOyBvdXQuY2xh",
+            "c3NOYW1lID0gJ291dCBlcnInOyBvdXQudGV4dENvbnRlbnQgPSAn5b6F562+5ZCN5YiX6KGo5Li656m677yM6K+35YWI5re75Yqg5paH5Lu2JzsgcmV0dXJu",
+            "OyB9CiAgICAgICAgICBsZXQgb2tOID0gMCwgZXJyTiA9IDA7IGNvbnN0IGxpbmVzID0gW107CiAgICAgICAgICBmb3IgKGxldCBpID0gMDsgaSA8IGV4ZUpv",
+            "YnMubGVuZ3RoOyBpKyspIHsKICAgICAgICAgICAgY29uc3QgaiA9IGV4ZUpvYnNbaV07CiAgICAgICAgICAgIGouc3RhdGUgPSAnc2lnbmluZyc7IGoubXNn",
+            "ID0gJ+mqjOivgeS4rS4uLic7IHJlbmRlckV4ZUxpc3QoKTsKICAgICAgICAgICAgY29uc3QgZmQgPSBuZXcgRm9ybURhdGEoKTsKICAgICAgICAgICAgZmQu",
+            "YXBwZW5kKCdmaWxlJywgai5maWxlKTsKICAgICAgICAgICAgdHJ5IHsKICAgICAgICAgICAgICBjb25zdCByZXNwID0gYXdhaXQgZmV0Y2goJy9hcGkvdmVy",
+            "aWZ5L2V4ZScsIHsgbWV0aG9kOiAnUE9TVCcsIGJvZHk6IGZkIH0pOwogICAgICAgICAgICAgIGNvbnN0IHIgPSBhd2FpdCByZXNwLmpzb24oKTsKICAgICAg",
+            "ICAgICAgICBqLnN0YXRlID0gci5vayA/ICdvaycgOiAnZXJyJzsKICAgICAgICAgICAgICBqLm1zZyA9IHIub2sgPyAn4pyTIOmqjOivgeWujOaIkCcgOiAn",
+            "4pyXIOmqjOivgeWksei0pSc7CiAgICAgICAgICAgICAgaWYgKHIub2spIG9rTisrOyBlbHNlIHsgZXJyTisrOyBsaW5lcy5wdXNoKCfinJcgJyArIGouZmls",
+            "ZS5uYW1lICsgJyDihpIgJyArIChyLm1lc3NhZ2UgfHwgJ+Wksei0pScpKTsgfQogICAgICAgICAgICB9IGNhdGNoIChlKSB7CiAgICAgICAgICAgICAgai5z",
+            "dGF0ZSA9ICdlcnInOyBqLm1zZyA9ICfor7fmsYLlpLHotKU6ICcgKyBlOyBlcnJOKys7IGxpbmVzLnB1c2goJ+KclyAnICsgai5maWxlLm5hbWUgKyAnIOKG",
+            "kiAnICsgZSk7CiAgICAgICAgICAgIH0KICAgICAgICAgICAgcmVuZGVyRXhlTGlzdCgpOwogICAgICAgICAgfQogICAgICAgICAgb3V0LmhpZGRlbiA9IGZh",
+            "bHNlOwogICAgICAgICAgb3V0LmNsYXNzTmFtZSA9ICdvdXQgJyArIChlcnJOID8gJ2VycicgOiAnb2snKTsKICAgICAgICAgIG91dC50ZXh0Q29udGVudCA9",
+            "ICfmibnph4/pqozor4HlrozmiJDvvJrmiJDlip8gJyArIG9rTiArICcg5Liq77yM5aSx6LSlICcgKyBlcnJOICsgJyDkuKonICsgKGxpbmVzLmxlbmd0aCA/",
+            "ICdcbicgKyBsaW5lcy5qb2luKCdcbicpIDogJycpOwogICAgICAgIH0KICAgICAgICAvLyDmi5bmi73kuI7lpJrpgInliJ3lp4vljJYKICAgICAgICAoZnVu",
+            "Y3Rpb24gaW5pdEV4ZURyb3AoKSB7CiAgICAgICAgICBjb25zdCBkeiA9ICQoJ2V4ZURyb3AnKTsKICAgICAgICAgIGlmICghZHopIHJldHVybjsKICAgICAg",
+            "ICAgIGR6Lm9uZHJhZ292ZXIgPSBlID0+IHsgZS5wcmV2ZW50RGVmYXVsdCgpOyBkei5jbGFzc0xpc3QuYWRkKCdvdmVyJyk7IH07CiAgICAgICAgICBkei5v",
+            "bmRyYWdsZWF2ZSA9ICgpID0+IGR6LmNsYXNzTGlzdC5yZW1vdmUoJ292ZXInKTsKICAgICAgICAgIGR6Lm9uZHJvcCA9IGUgPT4geyBlLnByZXZlbnREZWZh",
+            "dWx0KCk7IGR6LmNsYXNzTGlzdC5yZW1vdmUoJ292ZXInKTsgYWRkRXhlRmlsZXMoZS5kYXRhVHJhbnNmZXIuZmlsZXMpOyB9OwogICAgICAgICAgY29uc3Qg",
+            "ZmkgPSAkKCdzZ0V4ZUZpbGUnKTsKICAgICAgICAgIGlmIChmaSkgZmkub25jaGFuZ2UgPSBlID0+IHsgYWRkRXhlRmlsZXMoZS50YXJnZXQuZmlsZXMpOyBl",
+            "LnRhcmdldC52YWx1ZSA9ICcnOyB9OwogICAgICAgIH0pKCk7CgogICAgICAgIC8vID09PT09IOetvuWQjeS4k+WMuu+8mumAieaLqeWkueWIh+aNoiA9PT09",
+            "PQogICAgICAgIGZ1bmN0aW9uIHNpZ1RhYihuYW1lLCBidG4pIHsKICAgICAgICAgIFsnZXhlJywgJ3BkZiddLmZvckVhY2gobiA9PiB7CiAgICAgICAgICAg",
+            "ICQoJ3NpZ1BhbmUtJyArIG4pLnN0eWxlLmRpc3BsYXkgPSBuID09PSBuYW1lID8gJycgOiAnbm9uZSc7CiAgICAgICAgICAgICQoJ3NpZ1RhYkJ0bi0nICsg",
+            "bikuY2xhc3NMaXN0LnRvZ2dsZSgnYWN0aXZlJywgbiA9PT0gbmFtZSk7CiAgICAgICAgICB9KTsKICAgICAgICB9CgogICAgICAgIC8vID09PT09IE9DU1B8",
+            "VFNB562+5Y+R77ya5YiG57G75aS55YiH5o2i77yIT0NTUOetvuWPkSAvIFRTQeetvuWPkSAvIOaooeaLn+ivt+axguiwg+ivle+8iSA9PT09PQogICAgICAg",
+            "IGZ1bmN0aW9uIG9jc3BUYWIodCkgewogICAgICAgICAgZG9jdW1lbnQucXVlcnlTZWxlY3RvckFsbCgnI29jc3BUYWJzIC5zaWctdGFiJykuZm9yRWFjaChi",
+            "ID0+IGIuY2xhc3NMaXN0LnRvZ2dsZSgnYWN0aXZlJywgYi5nZXRBdHRyaWJ1dGUoJ2RhdGEtdGFiJykgPT09IHQpKTsKICAgICAgICAgICQoJ29jc3BJc3N1",
+            "ZScpLnN0eWxlLmRpc3BsYXkgPSB0ID09PSAnaXNzdWUnID8gJycgOiAnbm9uZSc7CiAgICAgICAgICAkKCd0c2FJc3N1ZScpLnN0eWxlLmRpc3BsYXkgPSB0",
+            "ID09PSAndHNhaXNzdWUnID8gJycgOiAnbm9uZSc7CiAgICAgICAgICAkKCdkYmdPY3NwJykuc3R5bGUuZGlzcGxheSA9IHQgPT09ICdkZWJ1Z29jc3AnID8g",
+            "JycgOiAnbm9uZSc7CiAgICAgICAgICAkKCdkYmdUc2EnKS5zdHlsZS5kaXNwbGF5ID0gdCA9PT0gJ2RlYnVndHNhJyA/ICcnIDogJ25vbmUnOwogICAgICAg",
+            "IH0KCiAgICAgICAgLy8gPT09PT0gUERGIOaJuemHj+W+heetvuWQjemYn+WIl++8iOWkmumAiSArIOaLluaLve+8iSA9PT09PQogICAgICAgIGNvbnN0IHBk",
+            "ZkpvYnMgPSBbXTsKICAgICAgICBmdW5jdGlvbiBhZGRQZGZGaWxlcyhmaWxlcykgewogICAgICAgICAgbGV0IGFkZGVkID0gMDsKICAgICAgICAgIFsuLi5m",
+            "aWxlc10uZm9yRWFjaChmID0+IHsKICAgICAgICAgICAgaWYgKCEvXC5wZGYkL2kudGVzdChmLm5hbWUpKSByZXR1cm47CiAgICAgICAgICAgIGlmIChwZGZK",
+            "b2JzLnNvbWUoaiA9PiBqLmZpbGUubmFtZSA9PT0gZi5uYW1lICYmIGouZmlsZS5zaXplID09PSBmLmZpbGUuc2l6ZSkpIHJldHVybjsKICAgICAgICAgICAg",
+            "cGRmSm9icy5wdXNoKHsgZmlsZTogZiwgc3RhdGU6ICd3YWl0JywgbXNnOiAn5b6F5aSE55CGJywgYjY0OiBudWxsLCBuYW1lOiBudWxsIH0pOwogICAgICAg",
+            "ICAgICBhZGRlZCsrOwogICAgICAgICAgfSk7CiAgICAgICAgICByZW5kZXJQZGZMaXN0KCk7CiAgICAgICAgICByZXR1cm4gYWRkZWQ7CiAgICAgICAgfQog",
+            "ICAgICAgIGZ1bmN0aW9uIGZtdFNpemUobikgewogICAgICAgICAgcmV0dXJuIG4gPiAxMDQ4NTc2ID8gKG4gLyAxMDQ4NTc2KS50b0ZpeGVkKDEpICsgJyBN",
+            "QicgOiBNYXRoLm1heCgxLCBNYXRoLnJvdW5kKG4gLyAxMDI0KSkgKyAnIEtCJzsKICAgICAgICB9CiAgICAgICAgZnVuY3Rpb24gcmVuZGVyUGRmTGlzdCgp",
+            "IHsKICAgICAgICAgIGNvbnN0IGJveCA9ICQoJ3BkZkxpc3QnKTsKICAgICAgICAgIGJveC5pbm5lckhUTUwgPSAnJzsKICAgICAgICAgIHBkZkpvYnMuZm9y",
+            "RWFjaCgoaiwgaSkgPT4gewogICAgICAgICAgICBjb25zdCByb3cgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCdkaXYnKTsKICAgICAgICAgICAgcm93LmNs",
+            "YXNzTmFtZSA9ICdwZGYtcm93JzsKICAgICAgICAgICAgcm93LmlubmVySFRNTCA9ICc8c3BhbiBjbGFzcz0ibm0iIHRpdGxlPSInICsgZXNjKGouZmlsZS5u",
+            "YW1lKSArICciPicgKyBlc2Moai5maWxlLm5hbWUpICsgJ++8iCcgKyBmbXRTaXplKGouZmlsZS5zaXplKSArICfvvIk8L3NwYW4+JwogICAgICAgICAgICAg",
+            "ICsgJzxzcGFuIGNsYXNzPSJzdCAnICsgKGouc3RhdGUgPT09ICdvaycgPyAnb2snIDogai5zdGF0ZSA9PT0gJ2VycicgPyAnZXJyJyA6ICcnKSArICciPicg",
+            "KyBlc2Moai5tc2cpICsgJzwvc3Bhbj4nCiAgICAgICAgICAgICAgKyAoai5zdGF0ZSA9PT0gJ29rJyAmJiBqLmI2NCA/ICc8YSBjbGFzcz0iZGwiIGhyZWY9",
+            "ImRhdGE6YXBwbGljYXRpb24vcGRmO2Jhc2U2NCwnICsgai5iNjQgKyAnIiBkb3dubG9hZD0iJyArIGVzYyhqLm5hbWUpICsgJyI+4qyHIOS4i+i9vTwvYT4n",
+            "IDogJycpCiAgICAgICAgICAgICAgKyAnPGJ1dHRvbiBvbmNsaWNrPSJwZGZTaWduT25lKCcgKyBpICsgJykiPuetvuWQjTwvYnV0dG9uPicKICAgICAgICAg",
+            "ICAgICArICc8YnV0dG9uIGNsYXNzPSJnaG9zdCIgb25jbGljaz0icGRmVmVyaWZ5T25lKCcgKyBpICsgJykiPumqjOivgTwvYnV0dG9uPicKICAgICAgICAg",
+            "ICAgICArICc8YnV0dG9uIGNsYXNzPSJnaG9zdCIgb25jbGljaz0icGRmUmVtb3ZlKCcgKyBpICsgJykiPuenu+mZpDwvYnV0dG9uPic7CiAgICAgICAgICAg",
+            "IGJveC5hcHBlbmRDaGlsZChyb3cpOwogICAgICAgICAgfSk7CiAgICAgICAgICAkKCdwZGZDb3VudCcpLnRleHRDb250ZW50ID0gcGRmSm9icy5sZW5ndGg7",
+            "CiAgICAgICAgfQogICAgICAgIGZ1bmN0aW9uIHBkZlJlbW92ZShpKSB7IHBkZkpvYnMuc3BsaWNlKGksIDEpOyByZW5kZXJQZGZMaXN0KCk7IH0KICAgICAg",
+            "ICBmdW5jdGlvbiBwZGZDbGVhcigpIHsgcGRmSm9icy5sZW5ndGggPSAwOyByZW5kZXJQZGZMaXN0KCk7ICQoJ3NnUGRmT3V0JykuaGlkZGVuID0gdHJ1ZTsg",
+            "fQogICAgICAgIGZ1bmN0aW9uIHBkZlBhcmFtcygpIHsKICAgICAgICAgIGNvbnN0IGZkID0gbmV3IEZvcm1EYXRhKCk7CiAgICAgICAgICBmZC5hcHBlbmQo",
+            "J3NlcmlhbCcsICQoJ3NnUGRmQ2VydCcpLnZhbHVlKTsKICAgICAgICAgIGZkLmFwcGVuZCgnc2VhbFR5cGUnLCAkKCdzZ1BkZlNlYWwnKS52YWx1ZSk7CiAg",
+            "ICAgICAgICBmZC5hcHBlbmQoJ3RzVXJsJywgJCgnc2dQZGZUc1VybCcpLnZhbHVlKTsKICAgICAgICAgIGNvbnN0IGltZyA9ICQoJ3NnUGRmSW1hZ2UnKS5m",
+            "aWxlcyAmJiAkKCdzZ1BkZkltYWdlJykuZmlsZXNbMF07CiAgICAgICAgICBpZiAoaW1nKSBmZC5hcHBlbmQoJ2ltYWdlJywgaW1nKTsKICAgICAgICAgIHJl",
+            "dHVybiBmZDsKICAgICAgICB9CiAgICAgICAgZnVuY3Rpb24gcGRmUHJlQ2hlY2soKSB7CiAgICAgICAgICBjb25zdCBzZXJpYWwgPSAkKCdzZ1BkZkNlcnQn",
+            "KS52YWx1ZTsKICAgICAgICAgIGNvbnN0IHNlYWwgPSAkKCdzZ1BkZlNlYWwnKS52YWx1ZTsKICAgICAgICAgIGlmICghc2VyaWFsKSB7CiAgICAgICAgICAg",
+            "IGlmIChzZWFsICE9PSAnQURPQkUnKSByZXR1cm4gJ+e6r+aWh+aho+aXtumXtOaIs++8iOS4jemAieivgeS5pu+8ieS7heaUr+aMgSBBZG9iZSDmoIflh4Yn",
+            "OwogICAgICAgICAgICBpZiAoJCgnc2dQZGZJbWFnZScpLmZpbGVzICYmICQoJ3NnUGRmSW1hZ2UnKS5maWxlc1swXSkgcmV0dXJuICfnuq/mlofmoaPml7bp",
+            "l7TmiLPvvIjkuI3pgInor4HkuabvvInkuI3og73pmYTliqDnrb7nq6Dlm77niYcnOwogICAgICAgICAgfQogICAgICAgICAgcmV0dXJuIG51bGw7CiAgICAg",
+            "ICAgfQogICAgICAgIGFzeW5jIGZ1bmN0aW9uIHBkZlNpZ25PbmUoaSkgewogICAgICAgICAgY29uc3QgaiA9IHBkZkpvYnNbaV07CiAgICAgICAgICBpZiAo",
+            "IWopIHJldHVybjsKICAgICAgICAgIGNvbnN0IGVyciA9IHBkZlByZUNoZWNrKCk7CiAgICAgICAgICBpZiAoZXJyKSB7IGouc3RhdGUgPSAnZXJyJzsgai5t",
+            "c2cgPSBlcnI7IHJlbmRlclBkZkxpc3QoKTsgcmV0dXJuOyB9CiAgICAgICAgICBqLnN0YXRlID0gJ3NpZ25pbmcnOyBqLm1zZyA9ICfnrb7lkI3kuK0uLi4n",
+            "OyByZW5kZXJQZGZMaXN0KCk7CiAgICAgICAgICBjb25zdCBmZCA9IHBkZlBhcmFtcygpOwogICAgICAgICAgZmQuYXBwZW5kKCduYW1lJywgai5maWxlLm5h",
+            "bWUpOwogICAgICAgICAgZmQuYXBwZW5kKCdmaWxlJywgai5maWxlKTsKICAgICAgICAgIHRyeSB7CiAgICAgICAgICAgIGNvbnN0IHJlc3AgPSBhd2FpdCBm",
+            "ZXRjaCgnL2FwaS9zaWduL3BkZicsIHsgbWV0aG9kOiAnUE9TVCcsIGJvZHk6IGZkIH0pOwogICAgICAgICAgICBjb25zdCByID0gYXdhaXQgcmVzcC5qc29u",
+            "KCk7CiAgICAgICAgICAgIGouc3RhdGUgPSByLm9rID8gJ29rJyA6ICdlcnInOwogICAgICAgICAgICBqLm1zZyA9IChyLm9rID8gJ+KckyDnrb7lkI3miJDl",
+            "ip8nIDogJ+KclyAnICsgKHIubWVzc2FnZSB8fCAn5aSx6LSlJykpLnN1YnN0cmluZygwLCAxMjApOwogICAgICAgICAgICBqLmI2NCA9IHIub2sgPyAoci5i",
+            "NjQgfHwgbnVsbCkgOiBudWxsOwogICAgICAgICAgICBqLm5hbWUgPSByLm9rID8gKHIubmFtZSB8fCAnc2lnbmVkXycgKyBqLmZpbGUubmFtZSkgOiBudWxs",
+            "OwogICAgICAgICAgICBqLmxhc3REZXRhaWwgPSByLm1lc3NhZ2UgfHwgJyc7CiAgICAgICAgICB9IGNhdGNoIChlKSB7CiAgICAgICAgICAgIGouc3RhdGUg",
+            "PSAnZXJyJzsgai5tc2cgPSAn6K+35rGC5aSx6LSlOiAnICsgZTsgai5sYXN0RGV0YWlsID0gJyc7CiAgICAgICAgICB9CiAgICAgICAgICByZW5kZXJQZGZM",
+            "aXN0KCk7CiAgICAgICAgICAkKCdzZ1BkZk91dCcpLmhpZGRlbiA9IGZhbHNlOwogICAgICAgICAgJCgnc2dQZGZPdXQnKS5jbGFzc05hbWUgPSAnb3V0ICcg",
+            "KyAoai5zdGF0ZSA9PT0gJ29rJyA/ICdvaycgOiAnZXJyJyk7CiAgICAgICAgICAkKCdzZ1BkZk91dCcpLnRleHRDb250ZW50ID0gJ1snICsgai5maWxlLm5h",
+            "bWUgKyAnXSAnICsgKGoubGFzdERldGFpbCB8fCBqLm1zZyk7CiAgICAgICAgfQogICAgICAgIGFzeW5jIGZ1bmN0aW9uIHBkZlZlcmlmeU9uZShpKSB7CiAg",
+            "ICAgICAgICBjb25zdCBqID0gcGRmSm9ic1tpXTsKICAgICAgICAgIGlmICghaikgcmV0dXJuOwogICAgICAgICAgai5zdGF0ZSA9ICdzaWduaW5nJzsgai5t",
+            "c2cgPSAn6aqM6K+B5LitLi4uJzsgcmVuZGVyUGRmTGlzdCgpOwogICAgICAgICAgY29uc3QgZmQgPSBuZXcgRm9ybURhdGEoKTsKICAgICAgICAgIGZkLmFw",
+            "cGVuZCgnZmlsZScsIGouZmlsZSk7CiAgICAgICAgICB0cnkgewogICAgICAgICAgICBjb25zdCByZXNwID0gYXdhaXQgZmV0Y2goJy9hcGkvdmVyaWZ5L3Bk",
+            "ZicsIHsgbWV0aG9kOiAnUE9TVCcsIGJvZHk6IGZkIH0pOwogICAgICAgICAgICBjb25zdCByID0gYXdhaXQgcmVzcC5qc29uKCk7CiAgICAgICAgICAgIGou",
+            "c3RhdGUgPSByLm9rID8gJ29rJyA6ICdlcnInOwogICAgICAgICAgICBqLm1zZyA9IChyLm9rID8gJ+KckyDpqozor4HlrozmiJAnIDogJ+KclyDpqozor4Hl",
+            "pLHotKUnKS5zdWJzdHJpbmcoMCwgMTIwKTsKICAgICAgICAgICAgai5sYXN0RGV0YWlsID0gci5tZXNzYWdlIHx8ICcnOwogICAgICAgICAgfSBjYXRjaCAo",
+            "ZSkgewogICAgICAgICAgICBqLnN0YXRlID0gJ2Vycic7IGoubXNnID0gJ+ivt+axguWksei0pTogJyArIGU7IGoubGFzdERldGFpbCA9ICcnOwogICAgICAg",
+            "ICAgfQogICAgICAgICAgcmVuZGVyUGRmTGlzdCgpOwogICAgICAgICAgJCgnc2dQZGZPdXQnKS5oaWRkZW4gPSBmYWxzZTsKICAgICAgICAgICQoJ3NnUGRm",
+            "T3V0JykuY2xhc3NOYW1lID0gJ291dCAnICsgKGouc3RhdGUgPT09ICdvaycgPyAnb2snIDogJ2VycicpOwogICAgICAgICAgJCgnc2dQZGZPdXQnKS50ZXh0",
+            "Q29udGVudCA9ICdbJyArIGouZmlsZS5uYW1lICsgJ10gJyArIChqLmxhc3REZXRhaWwgfHwgai5tc2cpOwogICAgICAgIH0KICAgICAgICBhc3luYyBmdW5j",
+            "dGlvbiBwZGZTaWduQWxsKCkgewogICAgICAgICAgY29uc3Qgb3V0ID0gJCgnc2dQZGZPdXQnKTsKICAgICAgICAgIGlmICghcGRmSm9icy5sZW5ndGgpIHsg",
+            "b3V0LmhpZGRlbiA9IGZhbHNlOyBvdXQuY2xhc3NOYW1lID0gJ291dCBlcnInOyBvdXQudGV4dENvbnRlbnQgPSAn5b6F562+5ZCN5YiX6KGo5Li656m677yM",
+            "6K+35YWI5re75YqgIFBERiDmlofku7YnOyByZXR1cm47IH0KICAgICAgICAgIGxldCBva04gPSAwLCBlcnJOID0gMDsgY29uc3QgbGluZXMgPSBbXTsKICAg",
+            "ICAgICAgIGZvciAobGV0IGkgPSAwOyBpIDwgcGRmSm9icy5sZW5ndGg7IGkrKykgewogICAgICAgICAgICBjb25zdCBqID0gcGRmSm9ic1tpXTsKICAgICAg",
+            "ICAgICAgY29uc3QgZXJyID0gcGRmUHJlQ2hlY2soKTsKICAgICAgICAgICAgaWYgKGVycikgeyBqLnN0YXRlID0gJ2Vycic7IGoubXNnID0gZXJyOyBlcnJO",
+            "Kys7IGxpbmVzLnB1c2goJ+KclyAnICsgai5maWxlLm5hbWUgKyAnIOKGkiAnICsgZXJyKTsgcmVuZGVyUGRmTGlzdCgpOyBjb250aW51ZTsgfQogICAgICAg",
+            "ICAgICBqLnN0YXRlID0gJ3NpZ25pbmcnOyBqLm1zZyA9ICfnrb7lkI3kuK0uLi4nOyByZW5kZXJQZGZMaXN0KCk7CiAgICAgICAgICAgIGNvbnN0IGZkID0g",
+            "cGRmUGFyYW1zKCk7CiAgICAgICAgICAgIGZkLmFwcGVuZCgnbmFtZScsIGouZmlsZS5uYW1lKTsKICAgICAgICAgICAgZmQuYXBwZW5kKCdmaWxlJywgai5m",
+            "aWxlKTsKICAgICAgICAgICAgdHJ5IHsKICAgICAgICAgICAgICBjb25zdCByZXNwID0gYXdhaXQgZmV0Y2goJy9hcGkvc2lnbi9wZGYnLCB7IG1ldGhvZDog",
+            "J1BPU1QnLCBib2R5OiBmZCB9KTsKICAgICAgICAgICAgICBjb25zdCByID0gYXdhaXQgcmVzcC5qc29uKCk7CiAgICAgICAgICAgICAgai5zdGF0ZSA9IHIu",
+            "b2sgPyAnb2snIDogJ2Vycic7CiAgICAgICAgICAgICAgai5tc2cgPSByLm9rID8gJ+KckyDnrb7lkI3miJDlip8nIDogKCfinJcgJyArIChyLm1lc3NhZ2Ug",
+            "fHwgJ+Wksei0pScpKS5zdWJzdHJpbmcoMCwgMTAwKTsKICAgICAgICAgICAgICBqLmI2NCA9IHIub2sgPyAoci5iNjQgfHwgbnVsbCkgOiBudWxsOwogICAg",
+            "ICAgICAgICAgIGoubmFtZSA9IHIub2sgPyAoci5uYW1lIHx8ICdzaWduZWRfJyArIGouZmlsZS5uYW1lKSA6IG51bGw7CiAgICAgICAgICAgICAgaWYgKHIu",
+            "b2spIG9rTisrOyBlbHNlIHsgZXJyTisrOyBsaW5lcy5wdXNoKCfinJcgJyArIGouZmlsZS5uYW1lICsgJyDihpIgJyArIChyLm1lc3NhZ2UgfHwgJ+Wksei0",
+            "pScpKTsgfQogICAgICAgICAgICB9IGNhdGNoIChlKSB7CiAgICAgICAgICAgICAgai5zdGF0ZSA9ICdlcnInOyBqLm1zZyA9ICfor7fmsYLlpLHotKU6ICcg",
+            "KyBlOyBlcnJOKys7IGxpbmVzLnB1c2goJ+KclyAnICsgai5maWxlLm5hbWUgKyAnIOKGkiAnICsgZSk7CiAgICAgICAgICAgIH0KICAgICAgICAgICAgcmVu",
+            "ZGVyUGRmTGlzdCgpOwogICAgICAgICAgfQogICAgICAgICAgb3V0LmhpZGRlbiA9IGZhbHNlOwogICAgICAgICAgb3V0LmNsYXNzTmFtZSA9ICdvdXQgJyAr",
+            "IChlcnJOID8gJ2VycicgOiAnb2snKTsKICAgICAgICAgIG91dC50ZXh0Q29udGVudCA9ICfmibnph4/nrb7lkI3lrozmiJDvvJrmiJDlip8gJyArIG9rTiAr",
+            "ICcg5Liq77yM5aSx6LSlICcgKyBlcnJOICsgJyDkuKonICsgKGxpbmVzLmxlbmd0aCA/ICdcbicgKyBsaW5lcy5qb2luKCdcbicpIDogJycpOwogICAgICAg",
+            "IH0KICAgICAgICBhc3luYyBmdW5jdGlvbiBwZGZWZXJpZnlBbGwoKSB7CiAgICAgICAgICBjb25zdCBvdXQgPSAkKCdzZ1BkZk91dCcpOwogICAgICAgICAg",
+            "aWYgKCFwZGZKb2JzLmxlbmd0aCkgeyBvdXQuaGlkZGVuID0gZmFsc2U7IG91dC5jbGFzc05hbWUgPSAnb3V0IGVycic7IG91dC50ZXh0Q29udGVudCA9ICfl",
+            "voXnrb7lkI3liJfooajkuLrnqbrvvIzor7flhYjmt7vliqAgUERGIOaWh+S7tic7IHJldHVybjsgfQogICAgICAgICAgbGV0IG9rTiA9IDAsIGVyck4gPSAw",
+            "OyBjb25zdCBsaW5lcyA9IFtdOwogICAgICAgICAgZm9yIChsZXQgaSA9IDA7IGkgPCBwZGZKb2JzLmxlbmd0aDsgaSsrKSB7CiAgICAgICAgICAgIGNvbnN0",
+            "IGogPSBwZGZKb2JzW2ldOwogICAgICAgICAgICBqLnN0YXRlID0gJ3NpZ25pbmcnOyBqLm1zZyA9ICfpqozor4HkuK0uLi4nOyByZW5kZXJQZGZMaXN0KCk7",
+            "CiAgICAgICAgICAgIGNvbnN0IGZkID0gbmV3IEZvcm1EYXRhKCk7CiAgICAgICAgICAgIGZkLmFwcGVuZCgnZmlsZScsIGouZmlsZSk7CiAgICAgICAgICAg",
+            "IHRyeSB7CiAgICAgICAgICAgICAgY29uc3QgcmVzcCA9IGF3YWl0IGZldGNoKCcvYXBpL3ZlcmlmeS9wZGYnLCB7IG1ldGhvZDogJ1BPU1QnLCBib2R5OiBm",
+            "ZCB9KTsKICAgICAgICAgICAgICBjb25zdCByID0gYXdhaXQgcmVzcC5qc29uKCk7CiAgICAgICAgICAgICAgai5zdGF0ZSA9IHIub2sgPyAnb2snIDogJ2Vy",
+            "cic7CiAgICAgICAgICAgICAgai5tc2cgPSByLm9rID8gJ+KckyDpqozor4HlrozmiJAnIDogJ+KclyDpqozor4HlpLHotKUnOwogICAgICAgICAgICAgIGlm",
+            "IChyLm9rKSBva04rKzsgZWxzZSB7IGVyck4rKzsgbGluZXMucHVzaCgn4pyXICcgKyBqLmZpbGUubmFtZSArICcg4oaSICcgKyAoci5tZXNzYWdlIHx8ICfl",
+            "pLHotKUnKSk7IH0KICAgICAgICAgICAgfSBjYXRjaCAoZSkgewogICAgICAgICAgICAgIGouc3RhdGUgPSAnZXJyJzsgai5tc2cgPSAn6K+35rGC5aSx6LSl",
+            "OiAnICsgZTsgZXJyTisrOyBsaW5lcy5wdXNoKCfinJcgJyArIGouZmlsZS5uYW1lICsgJyDihpIgJyArIGUpOwogICAgICAgICAgICB9CiAgICAgICAgICAg",
+            "IHJlbmRlclBkZkxpc3QoKTsKICAgICAgICAgIH0KICAgICAgICAgIG91dC5oaWRkZW4gPSBmYWxzZTsKICAgICAgICAgIG91dC5jbGFzc05hbWUgPSAnb3V0",
+            "ICcgKyAoZXJyTiA/ICdlcnInIDogJ29rJyk7CiAgICAgICAgICBvdXQudGV4dENvbnRlbnQgPSAn5om56YeP6aqM6K+B5a6M5oiQ77ya5oiQ5YqfICcgKyBv",
+            "a04gKyAnIOS4qu+8jOWksei0pSAnICsgZXJyTiArICcg5LiqJyArIChsaW5lcy5sZW5ndGggPyAnXG4nICsgbGluZXMuam9pbignXG4nKSA6ICcnKTsKICAg",
+            "ICAgICB9CiAgICAgICAgLy8g5ouW5ou95LiO5aSa6YCJ5Yid5aeL5YyWCiAgICAgICAgKGZ1bmN0aW9uIGluaXRQZGZEcm9wKCkgewogICAgICAgICAgY29u",
+            "c3QgZHogPSAkKCdwZGZEcm9wJyk7CiAgICAgICAgICBpZiAoIWR6KSByZXR1cm47CiAgICAgICAgICBkei5vbmRyYWdvdmVyID0gZSA9PiB7IGUucHJldmVu",
+            "dERlZmF1bHQoKTsgZHouY2xhc3NMaXN0LmFkZCgnb3ZlcicpOyB9OwogICAgICAgICAgZHoub25kcmFnbGVhdmUgPSAoKSA9PiBkei5jbGFzc0xpc3QucmVt",
+            "b3ZlKCdvdmVyJyk7CiAgICAgICAgICBkei5vbmRyb3AgPSBlID0+IHsgZS5wcmV2ZW50RGVmYXVsdCgpOyBkei5jbGFzc0xpc3QucmVtb3ZlKCdvdmVyJyk7",
+            "IGFkZFBkZkZpbGVzKGUuZGF0YVRyYW5zZmVyLmZpbGVzKTsgfTsKICAgICAgICAgIGNvbnN0IGZpID0gJCgnc2dQZGZGaWxlJyk7CiAgICAgICAgICBpZiAo",
+            "ZmkpIGZpLm9uY2hhbmdlID0gZSA9PiB7IGFkZFBkZkZpbGVzKGUudGFyZ2V0LmZpbGVzKTsgZS50YXJnZXQudmFsdWUgPSAnJzsgfTsKICAgICAgICB9KSgp",
+            "OwoKICAgICAgICAvLyA9PT09PSDpobXpnaLliIfmjaIgPT09PT0KICAgICAgICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCcjbmF2IGEnKS5mb3JFYWNo",
+            "KGEgPT4gewogICAgICAgICAgYS5vbmNsaWNrID0gKCkgPT4gewogICAgICAgICAgICBkb2N1bWVudC5xdWVyeVNlbGVjdG9yQWxsKCcjbmF2IGEnKS5mb3JF",
+            "YWNoKHggPT4geC5jbGFzc0xpc3QucmVtb3ZlKCdhY3RpdmUnKSk7CiAgICAgICAgICAgIGRvY3VtZW50LnF1ZXJ5U2VsZWN0b3JBbGwoJy5wYWdlJykuZm9y",
+            "RWFjaCh4ID0+IHguY2xhc3NMaXN0LnJlbW92ZSgnYWN0aXZlJykpOwogICAgICAgICAgICBhLmNsYXNzTGlzdC5hZGQoJ2FjdGl2ZScpOwogICAgICAgICAg",
+            "ICBjb25zdCBwID0gYS5kYXRhc2V0LnBhZ2U7CiAgICAgICAgICAgICQoJ3BhZ2UtJyArIHApLmNsYXNzTGlzdC5hZGQoJ2FjdGl2ZScpOwogICAgICAgICAg",
+            "ICAkKCdwYWdlVGl0bGUnKS50ZXh0Q29udGVudCA9IFRJVExFU1twXSB8fCBwOwogICAgICAgICAgICBpZiAocCA9PT0gJ2Rhc2hib2FyZCcpIGxvYWRTdGF0",
+            "dXMoKTsKICAgICAgICAgICAgaWYgKHAgPT09ICdjZXJ0cycpIHsgbG9hZENlcnRzKCk7IGxvYWRJc3N1ZXJzKCk7IH0KICAgICAgICAgICAgaWYgKHAgPT09",
+            "ICdjb25maWcnKSBsb2FkQ29uZmlnKCk7CiAgICAgICAgICAgIGlmIChwID09PSAnbG9ncycpIGxvYWRMb2dzKCk7CiAgICAgICAgICAgIGlmIChwID09PSAn",
+            "c2lnbicpIGxvYWRTaWduQ2VydHMoKTsKICAgICAgICAgICAgaWYgKHAgPT09ICd0ZW1wbGF0ZScpIHsgbG9hZFRlbXBsYXRlcygpOyBsb2FkQ2VydHMoKTsg",
+            "bG9hZElzc3VlcnMoKTsgfQogICAgICAgICAgICBpZiAocCA9PT0gJ2N0bG9nJykgbG9hZEN0TG9nKCk7CiAgICAgICAgICAgIGlmIChwID09PSAndXNlcnMn",
+            "KSBsb2FkVXNlcnMoKTsKICAgICAgICAgICAgaWYgKHAgPT09ICdyYWRpdXMnKSB7IGxvYWRSYWRpdXMoKTsgfQogICAgICAgICAgICBpZiAocCA9PT0gJ3Bw",
+            "cG9lJykgeyBsb2FkUHBwb2UoKTsgbG9hZFBwcG9lTG9ncygpOyB9CiAgICAgICAgICB9OwogICAgICAgIH0pOwoKICAgICAgICAvLyA9PT09PSDku6rooajn",
+            "m5ggPT09PT0KICAgICAgICBmdW5jdGlvbiBmbXRVcHRpbWUocykgewogICAgICAgICAgaWYgKHMgPCA2MCkgcmV0dXJuIHMgKyAnIOenkic7CiAgICAgICAg",
+            "ICBpZiAocyA8IDM2MDApIHJldHVybiBNYXRoLmZsb29yKHMvNjApICsgJyDliIYgJyArIChzJTYwKSArICcg56eSJzsKICAgICAgICAgIGlmIChzIDwgODY0",
+            "MDApIHJldHVybiBNYXRoLmZsb29yKHMvMzYwMCkgKyAnIOaXtiAnICsgTWF0aC5mbG9vcihzJTM2MDAvNjApICsgJyDliIYnOwogICAgICAgICAgcmV0dXJu",
+            "IE1hdGguZmxvb3Iocy84NjQwMCkgKyAnIOWkqSAnICsgTWF0aC5mbG9vcihzJTg2NDAwLzM2MDApICsgJyDml7YnOwogICAgICAgIH0KICAgICAgICBhc3lu",
+            "YyBmdW5jdGlvbiBsb2FkU3RhdHVzKCkgewogICAgICAgICAgdHJ5IHsKICAgICAgICAgICAgY29uc3QgciA9IGF3YWl0IGFwaSgnL2FwaS9zdGF0dXMnKTsK",
+            "ICAgICAgICAgICAgaWYgKCFyLm9rKSByZXR1cm47CiAgICAgICAgICAgIGNvbnN0IGQgPSByLmRhdGE7CiAgICAgICAgICAgIGlmICgkKCdzdFBvcnQnKSkg",
+            "JCgnc3RQb3J0JykudGV4dENvbnRlbnQgPSBkLm1haW5Qb3J0OwogICAgICAgICAgICBpZiAoJCgnc3RVcHRpbWUnKSkgJCgnc3RVcHRpbWUnKS50ZXh0Q29u",
+            "dGVudCA9IGZtdFVwdGltZShkLnVwdGltZVNlY29uZHMpOwogICAgICAgICAgICBpZiAoJCgnc3RBZG1pbicpKSAkKCdzdEFkbWluJykudGV4dENvbnRlbnQg",
+            "PSBkLmFkbWluUG9ydDsKICAgICAgICAgICAgaWYgKCQoJ3N0Q2FsbHMnKSkgJCgnc3RDYWxscycpLnRleHRDb250ZW50ID0gZC50b3RhbENhbGxzOwogICAg",
+            "ICAgICAgICBpZiAoJCgnc3RMb2dzJykpICQoJ3N0TG9ncycpLnRleHRDb250ZW50ID0gZC5sb2dMaW5lczsKICAgICAgICAgICAgaWYgKCQoJ3N0QmFzZScp",
+            "KSAkKCdzdEJhc2UnKS50ZXh0Q29udGVudCA9IGQuYmFzZURpcjsKICAgICAgICAgICAgaWYgKCQoJ21haW5Qb3J0JykpICQoJ21haW5Qb3J0JykudGV4dENv",
+            "bnRlbnQgPSAnTUFJTjogJyArIGQubWFpblBvcnQ7CiAgICAgICAgICAgIGNvbnN0IHN0ID0gJCgnbWFpblN0YXRlJyk7CiAgICAgICAgICAgIGlmIChzdCkg",
+            "ewogICAgICAgICAgICAgIHN0LnRleHRDb250ZW50ID0gZC5tYWluUnVubmluZyA/ICfil48g6L+Q6KGM5LitJyA6ICfil4sg5pyq6L+Q6KGMJzsKICAgICAg",
+            "ICAgICAgICBzdC5jbGFzc05hbWUgPSAnYmFkZ2UgJyArIChkLm1haW5SdW5uaW5nID8gJ29rJyA6ICdlcnInKTsKICAgICAgICAgICAgfQogICAgICAgICAg",
+            "ICBpZiAoJCgnc2lkZVZlcnNpb24nKSkgJCgnc2lkZVZlcnNpb24nKS50ZXh0Q29udGVudCA9IGQudmVyc2lvbjsKICAgICAgICAgICAgLy8g5pyA6L+R5pel",
+            "5b+X77yI5LuF5Luq6KGo55uY6aG15ouJ5Y+W77yM6YG/5YWN5YW25a6D6aG16Z2i55m96ICX5rWB6YeP77yJCiAgICAgICAgICAgIGlmICgkKCdwYWdlLWRh",
+            "c2hib2FyZCcpICYmICQoJ3BhZ2UtZGFzaGJvYXJkJykuY2xhc3NMaXN0LmNvbnRhaW5zKCdhY3RpdmUnKSkgewogICAgICAgICAgICAgIGNvbnN0IGxyID0g",
+            "YXdhaXQgYXBpKCcvYXBpL2xvZ3M/bGluZXM9MzAnKTsKICAgICAgICAgICAgICBpZiAobHIub2sgJiYgJCgnZGFzaExvZ3MnKSkgJCgnZGFzaExvZ3MnKS50",
+            "ZXh0Q29udGVudCA9IGxyLmRhdGE7CiAgICAgICAgICAgIH0KICAgICAgICAgIH0gY2F0Y2ggKGUpIHsKICAgICAgICAgICAgY29uc3Qgc3QgPSAkKCdtYWlu",
+            "U3RhdGUnKTsKICAgICAgICAgICAgaWYgKHN0KSB7IHN0LnRleHRDb250ZW50ID0gJ+i/nuaOpeWksei0pSc7IHN0LmNsYXNzTmFtZSA9ICdiYWRnZSBlcnIn",
+            "OyB9CiAgICAgICAgICB9CiAgICAgICAgfQoKICAgICAgICAvLyA9PT09PSDor4HkuablupMgPT09PT0KICAgICAgICBsZXQgY2VydERhdGEgPSBbXTsKICAg",
+            "ICAgICBhc3luYyBmdW5jdGlvbiBsb2FkQ2VydHMoKSB7CiAgICAgICAgICB0cnkgewogICAgICAgICAgICBjb25zdCByID0gYXdhaXQgYXBpKCcvYXBpL2Nl",
+            "cnRzJyk7CiAgICAgICAgICAgIGlmIChyLm9rKSB7IGNlcnREYXRhID0gci5kYXRhOyByZW5kZXJDZXJ0cygpOyB9CiAgICAgICAgICB9IGNhdGNoIChlKSB7",
+            "IC8qIGlnbm9yZSAqLyB9CiAgICAgICAgfQogICAgICAgIGZ1bmN0aW9uIHJlbmRlckNlcnRzKCkgewogICAgICAgICAgY29uc3QgZiA9IHYoJ2NlcnRzRmls",
+            "dGVyJykudG9Mb3dlckNhc2UoKTsKICAgICAgICAgIGNvbnN0IHJvd3MgPSBjZXJ0RGF0YS5maWx0ZXIoZSA9PiAhZiB8fCBKU09OLnN0cmluZ2lmeShlKS50",
+            "b0xvd2VyQ2FzZSgpLmluY2x1ZGVzKGYpKTsKICAgICAgICAgIGNvbnN0IHRiID0gJCgnY2VydHNUYWJsZScpLnF1ZXJ5U2VsZWN0b3IoJ3Rib2R5Jyk7CiAg",
+            "ICAgICAgICB0Yi5pbm5lckhUTUwgPSAnJzsKICAgICAgICAgIHJvd3MuZm9yRWFjaChlID0+IHsKICAgICAgICAgICAgY29uc3QgdHIgPSBkb2N1bWVudC5j",
+            "cmVhdGVFbGVtZW50KCd0cicpOwogICAgICAgICAgICB0ci5kYXRhc2V0LnNlcmlhbCA9IGUuc2VyaWFsOwogICAgICAgICAgICAvLyDnirbmgIHmlofmnKzv",
+            "vJpWLuato+W4uCAvIFIu5bey5ZCK6ZSAIC8gTi7mnKrnn6XvvJvphY3oibLvvJrmraPluLjnu7/jgIHlt7LlkIrplIDmt7HnuqLjgIHmnKrnn6XmqZkKICAg",
+            "ICAgICAgICAgY29uc3Qgc3RUeHQgPSB7VjonVi7mraPluLgnLCBSOidSLuW3suWQiumUgCcsIE46J04u5pyq55+lJ31bZS5zdGF0dXNdIHx8IGUuc3RhdHVz",
+            "OwogICAgICAgICAgICBjb25zdCBzdENscyA9IGUuc3RhdHVzID09PSAnUicgPyAnY29sb3I6I2RjMjYyNicgOiBlLnN0YXR1cyA9PT0gJ1YnID8gJ2NvbG9y",
+            "OnZhcigtLW9rKScgOiBlLnN0YXR1cyA9PT0gJ04nID8gJ2NvbG9yOiNmNTllMGInIDogJyc7CiAgICAgICAgICAgIC8vIOW6j+WIl+WPt+WIl++8mum8oOag",
+            "h+aCrOa1ruaYvuekuuivgeS5puivpuaDhe+8iOS4juS7quihqOebmOivgeS5pumTvuWQjOasvuaCrOa1rueql++8iQogICAgICAgICAgICBjb25zdCB0aXAg",
+            "PSBjZXJ0VGlwKGUuc2VyaWFsKTsKICAgICAgICAgICAgdHIuaW5uZXJIVE1MID0gJzx0ZCBjbGFzcz0idC1ib3giIGRhdGEtdGlwPSInICsgZXNjKHRpcCkg",
+            "KyAnIj4nICsgZXNjKGUuc2VyaWFsKSArICc8L3RkPicgKwogICAgICAgICAgICAgICc8dGQ+JyArIGVzYyh0eXBlTmFtZShlLnR5cGUpKSArICc8L3RkPjx0",
+            "ZCBzdHlsZT0iJyArIHN0Q2xzICsgJztmb250LXdlaWdodDo3MDAiPicgKyBlc2Moc3RUeHQpICsgJzwvdGQ+JyArCiAgICAgICAgICAgICAgJzx0ZD4nICsg",
+            "ZXNjKGUucmVhc29uKSArICc8L3RkPjx0ZD4nICsgZXNjKGUudGltZSkgKyAnPC90ZD4nICsKICAgICAgICAgICAgICAnPHRkIGNsYXNzPSJ0LWJveCIgZGF0",
+            "YS10aXA9IicgKyBlc2MoY2VydFRpcChlLmlzc3VlcikpICsgJyI+JyArIGVzYyhlLmlzc3VlcikgKyAnPC90ZD48dGQ+JyArIGVzYyhlLmFsZ28pICsgJzwv",
+            "dGQ+JyArCiAgICAgICAgICAgICAgJzx0ZD48YnV0dG9uIGNsYXNzPSJnaG9zdCIgZGF0YS1zZXJpYWw9IicgKyBlLnNlcmlhbCArICciIHN0eWxlPSJwYWRk",
+            "aW5nOjRweCAxMnB4O2ZvbnQtc2l6ZToxMnB4Ij7or6bmg4U8L2J1dHRvbj4gJyArCiAgICAgICAgICAgICAgJzxidXR0b24gY2xhc3M9Imdob3N0IiBkYXRh",
+            "LXZlcmlmeT0iJyArIGUuc2VyaWFsICsgJyIgc3R5bGU9InBhZGRpbmc6NHB4IDEycHg7Zm9udC1zaXplOjEycHgiPumqjOivgTwvYnV0dG9uPiAnICsKICAg",
+            "ICAgICAgICAgICAnPGJ1dHRvbiBjbGFzcz0iZ2hvc3QiIGRhdGEtb3A9IicgKyBlLnNlcmlhbCArICciIHN0eWxlPSJwYWRkaW5nOjRweCAxMnB4O2ZvbnQt",
+            "c2l6ZToxMnB4Ij7mk43kvZw8L2J1dHRvbj48L3RkPic7CiAgICAgICAgICAgIHRiLmFwcGVuZENoaWxkKHRyKTsKICAgICAgICAgIH0pOwogICAgICAgICAg",
+            "aWYgKCFyb3dzLmxlbmd0aCkgdGIuaW5uZXJIVE1MID0gJzx0cj48dGQgY29sc3Bhbj0iOCIgc3R5bGU9ImNvbG9yOnZhcigtLWRpbSkiPu+8iOaXoOWMuemF",
+            "jeiusOW9le+8iTwvdGQ+PC90cj4nOwogICAgICAgIH0KICAgICAgICAvLyDor4Hkuabmgqzmta7nqpfvvJrkvJjlhYjnlKjor4Hkuabpk77moJHnmoTor6bm",
+            "g4XvvIhETi/lr4bpkqUv5ZOI5biML+mVv+W6pi9PQ1NQL0NSTO+8ie+8jOacqueZu+iusOmTvuaVsOaNruaXtuWbnumAgOeZu+iusOihqOS/oeaBrwogICAg",
+            "ICAgIGZ1bmN0aW9uIGNlcnRUaXAoc2VyaWFsKSB7CiAgICAgICAgICBjb25zdCBuID0gaXNzdWVyTWFwW3NlcmlhbF07CiAgICAgICAgICBpZiAobikgcmV0",
+            "dXJuIGlzc3VlclRpcChzZXJpYWwpOwogICAgICAgICAgY29uc3QgZSA9IGNlcnREYXRhLmZpbmQoeCA9PiB4LnNlcmlhbC50b0xvd2VyQ2FzZSgpID09PSBT",
+            "dHJpbmcoc2VyaWFsKS50b0xvd2VyQ2FzZSgpKTsKICAgICAgICAgIGlmICghZSkgcmV0dXJuICc8ZGl2IGNsYXNzPSJrdiI+PGI+6K+B5Lmm5L+h5oGv77ya",
+            "PC9iPuacquaJvuWIsO+8iOivpeW6j+WIl+WPt+acqueZu+iusOivpuaDhe+8iTwvZGl2Pic7CiAgICAgICAgICBjb25zdCBzdFR4dCA9IHtWOifmraPluLgn",
+            "LCBSOiflt7LlkIrplIAnLCBOOifmnKrnn6UnfVtlLnN0YXR1c10gfHwgZS5zdGF0dXM7CiAgICAgICAgICByZXR1cm4gJzxkaXYgY2xhc3M9Imt2Ij48Yj7l",
+            "uo/liJflj7fvvJo8L2I+JyArIGVzYyhlLnNlcmlhbCkgKyAnPC9kaXY+JyArCiAgICAgICAgICAgICc8ZGl2IGNsYXNzPSJrdiI+PGI+6K+B5Lmm57G75Z6L",
+            "77yaPC9iPicgKyBlc2ModHlwZU5hbWUoZS50eXBlKSkgKyAnPC9kaXY+JyArCiAgICAgICAgICAgICc8ZGl2IGNsYXNzPSJrdiI+PGI+54q25oCB77yaPC9i",
+            "PicgKyBlc2Moc3RUeHQpICsgJyAvIOeul+azle+8micgKyBlc2MoZS5hbGdvIHx8ICctJykgKyAnPC9kaXY+JyArCiAgICAgICAgICAgICc8ZGl2IGNsYXNz",
+            "PSJrdiI+PGI+6aKB5Y+R6ICF77yaPC9iPicgKyBlc2MoZS5pc3N1ZXIpICsgJzwvZGl2PicgKwogICAgICAgICAgICAnPGRpdiBjbGFzcz0ia3YiPjxiPuaX",
+            "tumXtO+8mjwvYj4nICsgZXNjKGUudGltZSkgKyAnPC9kaXY+JzsKICAgICAgICB9CgogICAgICAgIC8vID09PT09IOivgeS5puW6k++8muWPr+S/oeWFrOe9",
+            "kSBjYWNlcnRzIOmAieaLqeWkue+8iOe7k+aehOWQjCBDRVJUUy50eHQg5YiX6KGo77yJID09PT09CiAgICAgICAgbGV0IGNhRGF0YSA9IFtdOwogICAgICAg",
+            "IGZ1bmN0aW9uIGNzU3dpdGNoVGFiKHQpIHsKICAgICAgICAgIGRvY3VtZW50LmdldEVsZW1lbnRCeUlkKCdjc1RhYkJ0bkxvY2FsJykuY2xhc3NOYW1lID0g",
+            "J2N0LXRhYicgKyAodD09PSdsb2NhbCcgPyAnIGFjdGl2ZScgOiAnJyk7CiAgICAgICAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJZCgnY3NUYWJCdG5DYScp",
+            "LmNsYXNzTmFtZSA9ICdjdC10YWInICsgKHQ9PT0nY2FjZXJ0cycgPyAnIGFjdGl2ZScgOiAnJyk7CiAgICAgICAgICBkb2N1bWVudC5nZXRFbGVtZW50QnlJ",
+            "ZCgnY3NUYWJCdG5NeScpLmNsYXNzTmFtZSA9ICdjdC10YWInICsgKHQ9PT0nbXknID8gJyBhY3RpdmUnIDogJycpOwogICAgICAgICAgZG9jdW1lbnQuZ2V0",
+            "RWxlbWVudEJ5SWQoJ2NzUGFuZUxvY2FsJykuc3R5bGUuZGlzcGxheSA9IHQ9PT0nbG9jYWwnID8gJycgOiAnbm9uZSc7CiAgICAgICAgICBkb2N1bWVudC5n",
+            "ZXRFbGVtZW50QnlJZCgnY3NQYW5lQ2EnKS5zdHlsZS5kaXNwbGF5ID0gdD09PSdjYWNlcnRzJyA/ICcnIDogJ25vbmUnOwogICAgICAgICAgZG9jdW1lbnQu",
+            "Z2V0RWxlbWVudEJ5SWQoJ2NzUGFuZU15Jykuc3R5bGUuZGlzcGxheSA9IHQ9PT0nbXknID8gJycgOiAnbm9uZSc7CiAgICAgICAgICBpZiAodD09PSdjYWNl",
+            "cnRzJykgbG9hZENhY2VydHMoKTsKICAgICAgICAgIGlmICh0PT09J215JykgbG9hZE15KCk7CiAgICAgICAgfQogICAgICAgIGFzeW5jIGZ1bmN0aW9uIGxv",
+            "YWRDYWNlcnRzKCkgewogICAgICAgICAgdHJ5IHsKICAgICAgICAgICAgY29uc3QgciA9IGF3YWl0IGFwaSgnL2FwaS9jZXJ0cy9jYWNlcnRzJyk7CiAgICAg",
+            "ICAgICAgIGlmIChyLm9rKSB7IGNhRGF0YSA9IHIuZGF0YTsgcmVuZGVyQ2FjZXJ0cygpOyB9CiAgICAgICAgICB9IGNhdGNoIChlKSB7IC8qIGlnbm9yZSAq",
+            "LyB9CiAgICAgICAgfQogICAgICAgIGZ1bmN0aW9uIHJlbmRlckNhY2VydHMoKSB7CiAgICAgICAgICBjb25zdCBmID0gdignY2FGaWx0ZXInKS50b0xvd2Vy",
+            "Q2FzZSgpOwogICAgICAgICAgY29uc3Qgcm93cyA9IGNhRGF0YS5maWx0ZXIoZSA9PiAhZiB8fCBKU09OLnN0cmluZ2lmeShlKS50b0xvd2VyQ2FzZSgpLmlu",
+            "Y2x1ZGVzKGYpKTsKICAgICAgICAgIGNvbnN0IHRiID0gJCgnY2FUYWJsZScpLnF1ZXJ5U2VsZWN0b3IoJ3Rib2R5Jyk7CiAgICAgICAgICB0Yi5pbm5lckhU",
+            "TUwgPSAnJzsKICAgICAgICAgIHJvd3MuZm9yRWFjaChlID0+IHsKICAgICAgICAgICAgY29uc3QgdHIgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCd0cicp",
+            "OwogICAgICAgICAgICB0ci5kYXRhc2V0LnNlcmlhbCA9IGUuc2VyaWFsOwogICAgICAgICAgICB0ci5pbm5lckhUTUwgPSAnPHRkIHN0eWxlPSJmb250LWZh",
+            "bWlseTp2YXIoLS1tb25vKTtmb250LXNpemU6MTJweDttYXgtd2lkdGg6MTMwcHg7b3ZlcmZsb3c6aGlkZGVuO3RleHQtb3ZlcmZsb3c6ZWxsaXBzaXM7d2hp",
+            "dGUtc3BhY2U6bm93cmFwIiB0aXRsZT0iJyArIGVzYyhlLnNlcmlhbCkgKyAnIj4nICsgZXNjKGUuc2VyaWFsKSArICc8L3RkPicgKwogICAgICAgICAgICAg",
+            "ICc8dGQ+JyArIGVzYyhlLmFsZ28pICsgJzwvdGQ+JyArCiAgICAgICAgICAgICAgJzx0ZD4nICsgZXNjKGUubm90QmVmb3JlKSArICc8L3RkPjx0ZD4nICsg",
+            "ZXNjKGUubm90QWZ0ZXIpICsgJzwvdGQ+JyArCiAgICAgICAgICAgICAgJzx0ZCBzdHlsZT0ibWF4LXdpZHRoOjM2MHB4O292ZXJmbG93OmhpZGRlbjt0ZXh0",
+            "LW92ZXJmbG93OmVsbGlwc2lzO3doaXRlLXNwYWNlOm5vd3JhcCIgdGl0bGU9IicgKyBlc2MoZS5zdWJqZWN0KSArICciPicgKyBlc2MoZS5zdWJqZWN0KSAr",
+            "ICc8L3RkPicgKwogICAgICAgICAgICAgICc8dGQ+PGJ1dHRvbiBjbGFzcz0iZ2hvc3QiIGRhdGEtc2VyaWFsPSInICsgZXNjKGUuc2VyaWFsKSArICciIHN0",
+            "eWxlPSJwYWRkaW5nOjRweCAxMnB4O2ZvbnQtc2l6ZToxMnB4Ij7or6bmg4U8L2J1dHRvbj48L3RkPic7CiAgICAgICAgICAgIHRiLmFwcGVuZENoaWxkKHRy",
+            "KTsKICAgICAgICAgIH0pOwogICAgICAgICAgaWYgKCFyb3dzLmxlbmd0aCkgdGIuaW5uZXJIVE1MID0gJzx0cj48dGQgY29sc3Bhbj0iNiIgc3R5bGU9ImNv",
+            "bG9yOnZhcigtLWRpbSkiPu+8iOaXoOWMuemFjeiusOW9le+8iTwvdGQ+PC90cj4nOwogICAgICAgIH0KCiAgICAgICAgLy8gPT09PT0g6K+B5Lmm5bqT77ya",
+            "5oiR55qE6K+B5Lmm77yIUEtJL01ZIOWvvOWFpeW6k++8iSA9PT09PQogICAgICAgIGxldCBteURhdGEgPSBbXTsKICAgICAgICBsZXQgbXlQZW5kaW5nRmls",
+            "ZSA9IG51bGw7CiAgICAgICAgbGV0IG15UGVuZGluZ05hbWUgPSAnJzsKICAgICAgICBsZXQgbXlEZWxldGVTZXJpYWwgPSAnJzsKICAgICAgICBhc3luYyBm",
+            "dW5jdGlvbiBsb2FkTXkoKSB7CiAgICAgICAgICB0cnkgewogICAgICAgICAgICBjb25zdCByID0gYXdhaXQgYXBpKCcvYXBpL215L2xpc3QnKTsKICAgICAg",
+            "ICAgICAgaWYgKHIub2spIHsgbXlEYXRhID0gci5kYXRhIHx8IFtdOyByZW5kZXJNeSgpOyB9CiAgICAgICAgICB9IGNhdGNoIChlKSB7IC8qIGlnbm9yZSAq",
+            "LyB9CiAgICAgICAgfQogICAgICAgIGZ1bmN0aW9uIG15VHlwZVR4dCh0KSB7IHJldHVybiB7Ujon5qC56K+B5LmmJywgQzonQ0Hor4HkuaYnLCBFOifnu4jn",
+            "q6/or4HkuaYnfVt0XSB8fCB0OyB9CiAgICAgICAgZnVuY3Rpb24gcmVuZGVyTXkoKSB7CiAgICAgICAgICBjb25zdCBmID0gdignbXlGaWx0ZXInKS50b0xv",
+            "d2VyQ2FzZSgpOwogICAgICAgICAgY29uc3Qgcm93cyA9IG15RGF0YS5maWx0ZXIoZSA9PiAhZiB8fCBKU09OLnN0cmluZ2lmeShlKS50b0xvd2VyQ2FzZSgp",
+            "LmluY2x1ZGVzKGYpKTsKICAgICAgICAgIGNvbnN0IHRiID0gJCgnbXlUYWJsZScpLnF1ZXJ5U2VsZWN0b3IoJ3Rib2R5Jyk7CiAgICAgICAgICB0Yi5pbm5l",
+            "ckhUTUwgPSAnJzsKICAgICAgICAgIHJvd3MuZm9yRWFjaChlID0+IHsKICAgICAgICAgICAgY29uc3QgdHIgPSBkb2N1bWVudC5jcmVhdGVFbGVtZW50KCd0",
+            "cicpOwogICAgICAgICAgICB0ci5kYXRhc2V0LnNlcmlhbCA9IGUuc2VyaWFsOwogICAgICAgICAgICB0ci5pbm5lckhUTUwgPQogICAgICAgICAgICAgICc8",
+            "dGQgY2xhc3M9InQtYm94IiBkYXRhLXRpcD0iJyArIGVzYyhteVRpcChlKSkgKyAnIj4nICsgZXNjKGUuc2VyaWFsKSArICc8L3RkPicgKwogICAgICAgICAg",
+            "ICAgICc8dGQ+JyArIGVzYyhteVR5cGVUeHQoZS50eXBlKSkgKyAnPC90ZD4nICsKICAgICAgICAgICAgICAnPHRkPicgKyBlc2MoZS5hbGdvKSArICc8L3Rk",
+            "PicgKwogICAgICAgICAgICAgICc8dGQ+JyArIChlLmhhc0tleSA9PT0gJ1knID8gJ+aYrycgOiAn5ZCmJykgKyAnPC90ZD4nICsKICAgICAgICAgICAgICAn",
+            "PHRkPicgKyBlc2MoZS5ub3RCZWZvcmUpICsgJzwvdGQ+PHRkPicgKyBlc2MoZS5ub3RBZnRlcikgKyAnPC90ZD4nICsKICAgICAgICAgICAgICAnPHRkPjxi",
+            "dXR0b24gY2xhc3M9Imdob3N0IiBkYXRhLW1zZXJpYWw9IicgKyBlc2MoZS5zZXJpYWwpICsgJyIgZGF0YS1hY3Q9ImRldGFpbCIgc3R5bGU9InBhZGRpbmc6",
+            "NHB4IDEycHg7Zm9udC1zaXplOjEycHgiPuivpuaDhTwvYnV0dG9uPiAnICsKICAgICAgICAgICAgICAnPGJ1dHRvbiBjbGFzcz0iZ2hvc3QiIGRhdGEtbXNl",
+            "cmlhbD0iJyArIGVzYyhlLnNlcmlhbCkgKyAnIiBkYXRhLWFjdD0idmVyaWZ5IiBzdHlsZT0icGFkZGluZzo0cHggMTJweDtmb250LXNpemU6MTJweCI+6aqM",
+            "6K+BPC9idXR0b24+ICcgKwogICAgICAgICAgICAgICc8YnV0dG9uIGNsYXNzPSJnaG9zdCIgZGF0YS1tc2VyaWFsPSInICsgZXNjKGUuc2VyaWFsKSArICci",
+            "IGRhdGEtYWN0PSJkZWwiIHN0eWxlPSJwYWRkaW5nOjRweCAxMnB4O2ZvbnQtc2l6ZToxMnB4O2NvbG9yOiNkYzI2MjY7Zm9udC13ZWlnaHQ6NzAwIj7liKDp",
+            "maQ8L2J1dHRvbj48L3RkPic7CiAgICAgICAgICAgIHRiLmFwcGVuZENoaWxkKHRyKTsKICAgICAgICAgIH0pOwogICAgICAgICAgaWYgKCFyb3dzLmxlbmd0",
+            "aCkgdGIuaW5uZXJIVE1MID0gJzx0cj48dGQgY29sc3Bhbj0iNyIgc3R5bGU9ImNvbG9yOnZhcigtLWRpbSkiPu+8iOaXoOiusOW9le+8jOeCueWHuyLlr7zl",
+            "haXor4HkuaYi5re75Yqg77yJPC90ZD48L3RyPic7CiAgICAgICAgfQogICAgICAgIGZ1bmN0aW9uIG15VGlwKGUpIHsKICAgICAgICAgIHJldHVybiAnPGRp",
+            "diBjbGFzcz0ia3YiPjxiPuW6j+WIl+WPt++8mjwvYj4nICsgZXNjKGUuc2VyaWFsKSArICc8L2Rpdj4nICsKICAgICAgICAgICAgJzxkaXYgY2xhc3M9Imt2",
+            "Ij48Yj7or4HkuabnsbvlnovvvJo8L2I+JyArIGVzYyhteVR5cGVUeHQoZS50eXBlKSkgKyAnPC9kaXY+JyArCiAgICAgICAgICAgICc8ZGl2IGNsYXNzPSJr",
+            "diI+PGI+566X5rOV77yaPC9iPicgKyBlc2MoZS5hbGdvKSArICcgLyDnp4HpkqXvvJonICsgKGUuaGFzS2V5ID09PSAnWScgPyAn5pyJJyA6ICfml6AnKSAr",
+            "ICc8L2Rpdj4nICsKICAgICAgICAgICAgJzxkaXYgY2xhc3M9Imt2Ij48Yj7mnInmlYjmnJ/vvJo8L2I+JyArIGVzYyhlLm5vdEJlZm9yZSkgKyAnIH4gJyAr",
+            "IGVzYyhlLm5vdEFmdGVyKSArICc8L2Rpdj4nOwogICAgICAgIH0KICAgICAgICBmdW5jdGlvbiBteUZpbGVDaG9zZW4oKSB7CiAgICAgICAgICBjb25zdCBp",
+            "bnAgPSAkKCdteUZpbGUnKTsKICAgICAgICAgIGlmICghaW5wLmZpbGVzIHx8ICFpbnAuZmlsZXMubGVuZ3RoKSByZXR1cm47CiAgICAgICAgICBjb25zdCBm",
+            "aWxlID0gaW5wLmZpbGVzWzBdOwogICAgICAgICAgY29uc3QgbmFtZSA9IChmaWxlLm5hbWUgfHwgJycpLnRvTG93ZXJDYXNlKCk7CiAgICAgICAgICBteVBl",
+            "bmRpbmdGaWxlID0gZmlsZTsgbXlQZW5kaW5nTmFtZSA9IGZpbGUubmFtZSB8fCAnY2VydCc7CiAgICAgICAgICBpZiAobmFtZS5lbmRzV2l0aCgnLnBmeCcp",
+            "IHx8IG5hbWUuZW5kc1dpdGgoJy5wMTInKSB8fCBuYW1lLmVuZHNXaXRoKCcuamtzJykpIHsKICAgICAgICAgICAgJCgnbXlQd2RGaWxlJykudGV4dENvbnRl",
+            "bnQgPSAn5paH5Lu277yaJyArIGZpbGUubmFtZTsKICAgICAgICAgICAgJCgnbXlQd2QnKS52YWx1ZSA9ICcnOwogICAgICAgICAgICAkKCdteVB3ZE1vZGFs",
+            "Jykuc3R5bGUuZGlzcGxheSA9ICdmbGV4JzsKICAgICAgICAgICAgc2V0VGltZW91dChmdW5jdGlvbigpeyAkKCdteVB3ZCcpLmZvY3VzKCk7IH0sIDYwKTsK",
+            "ICAgICAgICAgIH0gZWxzZSB7CiAgICAgICAgICAgIG15RG9JbXBvcnQoJycpOwogICAgICAgICAgfQogICAgICAgICAgaW5wLnZhbHVlID0gJyc7CiAgICAg",
+            "ICAgfQogICAgICAgIGZ1bmN0aW9uIGNsb3NlTXlQd2QoKSB7ICQoJ215UHdkTW9kYWwnKS5zdHlsZS5kaXNwbGF5ID0gJ25vbmUnOyB9CiAgICAgICAgZnVu",
+            "Y3Rpb24gbXlQd2RPaygpIHsgbXlEb0ltcG9ydCgkKCdteVB3ZCcpLnZhbHVlKTsgY2xvc2VNeVB3ZCgpOyB9CiAgICAgICAgYXN5bmMgZnVuY3Rpb24gbXlE",
+            "b0ltcG9ydChwYXNzd29yZCkgewogICAgICAgICAgaWYgKCFteVBlbmRpbmdGaWxlKSByZXR1cm47CiAgICAgICAgICBjb25zdCBtc2cgPSAkKCdteU1zZycp",
+            "OwogICAgICAgICAgbXNnLmNsYXNzTmFtZSA9ICdoaW50JzsgbXNnLnN0eWxlLmNvbG9yID0gJ3ZhcigtLWRpbSknOwogICAgICAgICAgbXNnLnRleHRDb250",
+            "ZW50ID0gJ+ato+WcqOWvvOWFpSAnICsgbXlQZW5kaW5nTmFtZSArICcgLi4uJzsKICAgICAgICAgIGNvbnN0IGZkID0gbmV3IEZvcm1EYXRhKCk7CiAgICAg",
+            "ICAgICBmZC5hcHBlbmQoJ2ZpbGUnLCBteVBlbmRpbmdGaWxlKTsKICAgICAgICAgIGlmIChwYXNzd29yZCAhPT0gJycpIGZkLmFwcGVuZCgncGFzc3dvcmQn",
+            "LCBwYXNzd29yZCk7CiAgICAgICAgICB0cnkgewogICAgICAgICAgICBjb25zdCByZXNwID0gYXdhaXQgZmV0Y2goJy9hcGkvbXkvaW1wb3J0JywgeyBtZXRo",
+            "b2Q6ICdQT1NUJywgYm9keTogZmQgfSk7CiAgICAgICAgICAgIGNvbnN0IGogPSBhd2FpdCByZXNwLmpzb24oKTsKICAgICAgICAgICAgaWYgKGoub2spIHsK",
+            "ICAgICAgICAgICAgICBtc2cuc3R5bGUuY29sb3IgPSAndmFyKC0tb2spJzsKICAgICAgICAgICAgICBtc2cudGV4dENvbnRlbnQgPSAoai5tZXNzYWdlIHx8",
+            "ICflr7zlhaXmiJDlip8nKSArICfvvIzor4HkuabvvJonICsgKGouY2VydFBhdGggfHwgJycpICsgKGoua2V5UGF0aCA/ICfvvIznp4HpkqXvvJonICsgai5r",
+            "ZXlQYXRoIDogJycpOwogICAgICAgICAgICAgIGxvYWRNeSgpOwogICAgICAgICAgICB9IGVsc2UgewogICAgICAgICAgICAgIG1zZy5zdHlsZS5jb2xvciA9",
+            "ICd2YXIoLS1lcnIpJzsKICAgICAgICAgICAgICBtc2cudGV4dENvbnRlbnQgPSAn5a+85YWl5aSx6LSl77yaJyArIChqLm1lc3NhZ2UgfHwgJ+acquefpemU",
+            "meivrycpOwogICAgICAgICAgICB9CiAgICAgICAgICB9IGNhdGNoIChlKSB7CiAgICAgICAgICAgIG1zZy5zdHlsZS5jb2xvciA9ICd2YXIoLS1lcnIpJzsK",
+            "ICAgICAgICAgICAgbXNnLnRleHRDb250ZW50ID0gJ+WvvOWFpeivt+axguW8guW4uO+8micgKyBlOwogICAgICAgICAgfQogICAgICAgIH0KICAgICAgICBm",
+            "dW5jdGlvbiBteUFza0RlbGV0ZShzZXJpYWwpIHsKICAgICAgICAgIG15RGVsZXRlU2VyaWFsID0gc2VyaWFsOwogICAgICAgICAgJCgnbXlEZWxUZXh0Jyku",
+            "dGV4dENvbnRlbnQgPSAn5piv5ZCm5Yig6ZmkIOW6j+WIl+WPt+S4uiAnICsgc2VyaWFsICsgJyDnmoTor4HkuabvvJ8nOwogICAgICAgICAgJCgnbXlEZWxN",
+            "b2RhbCcpLnN0eWxlLmRpc3BsYXkgPSAnZmxleCc7CiAgICAgICAgfQogICAgICAgIGZ1bmN0aW9uIGNsb3NlTXlEZWwoKSB7ICQoJ215RGVsTW9kYWwnKS5z",
+            "dHlsZS5kaXNwbGF5ID0gJ25vbmUnOyB9CiAgICAgICAgYXN5bmMgZnVuY3Rpb24gbXlEb0RlbGV0ZSgpIHsKICAgICAgICAgIGNvbnN0IHMgPSBteURlbGV0",
+            "ZVNlcmlhbDsKICAgICAgICAgIGNsb3NlTXlEZWwoKTsKICAgICAgICAgIGlmICghcykgcmV0dXJuOwogICAgICAgICAgdHJ5IHsKICAgICAgICAgICAgY29u",
+            "c3QgciA9IGF3YWl0IGFwaSgnL2FwaS9teS9kZWxldGUnLCB7IHNlcmlhbDogcyB9KTsKICAgICAgICAgICAgY29uc3QgbXNnID0gJCgnbXlNc2cnKTsKICAg",
+            "ICAgICAgICAgbXNnLmNsYXNzTmFtZSA9ICdoaW50JzsKICAgICAgICAgICAgbXNnLnN0eWxlLmNvbG9yID0gci5vayA/ICd2YXIoLS1vayknIDogJ3Zhcigt",
+            "LWVyciknOwogICAgICAgICAgICBtc2cudGV4dENvbnRlbnQgPSByLm1lc3NhZ2UgfHwgKHIub2sgPyAn5Yig6Zmk5oiQ5YqfJyA6ICfliKDpmaTlpLHotKUn",
+            "KTsKICAgICAgICAgICAgbG9hZE15KCk7CiAgICAgICAgICB9IGNhdGNoIChlKSB7CiAgICAgICAgICAgIGNvbnN0IG1zZyA9ICQoJ215TXNnJyk7CiAgICAg",
+            "ICAgICAgIG1zZy5jbGFzc05hbWUgPSAnaGludCc7IG1zZy5zdHlsZS5jb2xvciA9ICd2YXIoLS1lcnIpJzsKICAgICAgICAgICAgbXNnLnRleHRDb250ZW50",
+            "ID0gJ+WIoOmZpOivt+axguW8guW4uO+8micgKyBlOwogICAgICAgICAgfQogICAgICAgIH0KCiAgICAgICAgLy8g562+5Y+R6K+B5Lmm55qE6aKB5Y+R6ICF",
+            "5LiL5ouJ77yaQ0VSVFMudHh0IOS4rSBSL0Mg57G75Z6L5bqP5YiX5Y+377yI5oKs5YGc5pi+56S66K+B5Lmm6K+m5oOF77yJCiAgICAgICAgbGV0IGlzc3Vl",
+            "ck1hcCA9IHt9OwogICAgICAgIGFzeW5jIGZ1bmN0aW9uIGxvYWRJc3N1ZXJzKCkgewogICAgICAgICAgdHJ5IHsKICAgICAgICAgICAgY29uc3QgW3JpLCBy",
+            "Y10gPSBhd2FpdCBQcm9taXNlLmFsbChbYXBpKCcvYXBpL2lzc3VlcnMnKSwgYXBpKCcvYXBpL2NoYWluJyldKTsKICAgICAgICAgICAgaWYgKCFyaS5vaykg",
+            "cmV0dXJuOwogICAgICAgICAgICBpc3N1ZXJNYXAgPSB7fTsKICAgICAgICAgICAgaWYgKHJjLm9rKSB7CiAgICAgICAgICAgICAgLy8gL2FwaS9jaGFpbiDo",
+            "v5Tlm57ltYzlpZfmoJHvvIzlsZXlubPkuLogc2VyaWFsIOKGkiDoioLngrkK"
+    });
 
-        async function api(path, body) {
-          const opt = { method: body ? 'POST' : 'GET', headers: {} };
-          if (body !== undefined) { opt.headers['Content-Type'] = 'application/json'; opt.body = JSON.stringify(body); }
-          const r = await fetch(path, opt);
-          return r.json();
-        }
-
-        function showOut(id, text, ok) {
-          const el = $(id);
-          el.hidden = false;
-          el.textContent = text || '(无输出)';
-          el.className = 'out ' + (ok ? 'ok' : 'err');
-        }
-
-        // 证书验证：上传本地 cer/crt/pem 文件验证
-        async function verifyFile() {
-          const inp = $('vfFile');
-          if (!inp.files || !inp.files.length) { showOut('vfOut', '请先选择证书文件（cer / crt / pem）', false); return; }
-          const fd = new FormData();
-          fd.append('file', inp.files[0]);
-          showOut('vfOut', '验证中...', true);
-          try {
-            const resp = await fetch('/api/verify/file', { method: 'POST', body: fd });
-            const j = await resp.json();
-            if (j.ok) showOut('vfOut', j.message || '(无输出)', true);
-            else showOut('vfOut', '验证失败: ' + (j.message || ''), false);
-          } catch (e) { showOut('vfOut', '请求异常: ' + e, false); }
-        }
-
-        async function postForm(path, params, outId, btn) {
-          const el = $(outId);
-          el.hidden = false; el.className = 'out'; el.textContent = '执行中...';
-          if (btn) btn.disabled = true;
-          try {
-            const r = await api(path, params);
-            showOut(outId, r.message || 'OK', !!r.ok);
-          } catch (e) {
-            showOut(outId, '请求失败: ' + e, false);
-          } finally {
-            if (btn) btn.disabled = false;
-          }
-        }
-
-        // ===== 签发根证书：DN 辅助编辑 =====
-        // 基础字段映射 [输入框id, DN key]；输出顺序按 CA/B Forum 常见 subject DN 顺序（C,S,L,O,OU,CN,E）。
-        // E 邮箱后端按 OID 1.2.840.113549.1.9.1 处理。
-        // ===== 通用 DN 辅助编辑（mk 签发根证书 / sc 签发证书 / in 初始化环境 共用）=====
-        // 基础字段 [后缀, DN key]，输出顺序 C,S,L,O,OU,CN,E；E 邮箱后端按 OID 1.2.840.113549.1.9.1 处理
-        const DN_STD_PAT = [['C','C'],['S','S'],['L','L'],['O','O'],['Ou','OU'],['Cn','CN'],['E','1.2.840.113549.1.9.1']];
-        const DN_EV_PAT = [['Reg','2.5.4.5'],['Bc','2.5.4.15'],
-          ['Jc','1.3.6.1.4.1.311.60.2.1.3'],['Js','1.3.6.1.4.1.311.60.2.1.2'],['Jl','1.3.6.1.4.1.311.60.2.1.1'],
-          ['Addr','2.5.4.9'],['Oi','2.5.4.97']];
-        function dnF(p,n){ return p + 'Dn' + n; }
-        function dnStd(p){ return DN_STD_PAT.map(function(x){ return [dnF(p,x[0]), x[1]]; }); }
-        function dnEvFields(p){ return DN_EV_PAT.map(function(x){ return [dnF(p,x[0]), x[1]]; }); }
-        function dnEvOn(p){ const el = $(dnF(p,'EvToggle')); return el && el.checked; }
-        function syncDn(p) {
-          const parts = [];
-          const all = dnStd(p).concat(dnEvOn(p) ? dnEvFields(p) : []);
-          all.forEach(function(pa){
-            const el = $(pa[0]); if (!el) return;
-            const val = el.value.trim();
-            if (val) parts.push(pa[1] + '=' + val);
-          });
-          document.querySelectorAll('#' + p + 'DnOidRows .dn-oid-row').forEach(function(row){
-            const k = row.querySelector('.dn-key').value.trim();
-            const val = row.querySelector('.dn-val').value.trim();
-            if (k && val) parts.push(k + '=' + val);
-          });
-          $(p + 'Dn').value = parts.join(',');
-        }
-        function toggleDnEv(p) {
-          const on = dnEvOn(p);
-          $(p + 'DnEvFields').style.display = on ? '' : 'none';
-          syncDn(p);
-        }
-        function addDnRow(p, key, val) {
-          const div = document.createElement('div');
-          div.className = 'dn-oid-row';
-          div.style.cssText = 'display:flex;gap:6px;margin-bottom:6px;align-items:center';
-          const esc = s => String(s || '').replace(/"/g, '&quot;');
-          div.innerHTML = '<input class="dn-key" placeholder="字段名或 OID（如 2.5.4.42）" style="flex:1.2;max-width:320px" value="' + esc(key) + '" oninput="syncDn(\\'' + p + '\\')">'
-            + '<input class="dn-val" placeholder="值" style="flex:1.5" value="' + esc(val) + '" oninput="syncDn(\\'' + p + '\\')">'
-            + '<button type="button" class="ghost" style="flex:none" onclick="this.parentNode.remove();syncDn(\\'' + p + '\\')">✕</button>';
-          $(p + 'DnOidRows').appendChild(div);
-        }
-        function parseDn(p) {
-          const dn = $(p + 'Dn').value.trim();
-          if (!dn) return;
-          $(p + 'DnOidRows').innerHTML = '';
-          const all = dnStd(p).concat(dnEvFields(p));
-          all.forEach(function(pa){ $(pa[0]).value = ''; });
-          let evHit = false;
-          dn.split(',').forEach(function(seg){
-            seg = seg.trim(); if (!seg) return;
-            const i = seg.indexOf('='); if (i < 0) return;
-            const k = seg.slice(0, i).trim(), val = seg.slice(i + 1).trim();
-            const hit = all.find(function(pa){ return pa[1].toUpperCase() === k.toUpperCase(); });
-            if (hit) {
-              $(hit[0]).value = val;
-              if (dnEvFields(p).indexOf(hit) >= 0) evHit = true;
-            } else addDnRow(p, k, val);
-          });
-          if (evHit) { $(dnF(p,'EvToggle')).checked = true; $(p + 'DnEvFields').style.display = ''; }
-        }
-        // mk 兼容包装（签发根证书原有函数名不变）
-        function mkDnEvOn(){ return dnEvOn('mk'); }
-        function syncMkDn(){ return syncDn('mk'); }
-        function toggleMkDnEv(){ return toggleDnEv('mk'); }
-        function addMkDnRow(k,v){ return addDnRow('mk',k,v); }
-        function parseMkDn(){ return parseDn('mk'); }
-        // 页面就绪：把各页默认 DN 拆分到辅助字段
-        parseMkDn(); parseDn('sc'); parseDn('in');
-
-
-        async function quickAction(path) {
-          postForm(path, {}, 'dashOut');
-        }
-
-        // ===== 签名专区：微软代码签名 / PDF 文档签名 =====
-        async function loadSignCerts() {
-          try {
-            const re = await api('/api/signcerts?kind=exe');
-            const rp = await api('/api/signcerts?kind=pdf');
-            fillSignSel($('sgExeCert'), (re.data || []).length ? re.data : null, 'exe');
-            fillSignSel($('sgPdfCert'), (rp.data || []).length ? rp.data : null, 'pdf');
-          } catch (e) {
-            $('sgExeCert').innerHTML = '<option value="">（加载失败: ' + e + '）</option>';
-            $('sgPdfCert').innerHTML = '<option value="">（加载失败: ' + e + '）</option>';
-          }
-        }
-        function fillSignSel(sel, list, kind) {
-          if (!list) {
-            sel.innerHTML = kind === 'pdf'
-              ? '<option value="">（不签名，仅文档时间戳）</option>'
-              : '<option value="">（无可用证书）</option>';
-            return;
-          }
-          const hint = kind === 'exe' ? '代码签名 EKU' : '文档签名 EKU';
-          sel.innerHTML = kind === 'pdf'
-            ? '<option value="">（不签名，仅文档时间戳）</option>'
-            : '<option value="">（请选择 ' + hint + ' 证书）</option>';
-          list.forEach(c => {
-            const o = document.createElement('option');
-            o.value = c.serial;
-            o.textContent = (c.src === 'my' ? '〔我的〕 ' : '') + c.serial + ' ｜ ' + (c.algo || '') + (c.bits ? ' ' + c.bits : '') + ' ｜ ' + c.dn;
-            o.title = '序列号: ' + c.serial + '\\n算法: ' + (c.algo || '') + (c.bits ? ' ' + c.bits + ' 位' : '') +
-              '\\n颁发者: ' + (c.issuer || '') + '\\n有效期: ' + (c.validFrom || '') + ' ~ ' + (c.validTo || '') +
-              '\\n状态: ' + (c.status === 'V' ? '正常' : c.status === 'R' ? '已吊销' : '未知') +
-              '\\nEKU: ' + ((c.ekus || []).join(', ') || '（无）') +
-              '\\nDN: ' + c.dn;
-            sel.appendChild(o);
-          });
-        }
-        // ===== 微软代码签名批量待签名队列（多选 + 拖拽） =====
-        const exeJobs = [];
-        function addExeFiles(files) {
-          let added = 0;
-          [...files].forEach(f => {
-            if (!/\\.(exe|dll|sys|cab|cat|msi)$/i.test(f.name)) return;
-            if (exeJobs.some(j => j.file.name === f.name && j.file.size === f.file.size)) return;
-            exeJobs.push({ file: f, state: 'wait', msg: '待处理', b64: null, name: null });
-            added++;
-          });
-          renderExeList();
-          return added;
-        }
-        function renderExeList() {
-          const box = $('exeList');
-          box.innerHTML = '';
-          exeJobs.forEach((j, i) => {
-            const row = document.createElement('div');
-            row.className = 'pdf-row';
-            row.innerHTML = '<span class="nm" title="' + esc(j.file.name) + '">' + esc(j.file.name) + '（' + fmtSize(j.file.size) + '）</span>'
-              + '<span class="st ' + (j.state === 'ok' ? 'ok' : j.state === 'err' ? 'err' : '') + '">' + esc(j.msg) + '</span>'
-              + (j.state === 'ok' && j.b64 ? '<a class="dl" href="data:application/octet-stream;base64,' + j.b64 + '" download="' + esc(j.name) + '">⬇ 下载</a>' : '')
-              + '<button onclick="exeSignOne(' + i + ')">签名</button>'
-              + '<button class="ghost" onclick="exeVerifyOne(' + i + ')">验证</button>'
-              + '<button class="ghost" onclick="exeRemove(' + i + ')">移除</button>';
-            box.appendChild(row);
-          });
-          $('exeCount').textContent = exeJobs.length;
-        }
-        function exeRemove(i) { exeJobs.splice(i, 1); renderExeList(); }
-        function exeClear() { exeJobs.length = 0; renderExeList(); $('sgExeOut').hidden = true; }
-        function exeParams() {
-          const fd = new FormData();
-          fd.append('serial', $('sgExeCert').value);
-          fd.append('tsType', $('sgExeTsType').value);
-          fd.append('tsUrl', $('sgExeTsUrl').value);
-          return fd;
-        }
-        function exePreCheck() {
-          if (!$('sgExeCert').value) return '请先选择签名证书';
-          return null;
-        }
-        async function exeSignOne(i) {
-          const j = exeJobs[i];
-          if (!j) return;
-          const err = exePreCheck();
-          if (err) { j.state = 'err'; j.msg = err; renderExeList(); return; }
-          j.state = 'signing'; j.msg = '签名中...'; renderExeList();
-          const fd = exeParams();
-          fd.append('name', j.file.name);
-          fd.append('file', j.file);
-          try {
-            const resp = await fetch('/api/sign/exe', { method: 'POST', body: fd });
-            const r = await resp.json();
-            j.state = r.ok ? 'ok' : 'err';
-            j.msg = (r.ok ? '✓ 签名成功' : '✗ ' + (r.message || '失败')).substring(0, 120);
-            j.b64 = r.ok ? (r.b64 || null) : null;
-            j.name = r.ok ? (r.name || 'signed_' + j.file.name) : null;
-            j.lastDetail = r.message || '';
-          } catch (e) {
-            j.state = 'err'; j.msg = '请求失败: ' + e; j.lastDetail = '';
-          }
-          renderExeList();
-          $('sgExeOut').hidden = false;
-          $('sgExeOut').className = 'out ' + (j.state === 'ok' ? 'ok' : 'err');
-          $('sgExeOut').textContent = '[' + j.file.name + '] ' + (j.lastDetail || j.msg);
-        }
-        async function exeVerifyOne(i) {
-          const j = exeJobs[i];
-          if (!j) return;
-          j.state = 'signing'; j.msg = '验证中...'; renderExeList();
-          const fd = new FormData();
-          fd.append('file', j.file);
-          try {
-            const resp = await fetch('/api/verify/exe', { method: 'POST', body: fd });
-            const r = await resp.json();
-            j.state = r.ok ? 'ok' : 'err';
-            j.msg = (r.ok ? '✓ 验证完成' : '✗ 验证失败').substring(0, 120);
-            j.lastDetail = r.message || '';
-          } catch (e) {
-            j.state = 'err'; j.msg = '请求失败: ' + e; j.lastDetail = '';
-          }
-          renderExeList();
-          $('sgExeOut').hidden = false;
-          $('sgExeOut').className = 'out ' + (j.state === 'ok' ? 'ok' : 'err');
-          $('sgExeOut').textContent = '[' + j.file.name + '] ' + (j.lastDetail || j.msg);
-        }
-        async function exeSignAll() {
-          const out = $('sgExeOut');
-          if (!exeJobs.length) { out.hidden = false; out.className = 'out err'; out.textContent = '待签名列表为空，请先添加文件'; return; }
-          let okN = 0, errN = 0; const lines = [];
-          for (let i = 0; i < exeJobs.length; i++) {
-            const j = exeJobs[i];
-            const err = exePreCheck();
-            if (err) { j.state = 'err'; j.msg = err; errN++; lines.push('✗ ' + j.file.name + ' → ' + err); renderExeList(); continue; }
-            j.state = 'signing'; j.msg = '签名中...'; renderExeList();
-            const fd = exeParams();
-            fd.append('name', j.file.name);
-            fd.append('file', j.file);
-            try {
-              const resp = await fetch('/api/sign/exe', { method: 'POST', body: fd });
-              const r = await resp.json();
-              j.state = r.ok ? 'ok' : 'err';
-              j.msg = r.ok ? '✓ 签名成功' : ('✗ ' + (r.message || '失败')).substring(0, 100);
-              j.b64 = r.ok ? (r.b64 || null) : null;
-              j.name = r.ok ? (r.name || 'signed_' + j.file.name) : null;
-              if (r.ok) okN++; else { errN++; lines.push('✗ ' + j.file.name + ' → ' + (r.message || '失败')); }
-            } catch (e) {
-              j.state = 'err'; j.msg = '请求失败: ' + e; errN++; lines.push('✗ ' + j.file.name + ' → ' + e);
-            }
-            renderExeList();
-          }
-          out.hidden = false;
-          out.className = 'out ' + (errN ? 'err' : 'ok');
-          out.textContent = '批量签名完成：成功 ' + okN + ' 个，失败 ' + errN + ' 个' + (lines.length ? '\\n' + lines.join('\\n') : '');
-        }
-        async function exeVerifyAll() {
-          const out = $('sgExeOut');
-          if (!exeJobs.length) { out.hidden = false; out.className = 'out err'; out.textContent = '待签名列表为空，请先添加文件'; return; }
-          let okN = 0, errN = 0; const lines = [];
-          for (let i = 0; i < exeJobs.length; i++) {
-            const j = exeJobs[i];
-            j.state = 'signing'; j.msg = '验证中...'; renderExeList();
-            const fd = new FormData();
-            fd.append('file', j.file);
-            try {
-              const resp = await fetch('/api/verify/exe', { method: 'POST', body: fd });
-              const r = await resp.json();
-              j.state = r.ok ? 'ok' : 'err';
-              j.msg = r.ok ? '✓ 验证完成' : '✗ 验证失败';
-              if (r.ok) okN++; else { errN++; lines.push('✗ ' + j.file.name + ' → ' + (r.message || '失败')); }
-            } catch (e) {
-              j.state = 'err'; j.msg = '请求失败: ' + e; errN++; lines.push('✗ ' + j.file.name + ' → ' + e);
-            }
-            renderExeList();
-          }
-          out.hidden = false;
-          out.className = 'out ' + (errN ? 'err' : 'ok');
-          out.textContent = '批量验证完成：成功 ' + okN + ' 个，失败 ' + errN + ' 个' + (lines.length ? '\\n' + lines.join('\\n') : '');
-        }
-        // 拖拽与多选初始化
-        (function initExeDrop() {
-          const dz = $('exeDrop');
-          if (!dz) return;
-          dz.ondragover = e => { e.preventDefault(); dz.classList.add('over'); };
-          dz.ondragleave = () => dz.classList.remove('over');
-          dz.ondrop = e => { e.preventDefault(); dz.classList.remove('over'); addExeFiles(e.dataTransfer.files); };
-          const fi = $('sgExeFile');
-          if (fi) fi.onchange = e => { addExeFiles(e.target.files); e.target.value = ''; };
-        })();
-
-        // ===== 签名专区：选择夹切换 =====
-        function sigTab(name, btn) {
-          ['exe', 'pdf'].forEach(n => {
-            $('sigPane-' + n).style.display = n === name ? '' : 'none';
-            $('sigTabBtn-' + n).classList.toggle('active', n === name);
-          });
-        }
-
-        // ===== OCSP|TSA签发：分类夹切换（OCSP签发 / TSA签发 / 模拟请求调试） =====
-        function ocspTab(t) {
-          document.querySelectorAll('#ocspTabs .sig-tab').forEach(b => b.classList.toggle('active', b.getAttribute('data-tab') === t));
-          $('ocspIssue').style.display = t === 'issue' ? '' : 'none';
-          $('tsaIssue').style.display = t === 'tsaissue' ? '' : 'none';
-          $('dbgOcsp').style.display = t === 'debugocsp' ? '' : 'none';
-          $('dbgTsa').style.display = t === 'debugtsa' ? '' : 'none';
-        }
-
-        // ===== PDF 批量待签名队列（多选 + 拖拽） =====
-        const pdfJobs = [];
-        function addPdfFiles(files) {
-          let added = 0;
-          [...files].forEach(f => {
-            if (!/\\.pdf$/i.test(f.name)) return;
-            if (pdfJobs.some(j => j.file.name === f.name && j.file.size === f.file.size)) return;
-            pdfJobs.push({ file: f, state: 'wait', msg: '待处理', b64: null, name: null });
-            added++;
-          });
-          renderPdfList();
-          return added;
-        }
-        function fmtSize(n) {
-          return n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.max(1, Math.round(n / 1024)) + ' KB';
-        }
-        function renderPdfList() {
-          const box = $('pdfList');
-          box.innerHTML = '';
-          pdfJobs.forEach((j, i) => {
-            const row = document.createElement('div');
-            row.className = 'pdf-row';
-            row.innerHTML = '<span class="nm" title="' + esc(j.file.name) + '">' + esc(j.file.name) + '（' + fmtSize(j.file.size) + '）</span>'
-              + '<span class="st ' + (j.state === 'ok' ? 'ok' : j.state === 'err' ? 'err' : '') + '">' + esc(j.msg) + '</span>'
-              + (j.state === 'ok' && j.b64 ? '<a class="dl" href="data:application/pdf;base64,' + j.b64 + '" download="' + esc(j.name) + '">⬇ 下载</a>' : '')
-              + '<button onclick="pdfSignOne(' + i + ')">签名</button>'
-              + '<button class="ghost" onclick="pdfVerifyOne(' + i + ')">验证</button>'
-              + '<button class="ghost" onclick="pdfRemove(' + i + ')">移除</button>';
-            box.appendChild(row);
-          });
-          $('pdfCount').textContent = pdfJobs.length;
-        }
-        function pdfRemove(i) { pdfJobs.splice(i, 1); renderPdfList(); }
-        function pdfClear() { pdfJobs.length = 0; renderPdfList(); $('sgPdfOut').hidden = true; }
-        function pdfParams() {
-          const fd = new FormData();
-          fd.append('serial', $('sgPdfCert').value);
-          fd.append('sealType', $('sgPdfSeal').value);
-          fd.append('tsUrl', $('sgPdfTsUrl').value);
-          const img = $('sgPdfImage').files && $('sgPdfImage').files[0];
-          if (img) fd.append('image', img);
-          return fd;
-        }
-        function pdfPreCheck() {
-          const serial = $('sgPdfCert').value;
-          const seal = $('sgPdfSeal').value;
-          if (!serial) {
-            if (seal !== 'ADOBE') return '纯文档时间戳（不选证书）仅支持 Adobe 标准';
-            if ($('sgPdfImage').files && $('sgPdfImage').files[0]) return '纯文档时间戳（不选证书）不能附加签章图片';
-          }
-          return null;
-        }
-        async function pdfSignOne(i) {
-          const j = pdfJobs[i];
-          if (!j) return;
-          const err = pdfPreCheck();
-          if (err) { j.state = 'err'; j.msg = err; renderPdfList(); return; }
-          j.state = 'signing'; j.msg = '签名中...'; renderPdfList();
-          const fd = pdfParams();
-          fd.append('name', j.file.name);
-          fd.append('file', j.file);
-          try {
-            const resp = await fetch('/api/sign/pdf', { method: 'POST', body: fd });
-            const r = await resp.json();
-            j.state = r.ok ? 'ok' : 'err';
-            j.msg = (r.ok ? '✓ 签名成功' : '✗ ' + (r.message || '失败')).substring(0, 120);
-            j.b64 = r.ok ? (r.b64 || null) : null;
-            j.name = r.ok ? (r.name || 'signed_' + j.file.name) : null;
-            j.lastDetail = r.message || '';
-          } catch (e) {
-            j.state = 'err'; j.msg = '请求失败: ' + e; j.lastDetail = '';
-          }
-          renderPdfList();
-          $('sgPdfOut').hidden = false;
-          $('sgPdfOut').className = 'out ' + (j.state === 'ok' ? 'ok' : 'err');
-          $('sgPdfOut').textContent = '[' + j.file.name + '] ' + (j.lastDetail || j.msg);
-        }
-        async function pdfVerifyOne(i) {
-          const j = pdfJobs[i];
-          if (!j) return;
-          j.state = 'signing'; j.msg = '验证中...'; renderPdfList();
-          const fd = new FormData();
-          fd.append('file', j.file);
-          try {
-            const resp = await fetch('/api/verify/pdf', { method: 'POST', body: fd });
-            const r = await resp.json();
-            j.state = r.ok ? 'ok' : 'err';
-            j.msg = (r.ok ? '✓ 验证完成' : '✗ 验证失败').substring(0, 120);
-            j.lastDetail = r.message || '';
-          } catch (e) {
-            j.state = 'err'; j.msg = '请求失败: ' + e; j.lastDetail = '';
-          }
-          renderPdfList();
-          $('sgPdfOut').hidden = false;
-          $('sgPdfOut').className = 'out ' + (j.state === 'ok' ? 'ok' : 'err');
-          $('sgPdfOut').textContent = '[' + j.file.name + '] ' + (j.lastDetail || j.msg);
-        }
-        async function pdfSignAll() {
-          const out = $('sgPdfOut');
-          if (!pdfJobs.length) { out.hidden = false; out.className = 'out err'; out.textContent = '待签名列表为空，请先添加 PDF 文件'; return; }
-          let okN = 0, errN = 0; const lines = [];
-          for (let i = 0; i < pdfJobs.length; i++) {
-            const j = pdfJobs[i];
-            const err = pdfPreCheck();
-            if (err) { j.state = 'err'; j.msg = err; errN++; lines.push('✗ ' + j.file.name + ' → ' + err); renderPdfList(); continue; }
-            j.state = 'signing'; j.msg = '签名中...'; renderPdfList();
-            const fd = pdfParams();
-            fd.append('name', j.file.name);
-            fd.append('file', j.file);
-            try {
-              const resp = await fetch('/api/sign/pdf', { method: 'POST', body: fd });
-              const r = await resp.json();
-              j.state = r.ok ? 'ok' : 'err';
-              j.msg = r.ok ? '✓ 签名成功' : ('✗ ' + (r.message || '失败')).substring(0, 100);
-              j.b64 = r.ok ? (r.b64 || null) : null;
-              j.name = r.ok ? (r.name || 'signed_' + j.file.name) : null;
-              if (r.ok) okN++; else { errN++; lines.push('✗ ' + j.file.name + ' → ' + (r.message || '失败')); }
-            } catch (e) {
-              j.state = 'err'; j.msg = '请求失败: ' + e; errN++; lines.push('✗ ' + j.file.name + ' → ' + e);
-            }
-            renderPdfList();
-          }
-          out.hidden = false;
-          out.className = 'out ' + (errN ? 'err' : 'ok');
-          out.textContent = '批量签名完成：成功 ' + okN + ' 个，失败 ' + errN + ' 个' + (lines.length ? '\\n' + lines.join('\\n') : '');
-        }
-        async function pdfVerifyAll() {
-          const out = $('sgPdfOut');
-          if (!pdfJobs.length) { out.hidden = false; out.className = 'out err'; out.textContent = '待签名列表为空，请先添加 PDF 文件'; return; }
-          let okN = 0, errN = 0; const lines = [];
-          for (let i = 0; i < pdfJobs.length; i++) {
-            const j = pdfJobs[i];
-            j.state = 'signing'; j.msg = '验证中...'; renderPdfList();
-            const fd = new FormData();
-            fd.append('file', j.file);
-            try {
-              const resp = await fetch('/api/verify/pdf', { method: 'POST', body: fd });
-              const r = await resp.json();
-              j.state = r.ok ? 'ok' : 'err';
-              j.msg = r.ok ? '✓ 验证完成' : '✗ 验证失败';
-              if (r.ok) okN++; else { errN++; lines.push('✗ ' + j.file.name + ' → ' + (r.message || '失败')); }
-            } catch (e) {
-              j.state = 'err'; j.msg = '请求失败: ' + e; errN++; lines.push('✗ ' + j.file.name + ' → ' + e);
-            }
-            renderPdfList();
-          }
-          out.hidden = false;
-          out.className = 'out ' + (errN ? 'err' : 'ok');
-          out.textContent = '批量验证完成：成功 ' + okN + ' 个，失败 ' + errN + ' 个' + (lines.length ? '\\n' + lines.join('\\n') : '');
-        }
-        // 拖拽与多选初始化
-        (function initPdfDrop() {
-          const dz = $('pdfDrop');
-          if (!dz) return;
-          dz.ondragover = e => { e.preventDefault(); dz.classList.add('over'); };
-          dz.ondragleave = () => dz.classList.remove('over');
-          dz.ondrop = e => { e.preventDefault(); dz.classList.remove('over'); addPdfFiles(e.dataTransfer.files); };
-          const fi = $('sgPdfFile');
-          if (fi) fi.onchange = e => { addPdfFiles(e.target.files); e.target.value = ''; };
-        })();
-
-        // ===== 页面切换 =====
-        document.querySelectorAll('#nav a').forEach(a => {
-          a.onclick = () => {
-            document.querySelectorAll('#nav a').forEach(x => x.classList.remove('active'));
-            document.querySelectorAll('.page').forEach(x => x.classList.remove('active'));
-            a.classList.add('active');
-            const p = a.dataset.page;
-            $('page-' + p).classList.add('active');
-            $('pageTitle').textContent = TITLES[p] || p;
-            if (p === 'dashboard') loadStatus();
-            if (p === 'certs') { loadCerts(); loadIssuers(); }
-            if (p === 'config') loadConfig();
-            if (p === 'logs') loadLogs();
-            if (p === 'sign') loadSignCerts();
-            if (p === 'template') { loadTemplates(); loadCerts(); loadIssuers(); }
-            if (p === 'ctlog') loadCtLog();
-            if (p === 'users') loadUsers();
-            if (p === 'radius') { loadRadius(); }
-            if (p === 'pppoe') { loadPppoe(); loadPppoeLogs(); }
-          };
-        });
-
-        // ===== 仪表盘 =====
-        function fmtUptime(s) {
-          if (s < 60) return s + ' 秒';
-          if (s < 3600) return Math.floor(s/60) + ' 分 ' + (s%60) + ' 秒';
-          if (s < 86400) return Math.floor(s/3600) + ' 时 ' + Math.floor(s%3600/60) + ' 分';
-          return Math.floor(s/86400) + ' 天 ' + Math.floor(s%86400/3600) + ' 时';
-        }
-        async function loadStatus() {
-          try {
-            const r = await api('/api/status');
-            if (!r.ok) return;
-            const d = r.data;
-            if ($('stPort')) $('stPort').textContent = d.mainPort;
-            if ($('stUptime')) $('stUptime').textContent = fmtUptime(d.uptimeSeconds);
-            if ($('stAdmin')) $('stAdmin').textContent = d.adminPort;
-            if ($('stCalls')) $('stCalls').textContent = d.totalCalls;
-            if ($('stLogs')) $('stLogs').textContent = d.logLines;
-            if ($('stBase')) $('stBase').textContent = d.baseDir;
-            if ($('mainPort')) $('mainPort').textContent = 'MAIN: ' + d.mainPort;
-            const st = $('mainState');
-            if (st) {
-              st.textContent = d.mainRunning ? '● 运行中' : '○ 未运行';
-              st.className = 'badge ' + (d.mainRunning ? 'ok' : 'err');
-            }
-            if ($('sideVersion')) $('sideVersion').textContent = d.version;
-            // 最近日志（仅仪表盘页拉取，避免其它页面白耗流量）
-            if ($('page-dashboard') && $('page-dashboard').classList.contains('active')) {
-              const lr = await api('/api/logs?lines=30');
-              if (lr.ok && $('dashLogs')) $('dashLogs').textContent = lr.data;
-            }
-          } catch (e) {
-            const st = $('mainState');
-            if (st) { st.textContent = '连接失败'; st.className = 'badge err'; }
-          }
-        }
-
-        // ===== 证书库 =====
-        let certData = [];
-        async function loadCerts() {
-          try {
-            const r = await api('/api/certs');
-            if (r.ok) { certData = r.data; renderCerts(); }
-          } catch (e) { /* ignore */ }
-        }
-        function renderCerts() {
-          const f = v('certsFilter').toLowerCase();
-          const rows = certData.filter(e => !f || JSON.stringify(e).toLowerCase().includes(f));
-          const tb = $('certsTable').querySelector('tbody');
-          tb.innerHTML = '';
-          rows.forEach(e => {
-            const tr = document.createElement('tr');
-            tr.dataset.serial = e.serial;
-            // 状态文本：V.正常 / R.已吊销 / N.未知；配色：正常绿、已吊销深红、未知橙
-            const stTxt = {V:'V.正常', R:'R.已吊销', N:'N.未知'}[e.status] || e.status;
-            const stCls = e.status === 'R' ? 'color:#dc2626' : e.status === 'V' ? 'color:var(--ok)' : e.status === 'N' ? 'color:#f59e0b' : '';
-            // 序列号列：鼠标悬浮显示证书详情（与仪表盘证书链同款悬浮窗）
-            const tip = certTip(e.serial);
-            tr.innerHTML = '<td class="t-box" data-tip="' + esc(tip) + '">' + esc(e.serial) + '</td>' +
-              '<td>' + esc(typeName(e.type)) + '</td><td style="' + stCls + ';font-weight:700">' + esc(stTxt) + '</td>' +
-              '<td>' + esc(e.reason) + '</td><td>' + esc(e.time) + '</td>' +
-              '<td class="t-box" data-tip="' + esc(certTip(e.issuer)) + '">' + esc(e.issuer) + '</td><td>' + esc(e.algo) + '</td>' +
-              '<td><button class="ghost" data-serial="' + e.serial + '" style="padding:4px 12px;font-size:12px">详情</button> ' +
-              '<button class="ghost" data-verify="' + e.serial + '" style="padding:4px 12px;font-size:12px">验证</button> ' +
-              '<button class="ghost" data-op="' + e.serial + '" style="padding:4px 12px;font-size:12px">操作</button></td>';
-            tb.appendChild(tr);
-          });
-          if (!rows.length) tb.innerHTML = '<tr><td colspan="8" style="color:var(--dim)">（无匹配记录）</td></tr>';
-        }
-        // 证书悬浮窗：优先用证书链树的详情（DN/密钥/哈希/长度/OCSP/CRL），未登记链数据时回退登记表信息
-        function certTip(serial) {
-          const n = issuerMap[serial];
-          if (n) return issuerTip(serial);
-          const e = certData.find(x => x.serial.toLowerCase() === String(serial).toLowerCase());
-          if (!e) return '<div class="kv"><b>证书信息：</b>未找到（该序列号未登记详情）</div>';
-          const stTxt = {V:'正常', R:'已吊销', N:'未知'}[e.status] || e.status;
-          return '<div class="kv"><b>序列号：</b>' + esc(e.serial) + '</div>' +
-            '<div class="kv"><b>证书类型：</b>' + esc(typeName(e.type)) + '</div>' +
-            '<div class="kv"><b>状态：</b>' + esc(stTxt) + ' / 算法：' + esc(e.algo || '-') + '</div>' +
-            '<div class="kv"><b>颁发者：</b>' + esc(e.issuer) + '</div>' +
-            '<div class="kv"><b>时间：</b>' + esc(e.time) + '</div>';
-        }
-
-        // ===== 证书库：可信公网 cacerts 选择夹（结构同 CERTS.txt 列表） =====
-        let caData = [];
-        function csSwitchTab(t) {
-          document.getElementById('csTabBtnLocal').className = 'ct-tab' + (t==='local' ? ' active' : '');
-          document.getElementById('csTabBtnCa').className = 'ct-tab' + (t==='cacerts' ? ' active' : '');
-          document.getElementById('csTabBtnMy').className = 'ct-tab' + (t==='my' ? ' active' : '');
-          document.getElementById('csPaneLocal').style.display = t==='local' ? '' : 'none';
-          document.getElementById('csPaneCa').style.display = t==='cacerts' ? '' : 'none';
-          document.getElementById('csPaneMy').style.display = t==='my' ? '' : 'none';
-          if (t==='cacerts') loadCacerts();
-          if (t==='my') loadMy();
-        }
-        async function loadCacerts() {
-          try {
-            const r = await api('/api/certs/cacerts');
-            if (r.ok) { caData = r.data; renderCacerts(); }
-          } catch (e) { /* ignore */ }
-        }
-        function renderCacerts() {
-          const f = v('caFilter').toLowerCase();
-          const rows = caData.filter(e => !f || JSON.stringify(e).toLowerCase().includes(f));
-          const tb = $('caTable').querySelector('tbody');
-          tb.innerHTML = '';
-          rows.forEach(e => {
-            const tr = document.createElement('tr');
-            tr.dataset.serial = e.serial;
-            tr.innerHTML = '<td style="font-family:var(--mono);font-size:12px;max-width:130px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(e.serial) + '">' + esc(e.serial) + '</td>' +
-              '<td>' + esc(e.algo) + '</td>' +
-              '<td>' + esc(e.notBefore) + '</td><td>' + esc(e.notAfter) + '</td>' +
-              '<td style="max-width:360px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap" title="' + esc(e.subject) + '">' + esc(e.subject) + '</td>' +
-              '<td><button class="ghost" data-serial="' + esc(e.serial) + '" style="padding:4px 12px;font-size:12px">详情</button></td>';
-            tb.appendChild(tr);
-          });
-          if (!rows.length) tb.innerHTML = '<tr><td colspan="6" style="color:var(--dim)">（无匹配记录）</td></tr>';
-        }
-
-        // ===== 证书库：我的证书（PKI/MY 导入库） =====
-        let myData = [];
-        let myPendingFile = null;
-        let myPendingName = '';
-        let myDeleteSerial = '';
-        async function loadMy() {
-          try {
-            const r = await api('/api/my/list');
-            if (r.ok) { myData = r.data || []; renderMy(); }
-          } catch (e) { /* ignore */ }
-        }
-        function myTypeTxt(t) { return {R:'根证书', C:'CA证书', E:'终端证书'}[t] || t; }
-        function renderMy() {
-          const f = v('myFilter').toLowerCase();
-          const rows = myData.filter(e => !f || JSON.stringify(e).toLowerCase().includes(f));
-          const tb = $('myTable').querySelector('tbody');
-          tb.innerHTML = '';
-          rows.forEach(e => {
-            const tr = document.createElement('tr');
-            tr.dataset.serial = e.serial;
-            tr.innerHTML =
-              '<td class="t-box" data-tip="' + esc(myTip(e)) + '">' + esc(e.serial) + '</td>' +
-              '<td>' + esc(myTypeTxt(e.type)) + '</td>' +
-              '<td>' + esc(e.algo) + '</td>' +
-              '<td>' + (e.hasKey === 'Y' ? '是' : '否') + '</td>' +
-              '<td>' + esc(e.notBefore) + '</td><td>' + esc(e.notAfter) + '</td>' +
-              '<td><button class="ghost" data-mserial="' + esc(e.serial) + '" data-act="detail" style="padding:4px 12px;font-size:12px">详情</button> ' +
-              '<button class="ghost" data-mserial="' + esc(e.serial) + '" data-act="verify" style="padding:4px 12px;font-size:12px">验证</button> ' +
-              '<button class="ghost" data-mserial="' + esc(e.serial) + '" data-act="del" style="padding:4px 12px;font-size:12px;color:#dc2626;font-weight:700">删除</button></td>';
-            tb.appendChild(tr);
-          });
-          if (!rows.length) tb.innerHTML = '<tr><td colspan="7" style="color:var(--dim)">（无记录，点击"导入证书"添加）</td></tr>';
-        }
-        function myTip(e) {
-          return '<div class="kv"><b>序列号：</b>' + esc(e.serial) + '</div>' +
-            '<div class="kv"><b>证书类型：</b>' + esc(myTypeTxt(e.type)) + '</div>' +
-            '<div class="kv"><b>算法：</b>' + esc(e.algo) + ' / 私钥：' + (e.hasKey === 'Y' ? '有' : '无') + '</div>' +
-            '<div class="kv"><b>有效期：</b>' + esc(e.notBefore) + ' ~ ' + esc(e.notAfter) + '</div>';
-        }
-        function myFileChosen() {
-          const inp = $('myFile');
-          if (!inp.files || !inp.files.length) return;
-          const file = inp.files[0];
-          const name = (file.name || '').toLowerCase();
-          myPendingFile = file; myPendingName = file.name || 'cert';
-          if (name.endsWith('.pfx') || name.endsWith('.p12') || name.endsWith('.jks')) {
-            $('myPwdFile').textContent = '文件：' + file.name;
-            $('myPwd').value = '';
-            $('myPwdModal').style.display = 'flex';
-            setTimeout(function(){ $('myPwd').focus(); }, 60);
-          } else {
-            myDoImport('');
-          }
-          inp.value = '';
-        }
-        function closeMyPwd() { $('myPwdModal').style.display = 'none'; }
-        function myPwdOk() { myDoImport($('myPwd').value); closeMyPwd(); }
-        async function myDoImport(password) {
-          if (!myPendingFile) return;
-          const msg = $('myMsg');
-          msg.className = 'hint'; msg.style.color = 'var(--dim)';
-          msg.textContent = '正在导入 ' + myPendingName + ' ...';
-          const fd = new FormData();
-          fd.append('file', myPendingFile);
-          if (password !== '') fd.append('password', password);
-          try {
-            const resp = await fetch('/api/my/import', { method: 'POST', body: fd });
-            const j = await resp.json();
-            if (j.ok) {
-              msg.style.color = 'var(--ok)';
-              msg.textContent = (j.message || '导入成功') + '，证书：' + (j.certPath || '') + (j.keyPath ? '，私钥：' + j.keyPath : '');
-              loadMy();
-            } else {
-              msg.style.color = 'var(--err)';
-              msg.textContent = '导入失败：' + (j.message || '未知错误');
-            }
-          } catch (e) {
-            msg.style.color = 'var(--err)';
-            msg.textContent = '导入请求异常：' + e;
-          }
-        }
-        function myAskDelete(serial) {
-          myDeleteSerial = serial;
-          $('myDelText').textContent = '是否删除 序列号为 ' + serial + ' 的证书？';
-          $('myDelModal').style.display = 'flex';
-        }
-        function closeMyDel() { $('myDelModal').style.display = 'none'; }
-        async function myDoDelete() {
-          const s = myDeleteSerial;
-          closeMyDel();
-          if (!s) return;
-          try {
-            const r = await api('/api/my/delete', { serial: s });
-            const msg = $('myMsg');
-            msg.className = 'hint';
-            msg.style.color = r.ok ? 'var(--ok)' : 'var(--err)';
-            msg.textContent = r.message || (r.ok ? '删除成功' : '删除失败');
-            loadMy();
-          } catch (e) {
-            const msg = $('myMsg');
-            msg.className = 'hint'; msg.style.color = 'var(--err)';
-            msg.textContent = '删除请求异常：' + e;
-          }
-        }
-
-        // 签发证书的颁发者下拉：CERTS.txt 中 R/C 类型序列号（悬停显示证书详情）
-        let issuerMap = {};
-        async function loadIssuers() {
-          try {
-            const [ri, rc] = await Promise.all([api('/api/issuers'), api('/api/chain')]);
-            if (!ri.ok) return;
-            issuerMap = {};
-            if (rc.ok) {
-              // /api/chain 返回嵌套树，展平为 serial → 节点
-    """;
     private static final String PAGE_P2B = """
               const walk = nodes => (nodes || []).forEach(n => {
                 issuerMap[n.serial] = n;

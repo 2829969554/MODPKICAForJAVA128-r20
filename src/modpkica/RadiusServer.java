@@ -73,7 +73,7 @@ import org.bouncycastle.tls.crypto.TlsSigner;
 import org.bouncycastle.tls.crypto.impl.bc.BcTlsCrypto;
 
 /**
- * RADIUS 服务器（RFC 2865 认证 / RFC 2866 计费）+ EAP（RFC 3748 / RFC 2284）。
+ * RADIUS 服务器（RFC 2865 认证 / RFC 2866 计费）+ EAP（RFC 3748 / RFC 2284），Windows 原生 IKEv2 与 strongSwan 自适应认证。
  *
  * <p>参考 WinRadius：认证端口默认 1812、计费端口默认 1813、共享密钥可配置；
  * 支持 PPP / PPPoE / PPTP / VPN / VoIP / ADSL / Cable Modem / CDMA / GSM / GPRS /
@@ -246,12 +246,14 @@ public class RadiusServer {
         }
     }
 
-    /** EAP 挑战状态。 */
+    /** EAP 挑战状态。统一状态机同时兼容 Windows 原生 IKEv2 与 strongSwan。 */
     private static final class EapState {
         String username;
         byte[] challenge;
-        String method;       // "MD5" / "MSCHAPV2" / "GTC" / "MSCHAPV2_OK"
-        byte[] msk;          // MSCHAPV2 认证通过后的 MSK（第二阶段 Access-Accept 下发 MS-MPPE）
+        // ADAPTIVE: MSCHAPV2_PRE=先用 EAP-MD5 做能力协商；
+        // MSCHAPV2=已切换到 EAP-MSCHAPv2；MSCHAPV2_OK=方法层 Success 已发送，等待确认。
+        String method;       // "MD5" / "MSCHAPV2_FIRST" / "MSCHAPV2" / "GTC" / "MSCHAPV2_OK"
+        byte[] msk;          // MSCHAPV2 认证通过后的 MSK（最终 Access-Accept 下发 MS-MPPE）
         long expires;        // 过期时间戳
     }
 
@@ -1185,8 +1187,11 @@ public class RadiusServer {
                             name, eapId, EAP_CODE_REQUEST, EAP_TYPE_GTC,
                             "Enter Password: ".getBytes(StandardCharsets.UTF_8), null);
                 }
-                // 无前缀（裸用户名）→ 默认 EAP-MSCHAPv2：strongSwan eap-radius / iOS / Windows
-                // 拨号客户端只发纯用户名，业界事实标准即 EAP-MSCHAPv2（RFC 2759，EAP 类型 26）
+                // 无前缀（裸用户名）→ 统一自适应 EAP-MSCHAPv2。
+                // 不根据 User-Agent/用户名猜测 Windows 或 strongSwan。优先发送标准
+                // EAP-MSCHAPv2；如果客户端明确用 EAP-NAK 拒绝 Type=26，并声明支持
+                // EAP-MD5，则仅在此时回退到 EAP-MD5。这样支持 EAP-MD5 的 strongSwan
+                // 不会被错误地引导进入 MD5 流程，而需要 MD5 协商的 Windows 仍可兼容。
                 if (name.isEmpty()) {
                     addLog("EAP-Identity 用户名为空 来源=" + src);
                     authFail++;
@@ -1196,42 +1201,65 @@ public class RadiusServer {
                 return startEapMsChapV2(p, eapId, name, src);
             }
             case EAP_TYPE_NAK: {
-                // RFC 3748 §5.3：客户端 NAK 当前方法（如 MD5）并列出其支持的 EAP 类型列表。
-                // 复刻 FreeRADIUS rlm_eap 标准协商：MD5 协商轮被 NAK（数据含 0x1a=MSCHAPV2）后
-                // 转入 EAP-MSCHAPv2，挑战 EAP id = NAK id + 1（严格递增）。
+                // RFC 3748 §5.3：客户端 NAK 当前 EAP 方法，并在数据中列出其支持的方法。
+                // 当前统一流程优先发送 MSCHAPv2：
+                //   ① strongSwan 等支持 MSCHAPv2 的客户端直接返回 Type=26 Response；
+                //   ② 如果 Windows/其它客户端拒绝 Type=26，则发送 NAK，声明支持 Type=4；
+                //      此时才回退到 EAP-MD5。
                 EapState st = takeEapState(src);
-                if (st == null || !"MSCHAPV2_PRE".equals(st.method)) {
+                if (st == null) {
                     authFail++;
                     addLog("EAP-NAK 状态失效 来源=" + src + " 用户=" + username);
                     return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                             username, eapId, EAP_CODE_FAILURE, null, "EAP-NAK 状态失效");
                 }
-                boolean wantsMschapV2 = false;
+                boolean supportsMschapV2 = false;
+                boolean supportsMd5 = false;
                 for (byte b : data) {
-                    if ((b & 0xff) == EAP_TYPE_MSCHAPV2) {
-                        wantsMschapV2 = true;
-                        break;
+                    int t = b & 0xff;
+                    if (t == EAP_TYPE_MSCHAPV2) supportsMschapV2 = true;
+                    if (t == EAP_TYPE_MD5) supportsMd5 = true;
+                }
+
+                if ("MSCHAPV2_FIRST".equals(st.method) && supportsMd5) {
+                    // 客户端拒绝 MSCHAPv2，明确声明支持 MD5：仅此时回退到 MD5。
+                    st.method = "MD5";
+                    st.challenge = new byte[16];
+                    new SecureRandom().nextBytes(st.challenge);
+                    st.expires = System.currentTimeMillis() + EAP_STATE_TTL_MS;
+                    synchronized (eapStates) {
+                        eapStates.put(src, st);
+                        evictEapStates();
                     }
+                    byte[] md5Data = concat(new byte[]{16}, st.challenge);
+                    addLog("EAP-MSCHAPv2 被客户端 NAK，回退 EAP-MD5 来源=" + src
+                            + " 用户=" + st.username + " EAP-id=" + ((eapId + 1) & 0xff));
+                    return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
+                            username, (eapId + 1) & 0xff, EAP_CODE_REQUEST, EAP_TYPE_MD5,
+                            md5Data, null);
                 }
-                if (!wantsMschapV2) {
-                    authFail++;
-                    addLog("EAP-NAK 不支持 MSCHAPV2 来源=" + src + " 用户=" + st.username);
-                    return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
-                            username, eapId, EAP_CODE_FAILURE, null, "客户端不支持 EAP-MSCHAPV2");
+
+                // 如果客户端 NAK 后仍声明支持 MSCHAPv2，则重新发送 MSCHAPv2；
+                // 其它情况无法选择安全的共同方法，直接失败。
+                if ("MSCHAPV2_FIRST".equals(st.method) && supportsMschapV2) {
+                    st.method = "MSCHAPV2";
+                    st.expires = System.currentTimeMillis() + EAP_STATE_TTL_MS;
+                    synchronized (eapStates) {
+                        eapStates.put(src, st);
+                        evictEapStates();
+                    }
+                    byte[] chalData = buildMschapv2ChallengeData(st);
+                    addLog("EAP-NAK 仍支持 MSCHAPV2，重发挑战 来源=" + src + " 用户=" + st.username
+                            + " EAP-id=" + ((eapId + 1) & 0xff));
+                    return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
+                            username, (eapId + 1) & 0xff, EAP_CODE_REQUEST, EAP_TYPE_MSCHAPV2,
+                            chalData, null);
                 }
-                st.method = "MSCHAPV2";
-                st.expires = System.currentTimeMillis() + EAP_STATE_TTL_MS;
-                synchronized (eapStates) {
-                    eapStates.put(src, st);
-                    evictEapStates();
-                }
-                // ② EAP-Request/MSCHAPv2 Challenge，EAP id = NAK id + 1（=2）。
-                byte[] chalData = buildMschapv2ChallengeData(st);
-                addLog("EAP-MSCHAPV2 下发挑战 来源=" + src + " 用户=" + st.username
-                        + " EAP-id=" + ((eapId + 1) & 0xff));
-                return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                        username, (eapId + 1) & 0xff, EAP_CODE_REQUEST, EAP_TYPE_MSCHAPV2,
-                        chalData, null);
+
+                authFail++;
+                addLog("EAP-NAK 不存在可用兼容方法 来源=" + src + " 用户=" + st.username);
+                return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
+                        username, eapId, EAP_CODE_FAILURE, null, "客户端不支持可用 EAP 方法");
             }
             case EAP_TYPE_MD5: {
                 EapState st = takeEapState(src);
@@ -1282,26 +1310,45 @@ public class RadiusServer {
                             username, eapId, EAP_CODE_FAILURE, null, "EAP-MSCHAPv2 格式错误");
                 }
                 int valueSize = data[4] & 0xff;
-                if (data.length < 5 + valueSize || valueSize < 49) {
+                if (valueSize != 49 || data.length < 5 + valueSize) {
                     authFail++;
-                    addLog("EAP-MSCHAPv2 响应数据过短 来源=" + src);
+                    addLog("EAP-MSCHAPv2 响应数据长度非法 来源=" + src + " Value-Size=" + valueSize);
                     return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
-                            username, eapId, EAP_CODE_FAILURE, null, "EAP-MSCHAPv2 数据过短");
+                            username, eapId, EAP_CODE_FAILURE, null, "EAP-MSCHAPv2 数据长度错误");
                 }
                 byte[] value = Arrays.copyOfRange(data, 5, 5 + valueSize);
                 byte[] peerChallenge = Arrays.copyOfRange(value, 0, 16);
                 byte[] ntResponse = Arrays.copyOfRange(value, 24, 48);
+                // RFC 2759 §3.4：49 字节 Value 后面的剩余内容就是 Name。
+                // Android 系统 IKEv2：EAP-Identity=vpn.local，但这里会得到 admin666。
+                String mschapUser = new String(data, 5 + valueSize,
+                        data.length - (5 + valueSize), StandardCharsets.UTF_8).trim();
+                if (mschapUser.isEmpty()) {
+                    authFail++;
+                    addLog("EAP-MSCHAPv2 Response 缺少 Name 来源=" + src
+                            + " EAP-Identity=" + username);
+                    return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
+                            username, eapId, EAP_CODE_FAILURE, null, "EAP-MSCHAPv2 用户名缺失");
+                }
                 EapState st = takeEapState(src);
-                if (st == null || !"MSCHAPV2".equals(st.method)) {
+                if (st == null || !("MSCHAPV2".equals(st.method) || "MSCHAPV2_FIRST".equals(st.method))) {
                     authFail++;
                     addLog("EAP-MSCHAPv2 状态失效 来源=" + src);
                     return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                             username, eapId, EAP_CODE_FAILURE, null, "EAP-MSCHAPv2 状态失效");
                 }
-                UsersDB.User u = UsersDB.find(baseDir, st.username);
-                boolean ok = u != null && u.enabled()
-                        && verifyMsChapV2(u.password, st.username, peerChallenge, st.challenge, ntResponse);
-                logAuthResult(src, st.username, "EAP-MSCHAPv2", ok, "EAP");
+                // 从这里开始才确定最终 RADIUS 用户名：MSCHAPv2 Response.Name。
+                st.username = mschapUser;
+                UsersDB.User u = UsersDB.find(baseDir, mschapUser);
+                if (u == null || !u.enabled()) {
+                    authFail++;
+                    addLog("EAP-MSCHAPv2 用户不存在或停用 来源=" + src
+                            + " EAP-Identity=" + username + " MSCHAPv2-Name=" + mschapUser);
+                    return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
+                            mschapUser, eapId, EAP_CODE_FAILURE, null, "用户不存在或停用");
+                }
+                boolean ok = verifyMsChapV2(u.password, mschapUser, peerChallenge, st.challenge, ntResponse);
+                logAuthResult(src, mschapUser, "EAP-MSCHAPv2", ok, "EAP");
                 List<Attr> mppe = null;
                 byte[] successData = null;
                 if (ok) {
@@ -1394,45 +1441,38 @@ public class RadiusServer {
                 eapTlsFragments(new byte[0], 0, true), null);
     }
 
-    /** 启动独立 EAP-MSCHAPv2 认证（RFC 2759，EAP 类型 26）：校验用户并下发 MSCHAPv2 挑战。
-     *  支持 mschapv2:/eap-mschapv2: 前缀与裸用户名（strongSwan eap-radius / iOS / Windows 拨号客户端）。
-     *  复刻 FreeRADIUS rlm_eap 标准协商流程（2026-10-06 网关对照实验证明 Windows 原生 IKEv2 客户端需要）：
-     *    ① 先发 EAP-MD5 挑战（EAP id = identity 响应 id + 1），客户端回 EAP-NAK 并列出可用方法 [MSCHAPV2]；
-     *    ② 收到 NAK 后发 EAP-MSCHAPv2 挑战（EAP id = NAK id + 1），客户端回 NT-Response；
-     *    ③ 验证通过后发方法层 Success（EAP id = Response id + 1），客户端回确认；
-     *    ④ 收到确认后回 Access-Accept（EAP-Success + MS-MPPE 密钥）。
-     *  关键：EAP 标识符必须严格递增（identity 由 strongSwan 用 id=0 发起，此处 MD5=1、MSCHAPV2=2、
-     *  Success=3）。Windows raschap 严格校验该序列，跳号（如 0→0→3）会被静默丢弃，表现为 645
-     *  “内部身份验证错误”；同网关下 FreeRADIUS 用 0→1→2→3 即可成功连接（决定性对照证据）。 */
+    /** 启动统一自适应 EAP-MSCHAPv2 认证（RFC 2759，EAP 类型 26）。
+     *  裸用户名与 mschapv2:/eap-mschapv2: 前缀统一进入同一状态机。
+     *  首选 EAP-MSCHAPv2；只有客户端明确以 EAP-NAK 拒绝 Type=26 并声明支持
+     *  EAP-MD5 时，才回退到 EAP-MD5。这样避免把“客户端支持 MD5”误判为“客户端应该使用 MD5”。
+     */
     private byte[] startEapMsChapV2(Packet p, int eapId, String name, String src) {
-        String realUser = name.startsWith("mschapv2:") ? name.substring(9)
+        // EAP-Identity 不一定等于最终认证账号。
+        // Android 系统 IKEv2 可以发送 EAP-Identity=vpn.local，
+        // 但真正的账号位于后续 EAP-MSCHAPv2 Response 的 Name 字段（如 admin666）。
+        // 因此这里绝不能提前 UsersDB.find(identity)。
+        String identity = name.startsWith("mschapv2:") ? name.substring(9)
                 : (name.startsWith("eap-mschapv2:") ? name.substring(13) : name);
-        UsersDB.User m = realUser.isEmpty() ? null : UsersDB.find(baseDir, realUser);
-        if (m == null || !m.enabled()) {
-            addLog("EAP-MSCHAPv2 用户不存在或停用 来源=" + src + " 用户=" + realUser);
-            authFail++;
-            return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
-                    name, eapId, EAP_CODE_FAILURE, null, "用户不存在或停用");
-        }
+
         EapState st = new EapState();
-        st.username = realUser;
-        st.method = "MSCHAPV2_PRE";   // 先走 MD5 协商轮，客户端 NAK 后转入 MSCHAPV2
-        st.challenge = new byte[16];  // MSCHAPV2 认证挑战（NAK 后下发）
-        new java.security.SecureRandom().nextBytes(st.challenge);
-        byte[] md5Challenge = new byte[16];  // 本轮 MD5 协商挑战
-        new java.security.SecureRandom().nextBytes(md5Challenge);
+        // 暂存 Identity 仅用于“客户端明确 NAK 后回退 MD5”的兼容路径；
+        // 一旦收到 MSCHAPv2 Response，会立即用 Response.Name 覆盖。
+        st.username = identity;
+        st.method = "MSCHAPV2_FIRST";
+        st.challenge = new byte[16];
+        new SecureRandom().nextBytes(st.challenge);
         st.expires = System.currentTimeMillis() + EAP_STATE_TTL_MS;
         synchronized (eapStates) {
             eapStates.put(src, st);
             evictEapStates();
         }
-        // ① EAP-Request/MD5（Type=4，RFC 3748 §5.4）：Value-Size(1)=16 + Value(16B 挑战)。
-        //    EAP 标识符 = identity 响应 id + 1（严格递增）。
-        byte[] md5Data = concat(new byte[]{16}, md5Challenge);
-        addLog("EAP-MSCHAPv2 下发 MD5 协商挑战 来源=" + src + " 用户=" + realUser
-                + " EAP-id=" + ((eapId + 1) & 0xff));
+
+        addLog("EAP-MSCHAPv2 下发首选挑战 来源=" + src + " EAP-Identity=" + identity
+                + "（等待 MSCHAPv2 Response.Name） EAP-id=" + ((eapId + 1) & 0xff));
+        byte[] chalData = buildMschapv2ChallengeData(st);
         return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                name, (eapId + 1) & 0xff, EAP_CODE_REQUEST, EAP_TYPE_MD5, md5Data, null);
+                name, (eapId + 1) & 0xff, EAP_CODE_REQUEST, EAP_TYPE_MSCHAPV2,
+                chalData, null);
     }
 
     /** 构造 EAP-Request/MSCHAPv2 Challenge 载荷（RFC 2759 §3.2）：
@@ -4741,7 +4781,7 @@ public class RadiusServer {
         attrs2.add(new Attr(ATTR_EAP_MESSAGE, eapResp));
         byte[] req2 = buildRequestPacket(id, reqAuth, attrs2, secret, true);
         steps.add("[4] 发送 Access-Request：EAP-Response/MD5（" + hexShort(md5resp) + "）");
-        byte[] resp2 = sendRecv(sock, req2, host, port, steps, "[5]");
+        byte[] resp2 = sendRecv(sock, req2, host, port, steps, "[8]");
         Packet p2 = parsePacket(resp2, resp2.length);
         steps.add("[6] 收到 " + respName(p2.code) + "（ID=" + p2.identifier + "，"
                 + (verifyRespAuth(resp2, reqAuth, secret) ? "响应 Authenticator 校验通过" : "响应 Authenticator 校验失败") + "）");
@@ -4782,7 +4822,7 @@ public class RadiusServer {
         attrs2.add(new Attr(ATTR_EAP_MESSAGE, eapResp));
         byte[] req2 = buildRequestPacket(id, reqAuth, attrs2, secret, true);
         steps.add("[4] 发送 Access-Request：EAP-Response/GTC（明文令牌，RFC 3748 §5.6）");
-        byte[] resp2 = sendRecv(sock, req2, host, port, steps, "[5]");
+        byte[] resp2 = sendRecv(sock, req2, host, port, steps, "[8]");
         Packet p2 = parsePacket(resp2, resp2.length);
         steps.add("[6] 收到 " + respName(p2.code) + "（ID=" + p2.identifier + "，"
                 + (verifyRespAuth(resp2, reqAuth, secret) ? "响应 Authenticator 校验通过" : "响应 Authenticator 校验失败") + "）");
@@ -4806,22 +4846,47 @@ public class RadiusServer {
         byte[] resp1 = sendRecv(sock, req1, host, port, steps, "[2]");
         Packet p1 = parsePacket(resp1, resp1.length);
         if (p1.code != CODE_ACCESS_CHALLENGE) {
-            return clientResult(false, "EAP 服务器未下发 MS-CHAPv2 挑战（收到 " + respName(p1.code) + "）", steps);
+            return clientResult(false, "EAP 服务器未下发挑战（收到 " + respName(p1.code) + "）", steps);
         }
         byte[] eap1 = p1.getAttr(ATTR_EAP_MESSAGE);
-        if (eap1 == null || eap1.length < 10 || (eap1[0] & 0xff) != EAP_CODE_REQUEST
-                || (eap1[4] & 0xff) != EAP_TYPE_MSCHAPV2) {
-            return clientResult(false, "EAP-MSCHAPv2 挑战格式非法（RADIUS=" + respName(p1.code)
+        if (eap1 == null || eap1.length < 5 || (eap1[0] & 0xff) != EAP_CODE_REQUEST) {
+            return clientResult(false, "EAP-MSCHAPv2 协商挑战格式非法（RADIUS=" + respName(p1.code)
                     + "，EAP字节=" + (eap1 == null ? "null" : "len=" + eap1.length + " hex=" + hexFull(eap1)) + "）", steps);
         }
         int eapId = eap1[1] & 0xff;
+        int eapType = eap1[4] & 0xff;
+        // 统一服务端默认先发 EAP-MD5 作为能力探测。客户端以 NAK 声明支持 Type=26 后，
+        // 再进入 EAP-MSCHAPv2；如果以后接入直接下发 Type=26 的 NAS，也保留直接兼容路径。
+        if (eapType == EAP_TYPE_MD5) {
+            byte[] nak = eapPacket(EAP_CODE_RESPONSE, eapId, EAP_TYPE_NAK,
+                    new byte[]{(byte) EAP_TYPE_MSCHAPV2});
+            List<Attr> nakAttrs = new ArrayList<>();
+            nakAttrs.add(new Attr(ATTR_USER_NAME, eapUser.getBytes(StandardCharsets.UTF_8)));
+            nakAttrs.add(new Attr(ATTR_EAP_MESSAGE, nak));
+            byte[] nakReq = buildRequestPacket(id, reqAuth, nakAttrs, secret, true);
+            steps.add("[3] 收到 EAP-Request/MD5，发送 EAP-NAK（声明支持 MSCHAPv2）");
+            byte[] nakResp = sendRecv(sock, nakReq, host, port, steps, "[4]");
+            p1 = parsePacket(nakResp, nakResp.length);
+            if (p1.code != CODE_ACCESS_CHALLENGE) {
+                return clientResult(false, "EAP-NAK 后服务器未下发 MSCHAPv2（收到 " + respName(p1.code) + "）", steps);
+            }
+            eap1 = p1.getAttr(ATTR_EAP_MESSAGE);
+            if (eap1 == null || eap1.length < 10 || (eap1[0] & 0xff) != EAP_CODE_REQUEST
+                    || (eap1[4] & 0xff) != EAP_TYPE_MSCHAPV2) {
+                return clientResult(false, "EAP-NAK 后 MSCHAPv2 挑战格式非法", steps);
+            }
+            eapId = eap1[1] & 0xff;
+            steps.add("[5] 收到 EAP-Request/MSCHAPV2（由 NAK 协商进入）");
+        } else if (eapType != EAP_TYPE_MSCHAPV2) {
+            return clientResult(false, "服务器下发了不支持的 EAP 类型=" + eapType, steps);
+        }
         int mschapId = eap1[6] & 0xff;
         int vsize = eap1[9] & 0xff;
         if (vsize != 16 || eap1.length < 10 + vsize) {
             return clientResult(false, "EAP-MSCHAPv2 挑战长度非法（Value-Size=" + vsize + "）", steps);
         }
         byte[] authChallenge = Arrays.copyOfRange(eap1, 10, 10 + vsize);
-        steps.add("[3] 收到 Access-Challenge + EAP-Request/MSCHAPV2（ID=" + eapId + "，MS-CHAPv2-ID=" + mschapId
+        steps.add("[6] 收到 EAP-Request/MSCHAPV2（ID=" + eapId + "，MS-CHAPv2-ID=" + mschapId
                 + "，挑战 " + hexShort(authChallenge) + "）");
         byte[] peerChallenge = new byte[16];
         new java.security.SecureRandom().nextBytes(peerChallenge);
@@ -4844,8 +4909,8 @@ public class RadiusServer {
         attrs2.add(new Attr(ATTR_USER_NAME, eapUser.getBytes(StandardCharsets.UTF_8)));
         attrs2.add(new Attr(ATTR_EAP_MESSAGE, eapResp));
         byte[] req2 = buildRequestPacket(id, reqAuth, attrs2, secret, true);
-        steps.add("[4] 发送 Access-Request：EAP-Response/MSCHAPV2（NT-Response " + hexShort(ntResp) + "）");
-        byte[] resp2 = sendRecv(sock, req2, host, port, steps, "[5]");
+        steps.add("[7] 发送 Access-Request：EAP-Response/MSCHAPV2（NT-Response " + hexShort(ntResp) + "）");
+        byte[] resp2 = sendRecv(sock, req2, host, port, steps, "[8]");
         Packet p2 = parsePacket(resp2, resp2.length);
         boolean ok;
         if (p2.code == CODE_ACCESS_CHALLENGE) {
@@ -4874,7 +4939,7 @@ public class RadiusServer {
                 String got = new String(eap2, 11, 40, StandardCharsets.US_ASCII);
                 authOk = got.equalsIgnoreCase(hexFull(expectAuth));
             }
-            steps.add("[6] 收到 Access-Challenge + 方法层 MS-CHAPv2 Success（OpCode=3，MS-Length="
+            steps.add("[9] 收到 Access-Challenge + 方法层 MS-CHAPv2 Success（OpCode=3，MS-Length="
                     + (((eap2[7] & 0xff) << 8) | (eap2[8] & 0xff))
                     + "，" + (authOk ? "Authenticator 验证通过" : "Authenticator 验证失败！") + "）");
             if (!authOk) {
@@ -4886,14 +4951,14 @@ public class RadiusServer {
             attrs3.add(new Attr(ATTR_USER_NAME, eapUser.getBytes(StandardCharsets.UTF_8)));
             attrs3.add(new Attr(ATTR_EAP_MESSAGE, ack));
             byte[] req3 = buildRequestPacket(id, reqAuth, attrs3, secret, true);
-            steps.add("[7] 发送 Access-Request：空 EAP-Response 确认 Success");
+            steps.add("[10] 发送 Access-Request：空 EAP-Response 确认 Success");
             byte[] resp3 = sendRecv(sock, req3, host, port, steps, "[8]");
             Packet p3 = parsePacket(resp3, resp3.length);
-            steps.add("[9] 收到 " + respName(p3.code) + "（ID=" + p3.identifier + "，"
+            steps.add("[12] 收到 " + respName(p3.code) + "（ID=" + p3.identifier + "，"
                     + (verifyRespAuth(resp3, reqAuth, secret) ? "响应 Authenticator 校验通过" : "响应 Authenticator 校验失败") + "）");
             ok = p3.code == CODE_ACCESS_ACCEPT;
         } else {
-            steps.add("[6] 收到 " + respName(p2.code) + "（ID=" + p2.identifier + "，"
+            steps.add("[9] 收到 " + respName(p2.code) + "（ID=" + p2.identifier + "，"
                     + (verifyRespAuth(resp2, reqAuth, secret) ? "响应 Authenticator 校验通过" : "响应 Authenticator 校验失败") + "）");
             ok = p2.code == CODE_ACCESS_ACCEPT;
         }
