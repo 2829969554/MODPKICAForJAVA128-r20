@@ -1,0 +1,12 @@
+=== 手机原始 EAP-TLS 序列复现（直连本地 RADIUS 1812）===
+[1] 发送 Identity(91B EAP)
+    响应 code=11 EAP=0101002b1a0102002610d749c68009a6c30459efa460fc33fb834d4f44504b49
+43412d4d53434841...(+3B)
+[2] 发送 NAK(仅EAP-TLS)
+    响应 code=11 EAP=010200060d20
+[3] 发送手机 ClientHello(221B TLS, flags=0x80 total=0xd8)
+    响应 code=3 EAP-len=4
+    EAP hex:
+04020004
+Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: Index 4 out of bounds for length 4
+	at PhoneHelloRepro.main(PhoneHelloRepro.java:129)

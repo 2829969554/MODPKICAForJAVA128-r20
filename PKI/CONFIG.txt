@@ -1,4 +1,4 @@
-﻿WEBPORT=80
+WEBPORT=80
 OCSP=http://localhost:80/OCSP
 CRL=http://localhost:80/CRL/{CID}.crl
 CRT=http://localhost:80/CRT/{CID}.crt
@@ -15,3 +15,5 @@ RADIUSAUTO=on
 PPPOEDISC=512
 PPPOESESS=513
 PPPOEAUTO=on
+
+RADIUSCERT=f7679b33352bd0d0e150e8594606c01f

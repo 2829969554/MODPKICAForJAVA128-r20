@@ -1,0 +1,17 @@
+﻿=== EAP-TLS ֤���¼ȫ��·ð�̲��ԣ�ģ�� Windows ԭ�� IKEv2 ֤��ģʽ��===
+RADIUS 1812 secret=mytestkey �ͻ���֤��=a66de5fea3df44c8f8687f31d75384d
+[0] �ͻ���֤�� CN=CN=localhost �㷨=RSA
+[1] ���� Access-Request��User-Name=localhost + EAP-Identity(localhost)
+java : Exception in thread "main" java.net.SocketTimeoutException: Receive timed out
+所在位置 行:1 字符: 253
++ ... kica4JAVA'; java "-Dfile.encoding=UTF-8" -cp "out;BC185\*;debug_test" ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Exception in th...ceive timed out:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+	at java.base/sun.nio.ch.DatagramChannelImpl.tryBlockingReceive(DatagramChannelImpl.java:669)
+	at java.base/sun.nio.ch.DatagramChannelImpl.blockingReceive(DatagramChannelImpl.java:619)
+	at java.base/sun.nio.ch.DatagramSocketAdaptor.receive(DatagramSocketAdaptor.java:192)
+	at java.base/java.net.DatagramSocket.receive(DatagramSocket.java:638)
+	at EapTlsCertSmoke.sendRecv(EapTlsCertSmoke.java:147)
+	at EapTlsCertSmoke.main(EapTlsCertSmoke.java:388)

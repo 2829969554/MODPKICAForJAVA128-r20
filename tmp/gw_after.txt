@@ -1,0 +1,43 @@
+10月 10 21:14:25 server charon-systemd[2675]: received 317 cert requests for an unknown ca
+10月 10 21:14:25 server charon-systemd[2675]: looking for peer configs matching 10.255.228.225[%any]...10.255.228.55[10.255.228.55]
+10月 10 21:14:25 server charon-systemd[2675]: selected peer config 'ikev2-mschapv2'
+10月 10 21:14:25 server charon-systemd[2675]: initiating EAP_IDENTITY method (id 0x00)
+10月 10 21:14:25 server charon-systemd[2675]: peer supports MOBIKE
+10月 10 21:14:25 server charon-systemd[2675]: authentication of 'vpn.local' (myself) with RSA signature successful
+10月 10 21:14:25 server charon-systemd[2675]: sending end entity cert "C=CN, L=newer york, O=China IT Boys, OU=IT Clubs, CN=vpn.local"
+10月 10 21:14:25 server charon-systemd[2675]: generating IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
+10月 10 21:14:25 server charon-systemd[2675]: splitting IKE message (1920 bytes) into 2 fragments
+10月 10 21:14:25 server charon-systemd[2675]: generating IKE_AUTH response 1 [ EF(1/2) ]
+10月 10 21:14:25 server charon-systemd[2675]: generating IKE_AUTH response 1 [ EF(2/2) ]
+10月 10 21:14:25 server charon-systemd[2675]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (1236 bytes)
+10月 10 21:14:25 server charon-systemd[2675]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (756 bytes)
+10月 10 21:14:25 server charon-systemd[2675]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (96 bytes)
+10月 10 21:14:25 server charon-systemd[2675]: parsed IKE_AUTH request 2 [ EAP/RES/ID ]
+10月 10 21:14:25 server charon-systemd[2675]: received EAP identity 'admin888'
+10月 10 21:14:25 server charon-systemd[2675]: sending RADIUS Access-Request to server 'primary'
+10月 10 21:14:25 server charon-systemd[2675]: received RADIUS Access-Challenge from server 'primary'
+10月 10 21:14:25 server charon-systemd[2675]: initiating EAP_MSCHAPV2 method (id 0x01)
+10月 10 21:14:25 server charon-systemd[2675]: generating IKE_AUTH response 2 [ EAP/REQ/MSCHAPV2 ]
+10月 10 21:14:25 server charon-systemd[2675]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (112 bytes)
+10月 10 21:14:25 server charon-systemd[2675]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (80 bytes)
+10月 10 21:14:25 server charon-systemd[2675]: parsed IKE_AUTH request 3 [ EAP/RES/NAK ]
+10月 10 21:14:25 server charon-systemd[2675]: sending RADIUS Access-Request to server 'primary'
+10月 10 21:14:25 server charon-systemd[2675]: received RADIUS Access-Challenge from server 'primary'
+10月 10 21:14:25 server charon-systemd[2675]: generating IKE_AUTH response 3 [ EAP/REQ/TLS ]
+10月 10 21:14:25 server charon-systemd[2675]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (80 bytes)
+10月 10 21:14:54 server charon-systemd[2675]: deleting half open IKE_SA with 10.255.228.55 after timeout
+
+=== charon.log TLS 后续 ===
+415:Oct 10 21:12:32 00[LIB] loading feature EAP_SERVER:TLS in plugin 'eap-tls'
+416:Oct 10 21:12:32 00[LIB] loading feature EAP_CLIENT:TLS in plugin 'eap-tls'
+417:Oct 10 21:12:32 00[LIB] loading feature EAP_SERVER:TTLS in plugin 'eap-ttls'
+418:Oct 10 21:12:32 00[LIB] loading feature EAP_CLIENT:TTLS in plugin 'eap-ttls'
+5387:Oct 10 21:12:32 09[CFG]    eap-type = EAP_TLS
+10233:Oct 10 21:12:35 11[CFG]    eap-type = EAP_TLS
+26459:Oct 10 21:14:25 06[ENC] <ikev2-mschapv2|1> parsed IKE_AUTH request 2 [ EAP/RES/ID ]
+26757:Oct 10 21:14:25 15[ENC] <ikev2-mschapv2|1> parsed IKE_AUTH request 3 [ EAP/RES/NAK ]
+26778:Oct 10 21:14:25 15[IKE] <ikev2-mschapv2|1> EAP_TLS payload => 6 bytes @ 0x7f1c20000f70
+26783:Oct 10 21:14:25 15[ENC] <ikev2-mschapv2|1> generating IKE_AUTH response 3 [ EAP/REQ/TLS ]
+26951:Oct 10 21:14:54 12[JOB] <ikev2-mschapv2|1> deleting half open IKE_SA with 10.255.228.55 after timeout
+
+=== SAS ===

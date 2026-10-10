@@ -1,0 +1,91 @@
+=== EAP-TLS 证书登录全链路冒烟测试（模拟 Windows 原生 IKEv2 证书模式）===
+RADIUS 1812 secret=mytestkey 客户端证书=a66de5fea3df44c8f8687f31d75384d
+[0] 客户端证书 CN=CN=localhost 算法=RSA
+[1] 发送 Access-Request：User-Name=localhost + EAP-Identity(localhost)
+[2] 收到 EAP-Request type=26（期望 26=MSCHAPV2，实际=26）
+[3] 发送 EAP-NAK（声明支持 EAP-TLS Type=13）
+[4] 收到 EAP-Request/TLS Start（flags=0x20）——服务器已切换到 EAP-TLS
+[pollOutput] cur=0 start=0 done=false err=null
+[pollOutput] cur=0 start=0 done=false err=null
+[pollOutput] cur=155 start=0 done=false err=null
+[5] 客户端 ClientHello 155B hex=1603010096010000920303b06d38745607bcf5174a5352529c0241b3db48d924f954577cb4ad496b21db9400000ec02fc02bc013c009002f009c00ff0100005b00160000000a000a0008001d001e0017
+[CLI→] TLS片 160B flags=0x80 total=155 sent=155/155
+[发完] 客户端线程=TIMED_WAITING done=false err=null out.size=155 inQ=0
+      at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      at java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:271)
+      at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1803)
+      at java.base/java.util.concurrent.LinkedBlockingQueue.poll(LinkedBlockingQueue.java:460)
+      at EapTlsCertSmoke$BlockingInput.read(EapTlsCertSmoke.java:171)
+      at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+      at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+      at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+      at org.bouncycastle.tls.TlsClientProtocol.connect(Unknown Source)
+      at EapTlsCertSmoke.lambda$main$0(EapTlsCertSmoke.java:445)
+      at java.base/java.lang.Thread.run(Thread.java:1516)
+[sendRecv] 返回 290B code=11 hex=0b030122aa9ef9ed39df3778a18762a6
+[SVR←] TLS片 245B flags=0xc0
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 286B code=11 hex=0b04011eba264ac20e05a986fb9e78a6
+[SVR←] TLS片 241B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 286B code=11 hex=0b05011e6b311ef33ee7f749a850965f
+[SVR←] TLS片 241B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 286B code=11 hex=0b06011e4b214ae9139fd07a189c9b98
+[SVR←] TLS片 241B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 286B code=11 hex=0b07011eafe0070c8a0737b5afaca48f
+[SVR←] TLS片 241B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 286B code=11 hex=0b08011eb06f80f65c8af7fce657073e
+[SVR←] TLS片 241B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 286B code=11 hex=0b09011e42aeb9819f85fd8dd079e685
+[SVR←] TLS片 241B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 286B code=11 hex=0b0a011ec636696ac13d711ac2781b96
+[SVR←] TLS片 241B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 286B code=11 hex=0b0b011e34346392b390c5f6329736a5
+[SVR←] TLS片 241B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 286B code=11 hex=0b0c011e29b72fb1131b3c2034c624a2
+[SVR←] TLS片 241B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 286B code=11 hex=0b0d011e1900151010eebdebd3d74b1b
+[SVR←] TLS片 241B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 286B code=11 hex=0b0e011ede9e767d54c54e8494e4bd22
+[SVR←] TLS片 241B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 245B code=11 hex=0b0f00f530f5e15ae3b641d9c7697e58
+[SVR←] TLS片 200B flags=0x0
+[SVR flight] 3079B rec type=22 len=59(hs msg=2 len=55) rec type=22 len=2676(hs msg=11 len=2672) rec type=22 len=300(hs msg=12 len=296) rec type=22 len=15(hs msg=13 len=11) rec type=22 len=4(hs msg=14 len=0)
+[pollOutput] cur=155 start=155 done=false err=null
+[pollOutput] cur=155 start=155 done=false err=null
+[pollOutput] cur=155 start=155 done=false err=null
+[pollOutput] cur=155 start=155 done=false err=null
+[pollOutput] cur=2010 start=155 done=false err=null
+[增量] 1855B records: type=22 len=1661 type=22 len=37 type=22 len=136 type=20 len=1
+[record2 hex] 160303067d0b0006790006760006733082066f308205d8a00302010202100a66de5fea3df44c8f8687f31d75384d300d06092a864886f70d01010b05003056310b300906035504061302434e31133011060355040a0c0a4368696e614954626f7931133011060355040b0c0a4368696e614954626f79311d301b06035504030c144368696e614954626f79732052534120524f4f54301e170d3236313030313132343434395a170d3238303230393132343435325a30143112301006035504030c096c6f63616c686f737430819f300d06092a864886f70d010101050003818d0030818902818100cfc43d010c281a7cf04c379845cc4e27d227c386e8d1398d460c4baee88c09b4a916aa92581d1c8292a62ab604a9cbb3f0fc4b78f357788043ffbb948ea12ac2fe3ce14c10965e4044c22bee1cc37e576af5adc458886fa24fb70eb8dde98dd68c4e66f212d73b3c4c61b806523224af576b715a56d48d39d2b9ddced1b4eae70203010001a382047e3082047a300c0603551d130101ff04023000300e0603551d0f0101ff0404030203f8301f0603551d230418301680143999d910628fcf8b64448f4837339b356a26e0f6301d0603551d0e041604143e89230763ec3f40b2500a540cbf22ae9aa20f9c30130603551d25040c300a06082b06010505070302307e06082b0601050507010104723070302406082b060105050730018618687474703a2f2f6c6f63616c686f73743a38302f4f435350304806082b06010505073002863c687474703a2f2f6c6f63616c686f73743a38302f4352542f37373132643933353265363033386365373865353765336635373263656337342e6372743081970603551d1f04818f30818c3042a040a03e863c687474703a2f2f6c6f63616c686f73743a38302f43524c2f37373132643933353265363033386365373865353765336635373263656337342e63726c3046a044a0428640687474703a2f2f6c6f63616c686f73743a38302f43524c2f37373132643933353265363033386365373865353765336635373263656337342e6465722e63726c307b0603551d2004743072306706092b06010401a032015f305a302f06082b06010505070201162368747470733a2f2f67697465652e636f6d2f7778677368756a752f6d6f64706b696361302706082b06010505070202301b0c19687474703a2f2f6578616d706c652e636f6d2f6e6f6e6963653007060567810c010130330603551d11042c302a82096c6f63616c686f73748211616e71696b656a692e706963702e6e657487040affe43787047f00000130820237060a2b06010401d67902040204820227048202230221007600280b8458b32b2fa115f245555ea427bf8695c252f1c4428eb3c4d23922e68f76000001a120b25dec000004030047304502202c31724cd47639302960593c16bfbf9946899651798019f63fb03d623da5f399022100a8e02d900c73c61c29b686c322ec174c1a4e58fffcd59bd6801fa3e4d524c0a90076009de8709cc47acd613e601fee3320447aad1785645ae11ec17acc06e926270e7e000001a120b25e040000040300473045022034e9dcfacbd17a76c5d34719f08d1232ac8ae1405e82c6125591b76e717cfb80022100b9f51135390049c278e22dc5a61bd7343ce9941c27ee1b1254e02a51912a302f012f0090cc21ee226524a0e54bd351193b32d668654a88c249357418ec298d58321ca6000001a120b25e16000004010100d5b015d4e06b3a4b830fa530c61ad3b5a667d82606b0c2466120ebbadd70698ec1e7cda8dd62b5e2d6bfcf58b066f036a6f9b6e5609303ebde42efcea0fc7cfc45e59c8305b633dd335390f3c66b605bfec078529deda3e40353aee9a97039b21a6475db95f730792a49d2a78dac8b8ef97ff259ba1b3e7293b4753c47dfd19d4f64b89b891749613313f167aaa81e5a85cb0d55d8a240ccf7dc64e11773f137384f066a98435c6b0295f3b94af31fe53812bceef7c3de106bece4d9fb1f1add2dd37ff6cac221ae82bc8025d5952703aeb99a4193b94a59cd289cf8c7c23b1f00802800e453ae85025935c4e783aa90fd82573c0e000c4b7d3c0a680c9935d8300d06092a864886f70d01010b05000381810069ffa395f0ab8c2f176659715dd2e1fc542788f8dc270a8d9366401bc35357a1b0f87a0750f827904629891544842705a2088d21805ccb30f70c1630b039ff8950a659cc63553d17e40b5f7c5d2aec476210fd033f96a225c5e7a9959bb66bec951748dcfe859cbce0c36f11ea74f1cd2a11e36e5dfed34c3f733074720f950316030300251000002120b4cf4a357ac2409b344a8f40fcf54358e11215a6a7b3f19d0143e0f474e50a7116030300880f0000840401008087b9c21f9678cf7b3f869065f119d58429db744ace9c0dc0bb9253163ba440c687cd2415dd2e1cc3ca6be744e88ad321158371462bb54893bdde33c07fbe6b1b4ce8c739042b3bec051d5567abfa5a0795b47d9445102d417e17a33b9cc051839487d724b9d9045631106afba548ab28be0002dbd219618d7a278c54bd8644b6140303000101
+[handshake] msg=11 len=1657 msg=22 len=197376 已解析=199046/1855
+[CLI→] TLS片 245B flags=0xc0 total=1855 sent=240/1855
+[sendRecv] 返回 46B code=11 hex=0b10002e0cd0adbcc14dc2eca5ab131b
+[SVR←] TLS片 1B flags=0x0
+[CLI→] TLS片 241B flags=0x40 total=-263440488 sent=480/1855
+[sendRecv] 返回 46B code=11 hex=0b11002e9fe6d0e860e8b5f0250b28dd
+[SVR←] TLS片 1B flags=0x0
+[CLI→] TLS片 241B flags=0x40 total=721813765 sent=720/1855
+[sendRecv] 返回 46B code=11 hex=0b12002e29cd72323c568bfb82f2e803
+[SVR←] TLS片 1B flags=0x0
+[CLI→] TLS片 241B flags=0x40 total=1936996920 sent=960/1855
+[sendRecv] 返回 46B code=11 hex=0b13002ed9c023555b392bcbd17f6512
+[SVR←] TLS片 1B flags=0x0
+[CLI→] TLS片 241B flags=0x40 total=2030175234 sent=1200/1855
+[sendRecv] 返回 46B code=11 hex=0b14002e6261cebeb446ef3ed59bc8ba
+[SVR←] TLS片 1B flags=0x0
+[CLI→] TLS片 241B flags=0x40 total=-1810094098 sent=1440/1855
+[sendRecv] 返回 44B code=3 hex=0315002c41217047fe86cd87edc9fcc8
+FAIL [6] 服务器 Access-Reject: EAP code=4 (Failure) err=null

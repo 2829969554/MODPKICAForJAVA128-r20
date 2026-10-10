@@ -1,0 +1,14 @@
+﻿public final class org.bouncycastle.tls.SessionParameters {
+  public void clear();
+  public org.bouncycastle.tls.SessionParameters copy();
+  public int getCipherSuite();
+  public org.bouncycastle.tls.Certificate getLocalCertificate();
+  public org.bouncycastle.tls.crypto.TlsSecret getMasterSecret();
+  public org.bouncycastle.tls.ProtocolVersion getNegotiatedVersion();
+  public org.bouncycastle.tls.Certificate getPeerCertificate();
+  public byte[] getPSKIdentity();
+  public byte[] getSRPIdentity();
+  public boolean isExtendedMasterSecret();
+  public java.util.Hashtable readServerExtensions() throws java.io.IOException;
+  org.bouncycastle.tls.SessionParameters(int, org.bouncycastle.tls.Certificate, org.bouncycastle.tls.crypto.TlsSecret, org.bouncycastle.tls.ProtocolVersion, org.bouncycastle.tls.Certificate, byte[], byte[], byte[], boolean, org.bouncycastle.tls.SessionParameters$1);
+}

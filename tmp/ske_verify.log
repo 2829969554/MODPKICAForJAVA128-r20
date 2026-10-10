@@ -1,0 +1,3 @@
+=== EAP-TLS SKE 签名 OpenSSL 兼容性验证（SunJCE 严格 PKCS#1）===
+重组 TLS 数据 3172B
+FAIL: TLS record 截断

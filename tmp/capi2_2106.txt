@@ -1,0 +1,817 @@
+########## CAPI2 21:06:00-21:07:10 ##########
+[10/10/2026 21:06:54] Id=30 Lv=4
+  Process: douyin.exe
+  Cert: *.zijieapi.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:54] Id=11 Lv=4
+  Process: douyin.exe
+  Cert: *.zijieapi.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:54] Id=90 Lv=4
+  Process: douyin.exe
+  Cert: DigiCert Global Root G2 *.zijieapi.com RapidSSL TLS RSA CA G1
+  Result: 
+-----
+[10/10/2026 21:06:54] Id=10 Lv=4
+  Process: douyin.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=30 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=11 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=90 Lv=4
+  Process: Doubao.exe
+  Cert: DigiCert Global Root G2 *.byteimg.com RapidSSL TLS RSA CA G1
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=41 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=40 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=41 Lv=4
+  Process: Doubao.exe
+  Cert: RapidSSL TLS RSA CA G1
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=40 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=10 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=30 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=11 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=90 Lv=4
+  Process: Doubao.exe
+  Cert: DigiCert Global Root G2 *.byteimg.com RapidSSL TLS RSA CA G1
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=41 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=40 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=41 Lv=4
+  Process: Doubao.exe
+  Cert: RapidSSL TLS RSA CA G1
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=40 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=10 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=30 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=11 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=90 Lv=4
+  Process: Doubao.exe
+  Cert: DigiCert Global Root G2 *.byteimg.com RapidSSL TLS RSA CA G1
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=30 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=11 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=90 Lv=4
+  Process: Doubao.exe
+  Cert: DigiCert Global Root G2 *.byteimg.com RapidSSL TLS RSA CA G1
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=41 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=40 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=41 Lv=2
+  Process: Doubao.exe
+  Cert: *.byteimg.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=40 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=41 Lv=4
+  Process: Doubao.exe
+  Cert: RapidSSL TLS RSA CA G1
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=40 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=10 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=41 Lv=4
+  Process: Doubao.exe
+  Cert: RapidSSL TLS RSA CA G1
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:31] Id=40 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:31] Id=10 Lv=4
+  Process: Doubao.exe
+  Result: 
+-----
+[10/10/2026 21:06:24] Id=30 Lv=4
+  Process: douyin.exe
+  Cert: *.zijieapi.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:24] Id=11 Lv=4
+  Process: douyin.exe
+  Cert: *.zijieapi.com
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:24] Id=90 Lv=4
+  Process: douyin.exe
+  Cert: DigiCert Global Root G2 *.zijieapi.com RapidSSL TLS RSA CA G1
+  Result: 
+-----
+[10/10/2026 21:06:24] Id=10 Lv=4
+  Process: douyin.exe
+  Result: 
+-----
+[10/10/2026 21:06:22] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:22] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:22] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:22] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:22] Id=11 Lv=2
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:22] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local ChinaITboys RSA ROOT
+  Result: 
+-----
+[10/10/2026 21:06:22] Id=41 Lv=2
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:22] Id=40 Lv=4
+  Process: SystemSettings.exe
+  Result: 
+-----
+[10/10/2026 21:06:22] Id=10 Lv=4
+  Process: SystemSettings.exe
+  Result: 
+-----
+[10/10/2026 21:06:22] Id=70 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:22] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:22] Id=11 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:22] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local ChinaITboys RSA ROOT
+  Result: 
+-----
+[10/10/2026 21:06:22] Id=41 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:22] Id=40 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:22] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:18] Id=30 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Windows Publisher
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:18] Id=81 Lv=4
+  Process: svchost.exe
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:18] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Root Certificate Authority 2010 Microsoft Windows Production PCA 2011 Microsoft Time-Stamp PCA 2010 Microsoft Time-Stamp Service Microsoft Windows Publisher
+  Result: 
+-----
+[10/10/2026 21:06:18] Id=30 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Time-Stamp Service
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:18] Id=30 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Windows Publisher
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:18] Id=11 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Time-Stamp Service
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:18] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:18] Id=11 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Windows Publisher
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:18] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:18] Id=11 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Time-Stamp Service
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:18] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:18] Id=80 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:18] Id=70 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:18] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:18] Id=30 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:18] Id=30 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:18] Id=11 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:18] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: ChinaITboys RSA ROOT vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:18] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:17] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:17] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:17] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:17] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:12] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:12] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:12] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:12] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:12] Id=11 Lv=2
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:12] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local ChinaITboys RSA ROOT
+  Result: 
+-----
+[10/10/2026 21:06:12] Id=41 Lv=2
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:12] Id=40 Lv=4
+  Process: SystemSettings.exe
+  Result: 
+-----
+[10/10/2026 21:06:12] Id=10 Lv=4
+  Process: SystemSettings.exe
+  Result: 
+-----
+[10/10/2026 21:06:12] Id=70 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:12] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:12] Id=11 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:12] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local ChinaITboys RSA ROOT
+  Result: 
+-----
+[10/10/2026 21:06:12] Id=41 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:12] Id=40 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:12] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:10] Id=30 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Windows Publisher
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:10] Id=81 Lv=4
+  Process: svchost.exe
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:10] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Root Certificate Authority 2010 Microsoft Windows Production PCA 2011 Microsoft Time-Stamp PCA 2010 Microsoft Time-Stamp Service Microsoft Windows Publisher
+  Result: 
+-----
+[10/10/2026 21:06:10] Id=30 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Time-Stamp Service
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:10] Id=30 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Windows Publisher
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:10] Id=11 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Time-Stamp Service
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:10] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:10] Id=11 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Windows Publisher
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:10] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:10] Id=11 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Time-Stamp Service
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:10] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:10] Id=80 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:10] Id=70 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:10] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:10] Id=30 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:10] Id=30 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:10] Id=11 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:10] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: ChinaITboys RSA ROOT vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:10] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:09] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:09] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:09] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:09] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:04] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:04] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:04] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:04] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:04] Id=11 Lv=2
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:04] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local ChinaITboys RSA ROOT
+  Result: 
+-----
+[10/10/2026 21:06:04] Id=41 Lv=2
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:04] Id=40 Lv=4
+  Process: SystemSettings.exe
+  Result: 
+-----
+[10/10/2026 21:06:04] Id=10 Lv=4
+  Process: SystemSettings.exe
+  Result: 
+-----
+[10/10/2026 21:06:04] Id=70 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:04] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:04] Id=11 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:04] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local ChinaITboys RSA ROOT
+  Result: 
+-----
+[10/10/2026 21:06:04] Id=41 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:04] Id=40 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:04] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:02] Id=30 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Windows Publisher
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:02] Id=81 Lv=4
+  Process: svchost.exe
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:02] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Root Certificate Authority 2010 Microsoft Windows Production PCA 2011 Microsoft Time-Stamp PCA 2010 Microsoft Time-Stamp Service Microsoft Windows Publisher
+  Result: 
+-----
+[10/10/2026 21:06:02] Id=30 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Time-Stamp Service
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:02] Id=30 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Windows Publisher
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:02] Id=11 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Time-Stamp Service
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:02] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:02] Id=11 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Windows Publisher
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:02] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:02] Id=11 Lv=4
+  Process: svchost.exe
+  Cert: Microsoft Time-Stamp Service
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:02] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:02] Id=80 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:01] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:01] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:01] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:01] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:00] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:00] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:00] Id=70 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:00] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:00] Id=11 Lv=2
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:00] Id=90 Lv=4
+  Process: SystemSettings.exe
+  Cert: vpn.local ChinaITboys RSA ROOT
+  Result: 
+-----
+[10/10/2026 21:06:00] Id=41 Lv=2
+  Process: SystemSettings.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:00] Id=40 Lv=4
+  Process: SystemSettings.exe
+  Result: 
+-----
+[10/10/2026 21:06:00] Id=10 Lv=4
+  Process: SystemSettings.exe
+  Result: 
+-----
+[10/10/2026 21:06:00] Id=70 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:00] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:00] Id=11 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:00] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: vpn.local ChinaITboys RSA ROOT
+  Result: 
+-----
+[10/10/2026 21:06:00] Id=41 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:00] Id=40 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:00] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+[10/10/2026 21:06:00] Id=30 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:00] Id=30 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:00] Id=11 Lv=2
+  Process: svchost.exe
+  Cert: vpn.local
+  Result: System.Xml.XmlElement
+-----
+[10/10/2026 21:06:00] Id=90 Lv=4
+  Process: svchost.exe
+  Cert: ChinaITboys RSA ROOT vpn.local
+  Result: 
+-----
+[10/10/2026 21:06:00] Id=10 Lv=4
+  Process: svchost.exe
+  Result: 
+-----
+########## RasTls 21:05-21:07 ##########
+[10/10/2026 21:06:18] Id=101: EAP 方法类型 13 的身份验证失败。错误为 0x54F。
+
+[10/10/2026 21:06:10] Id=101: EAP 方法类型 13 的身份验证失败。错误为 0x54F。
+
+[10/10/2026 21:06:02] Id=101: EAP 方法类型 13 的身份验证失败。错误为 0x54F。
+
+[10/10/2026 21:05:45] Id=101: EAP 方法类型 13 的身份验证失败。错误为 0x54F。
+

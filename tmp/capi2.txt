@@ -1,0 +1,240 @@
+[10/10/2026 20:57:55] Id=81 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=90 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=11 Lv=2 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=80 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=82 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=81 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=90 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=80 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:55] Id=82 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=81 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=90 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=2 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=80 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=82 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=81 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=90 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=2 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=80 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=82 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=81 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=90 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=2 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=80 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=82 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=81 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=90 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=30 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=11 Lv=2 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=10 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=80 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=82 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=81 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----
+[10/10/2026 20:57:54] Id=90 Lv=4 Provider=Microsoft-Windows-CAPI2
+有关此事件的详细信息，请参阅“详细信息”节
+-----

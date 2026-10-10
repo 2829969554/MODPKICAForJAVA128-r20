@@ -1,0 +1,130 @@
+10月 10 21:09:57 server charon-systemd[2205]: received fragment #7 of 14, waiting for complete IKE message
+10月 10 21:09:57 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:09:57 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(8/14) ]
+10月 10 21:09:57 server charon-systemd[2205]: received fragment #8 of 14, waiting for complete IKE message
+10月 10 21:09:57 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:09:57 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(11/14) ]
+10月 10 21:09:57 server charon-systemd[2205]: received fragment #11 of 14, waiting for complete IKE message
+10月 10 21:09:57 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:09:57 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(12/14) ]
+10月 10 21:09:57 server charon-systemd[2205]: received fragment #12 of 14, waiting for complete IKE message
+10月 10 21:09:57 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:09:57 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(9/14) ]
+10月 10 21:09:57 server charon-systemd[2205]: received fragment #9 of 14, waiting for complete IKE message
+10月 10 21:09:57 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:09:57 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(10/14) ]
+10月 10 21:09:57 server charon-systemd[2205]: received fragment #10 of 14, reassembled fragmented IKE message (6848 bytes)
+10月 10 21:09:57 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ IDi CERTREQ N(MOBIKE_SUP) CPRQ(ADDR DNS NBNS SRV ADDR6 DNS6 SRV6) SA TSi TSr ]
+10月 10 21:09:57 server charon-systemd[2205]: received cert request for "C=CN, O=ChinaITboy, OU=ChinaITboy, CN=ChinaITboys RSA ROOT"
+10月 10 21:09:57 server charon-systemd[2205]: received 317 cert requests for an unknown ca
+10月 10 21:09:57 server charon-systemd[2205]: looking for peer configs matching 10.255.228.225[%any]...10.255.228.55[10.255.228.55]
+10月 10 21:09:57 server charon-systemd[2205]: selected peer config 'ikev2-mschapv2'
+10月 10 21:09:57 server charon-systemd[2205]: initiating EAP_IDENTITY method (id 0x00)
+10月 10 21:09:57 server charon-systemd[2205]: peer supports MOBIKE
+10月 10 21:09:57 server charon-systemd[2205]: authentication of 'vpn.local' (myself) with RSA signature successful
+10月 10 21:09:57 server charon-systemd[2205]: sending end entity cert "C=CN, L=newer york, O=China IT Boys, OU=IT Clubs, CN=vpn.local"
+10月 10 21:09:57 server charon-systemd[2205]: generating IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
+10月 10 21:09:57 server charon-systemd[2205]: splitting IKE message (1920 bytes) into 2 fragments
+10月 10 21:09:57 server charon-systemd[2205]: generating IKE_AUTH response 1 [ EF(1/2) ]
+10月 10 21:09:57 server charon-systemd[2205]: generating IKE_AUTH response 1 [ EF(2/2) ]
+10月 10 21:09:57 server charon-systemd[2205]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (1236 bytes)
+10月 10 21:09:57 server charon-systemd[2205]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (756 bytes)
+10月 10 21:09:57 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (96 bytes)
+10月 10 21:09:57 server charon-systemd[2205]: parsed IKE_AUTH request 2 [ EAP/RES/ID ]
+10月 10 21:09:57 server charon-systemd[2205]: received EAP identity 'admin666'
+10月 10 21:09:57 server charon-systemd[2205]: sending RADIUS Access-Request to server 'primary'
+10月 10 21:09:57 server charon-systemd[2205]: received RADIUS Access-Challenge from server 'primary'
+10月 10 21:09:57 server charon-systemd[2205]: initiating EAP_MSCHAPV2 method (id 0x01)
+10月 10 21:09:57 server charon-systemd[2205]: generating IKE_AUTH response 2 [ EAP/REQ/MSCHAPV2 ]
+10月 10 21:09:57 server charon-systemd[2205]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (112 bytes)
+10月 10 21:09:57 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (80 bytes)
+10月 10 21:09:57 server charon-systemd[2205]: parsed IKE_AUTH request 3 [ EAP/RES/NAK ]
+10月 10 21:09:57 server charon-systemd[2205]: sending RADIUS Access-Request to server 'primary'
+10月 10 21:09:57 server charon-systemd[2205]: received RADIUS Access-Challenge from server 'primary'
+10月 10 21:09:57 server charon-systemd[2205]: generating IKE_AUTH response 3 [ EAP/REQ/TLS ]
+10月 10 21:09:57 server charon-systemd[2205]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (80 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[500] to 10.255.228.225[500] (1104 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_SA_INIT request 0 [ SA KE No N(FRAG_SUP) N(NATD_S_IP) N(NATD_D_IP) V V V V ]
+10月 10 21:10:03 server charon-systemd[2205]: received MS NT5 ISAKMPOAKLEY v9 vendor ID
+10月 10 21:10:03 server charon-systemd[2205]: received MS-Negotiation Discovery Capable vendor ID
+10月 10 21:10:03 server charon-systemd[2205]: received Vid-Initial-Contact vendor ID
+10月 10 21:10:03 server charon-systemd[2205]: received unknown vendor ID: 01:52:8b:bb:c0:06:96:12:18:49:ab:9a:1c:5b:2a:51:00:00:00:02
+10月 10 21:10:03 server charon-systemd[2205]: 10.255.228.55 is initiating an IKE_SA
+10月 10 21:10:03 server charon-systemd[2205]: selected proposal: IKE:AES_CBC_256/HMAC_SHA2_256_128/PRF_HMAC_SHA2_256/MODP_1024
+10月 10 21:10:03 server charon-systemd[2205]: sending cert request for "C=CN, O=ChinaITboy, OU=ChinaITboy, CN=ChinaITboys RSA ROOT"
+10月 10 21:10:03 server charon-systemd[2205]: generating IKE_SA_INIT response 0 [ SA KE No N(NATD_S_IP) N(NATD_D_IP) CERTREQ N(FRAG_SUP) N(CHDLESS_SUP) N(MULT_AUTH) ]
+10月 10 21:10:03 server charon-systemd[2205]: sending packet: from 10.255.228.225[500] to 10.255.228.55[500] (353 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(1/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #1 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(2/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #2 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(3/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #3 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (404 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(14/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #14 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(4/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #4 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(5/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #5 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(6/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #6 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(7/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #7 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(8/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #8 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(9/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #9 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(10/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #10 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(12/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #12 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(11/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #11 of 14, waiting for complete IKE message
+10月 10 21:10:03 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (580 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ EF(13/14) ]
+10月 10 21:10:03 server charon-systemd[2205]: received fragment #13 of 14, reassembled fragmented IKE message (6848 bytes)
+10月 10 21:10:03 server charon-systemd[2205]: parsed IKE_AUTH request 1 [ IDi CERTREQ N(MOBIKE_SUP) CPRQ(ADDR DNS NBNS SRV ADDR6 DNS6 SRV6) SA TSi TSr ]
+10月 10 21:10:03 server charon-systemd[2205]: received cert request for "C=CN, O=ChinaITboy, OU=ChinaITboy, CN=ChinaITboys RSA ROOT"
+10月 10 21:10:04 server charon-systemd[2205]: received 317 cert requests for an unknown ca
+10月 10 21:10:04 server charon-systemd[2205]: looking for peer configs matching 10.255.228.225[%any]...10.255.228.55[10.255.228.55]
+10月 10 21:10:04 server charon-systemd[2205]: selected peer config 'ikev2-mschapv2'
+10月 10 21:10:04 server charon-systemd[2205]: initiating EAP_IDENTITY method (id 0x00)
+10月 10 21:10:04 server charon-systemd[2205]: peer supports MOBIKE
+10月 10 21:10:04 server charon-systemd[2205]: authentication of 'vpn.local' (myself) with RSA signature successful
+10月 10 21:10:04 server charon-systemd[2205]: sending end entity cert "C=CN, L=newer york, O=China IT Boys, OU=IT Clubs, CN=vpn.local"
+10月 10 21:10:04 server charon-systemd[2205]: generating IKE_AUTH response 1 [ IDr CERT AUTH EAP/REQ/ID ]
+10月 10 21:10:04 server charon-systemd[2205]: splitting IKE message (1920 bytes) into 2 fragments
+10月 10 21:10:04 server charon-systemd[2205]: generating IKE_AUTH response 1 [ EF(1/2) ]
+10月 10 21:10:04 server charon-systemd[2205]: generating IKE_AUTH response 1 [ EF(2/2) ]
+10月 10 21:10:04 server charon-systemd[2205]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (1236 bytes)
+10月 10 21:10:04 server charon-systemd[2205]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (756 bytes)
+10月 10 21:10:04 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (96 bytes)
+10月 10 21:10:04 server charon-systemd[2205]: parsed IKE_AUTH request 2 [ EAP/RES/ID ]
+10月 10 21:10:04 server charon-systemd[2205]: received EAP identity 'admin666'
+10月 10 21:10:04 server charon-systemd[2205]: sending RADIUS Access-Request to server 'primary'
+10月 10 21:10:04 server charon-systemd[2205]: received RADIUS Access-Challenge from server 'primary'
+10月 10 21:10:04 server charon-systemd[2205]: initiating EAP_MSCHAPV2 method (id 0x01)
+10月 10 21:10:04 server charon-systemd[2205]: generating IKE_AUTH response 2 [ EAP/REQ/MSCHAPV2 ]
+10月 10 21:10:04 server charon-systemd[2205]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (112 bytes)
+10月 10 21:10:04 server charon-systemd[2205]: received packet: from 10.255.228.55[4500] to 10.255.228.225[4500] (80 bytes)
+10月 10 21:10:04 server charon-systemd[2205]: parsed IKE_AUTH request 3 [ EAP/RES/NAK ]
+10月 10 21:10:04 server charon-systemd[2205]: sending RADIUS Access-Request to server 'primary'
+10月 10 21:10:04 server charon-systemd[2205]: received RADIUS Access-Challenge from server 'primary'
+10月 10 21:10:04 server charon-systemd[2205]: generating IKE_AUTH response 3 [ EAP/REQ/TLS ]
+10月 10 21:10:04 server charon-systemd[2205]: sending packet: from 10.255.228.225[4500] to 10.255.228.55[4500] (80 bytes)
+10月 10 21:10:18 server charon-systemd[2205]: deleting half open IKE_SA with 10.255.228.55 after timeout
+10月 10 21:10:27 server charon-systemd[2205]: deleting half open IKE_SA with 10.255.228.55 after timeout
+10月 10 21:10:33 server charon-systemd[2205]: deleting half open IKE_SA with 10.255.228.55 after timeout

@@ -1,0 +1,49 @@
+﻿=== EAP-TLS ֤���¼ȫ��·ð�̲��ԣ�ģ�� Windows ԭ�� IKEv2 ֤��ģʽ��===
+RADIUS 1812 secret=mytestkey �ͻ���֤��=a66de5fea3df44c8f8687f31d75384d
+[0] �ͻ���֤�� CN=CN=localhost �㷨=RSA
+[1] ���� Access-Request��User-Name=localhost + EAP-Identity(localhost)
+[2] �յ� EAP-Request type=26������ 26=MSCHAPV2��ʵ��=26��
+[3] ���� EAP-NAK������֧�� EAP-TLS Type=13��
+[4] �յ� EAP-Request/TLS Start��flags=0x10���������������л��� EAP-TLS
+[5] �ͻ��� ClientHello 159B hex=160301009a010000960303ef491f35e754c11593f738c7f11abd79ba308f98c862d66331cf55138eae543f00000ec02fc02bc013c009002f009c00ff0100005f0017000000160000000a000a0008001d
+[CLI��] TLSƬ 164B flags=0x40 total=159 sent=159/159
+[SVR��] TLSƬ 245B flags=0x60
+[CLI��] ��ȡ��Ƭ���հ� flags=0��
+[SVR��] TLSƬ 241B flags=0x20
+[CLI��] ��ȡ��Ƭ���հ� flags=0��
+[SVR��] TLSƬ 241B flags=0x20
+[CLI��] ��ȡ��Ƭ���հ� flags=0��
+[SVR��] TLSƬ 241B flags=0x20
+[CLI��] ��ȡ��Ƭ���հ� flags=0��
+[SVR��] TLSƬ 241B flags=0x20
+[CLI��] ��ȡ��Ƭ���հ� flags=0��
+[SVR��] TLSƬ 201B flags=0x0
+[����] 1708B records: type=22 len=1661 type=22 len=37
+[CLI��] TLSƬ 245B flags=0x60 total=1708 sent=240/1708
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 241B flags=0x20 total=-263440488 sent=480/1708
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 241B flags=0x20 total=721813765 sent=720/1708
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 241B flags=0x20 total=1936996920 sent=960/1708
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 241B flags=0x20 total=2030175234 sent=1200/1708
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 241B flags=0x20 total=-1810094098 sent=1440/1708
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 241B flags=0x20 total=314371831 sent=1680/1708
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 29B flags=0x0 total=2086225369 sent=1708/1708
+java : Exception in thread "main" java.net.SocketTimeoutException: Receive timed out
+所在位置 行:1 字符: 171
++ ... t -First 2; java "-Dfile.encoding=UTF-8" -cp "out;BC185\*;debug_test" ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Exception in th...ceive timed out:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+	at java.base/sun.nio.ch.DatagramChannelImpl.tryBlockingReceive(DatagramChannelImpl.java:669)
+	at java.base/sun.nio.ch.DatagramChannelImpl.blockingReceive(DatagramChannelImpl.java:619)
+	at java.base/sun.nio.ch.DatagramSocketAdaptor.receive(DatagramSocketAdaptor.java:192)
+	at java.base/java.net.DatagramSocket.receive(DatagramSocket.java:638)
+	at EapTlsCertSmoke.sendRecv(EapTlsCertSmoke.java:147)
+	at EapTlsCertSmoke.main(EapTlsCertSmoke.java:505)

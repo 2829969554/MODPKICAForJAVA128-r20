@@ -1,0 +1,12 @@
+﻿=== EAP-TLS ֤���¼ȫ��·ð�̲��ԣ�ģ�� Windows ԭ�� IKEv2 ֤��ģʽ��===
+RADIUS 1812 secret=mytestkey �ͻ���֤��=a66de5fea3df44c8f8687f31d75384d
+[0] �ͻ���֤�� CN=CN=localhost �㷨=RSA
+[1] ���� Access-Request��User-Name=localhost + EAP-Identity(localhost)
+[2] �յ� EAP-Request type=26������ 26=MSCHAPV2��ʵ��=26��
+[3] ���� EAP-NAK������֧�� EAP-TLS Type=13��
+[4] �յ� EAP-Request/TLS Start��flags=0x10���������������л��� EAP-TLS
+[5] �ͻ��� ClientHello 159B
+[CLI��] TLSƬ 164B flags=0x40 hex=400000009f160301009a010000960303f66f03b74ed93fe077bcf368934fc4750019a060170c6379dff94bbb9fd50b1d
+[SVR��] TLSƬ 245B flags=0x60 hex=6000000578160303003f0200003b0303ae102aad8e169aa2dfeb930d059161d5ca220d8d1663afa8d584d8395f4a6256
+[CLI��] TLSƬ 171B flags=0x40 hex=40000000a6160301009a010000960303f66f03b74ed93fe077bcf368934fc4750019a060170c6379dff94bbb9fd50b1d
+FAIL [6] ������ Access-Reject����Ƭ���ͽ׶Σ�: EAP type=?

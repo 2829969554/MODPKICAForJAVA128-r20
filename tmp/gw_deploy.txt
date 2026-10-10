@@ -1,0 +1,17 @@
+=== 校验新证书公钥与私钥匹配 ===
+cert=MD5(stdin)= 59b8132c4c87a6c7ea85c1425af4975d key=MD5(stdin)= 59b8132c4c87a6c7ea85c1425af4975d
+MATCH
+
+=== 新证书主题 ===
+subject=C=CN, L=newer york, O=China IT Boys, OU=IT Clubs, CN=vpn.local
+X509v3 Extended Key Usage: 
+    TLS Web Server Authentication
+X509v3 Subject Alternative Name: 
+    DNS:vpn.local, IP Address:10.255.228.225, IP Address:127.0.0.1
+
+=== 重启 ===
+active
+successfully loaded 1 pools, 0 unloaded
+loaded connection 'ikev2-mschapv2'
+loaded connection 'ikev2-eaptls'
+successfully loaded 2 connections, 0 unloaded

@@ -1,0 +1,14 @@
+﻿=== EAP-TLS ֤���¼ȫ��·ð�̲��ԣ�ģ�� Windows ԭ�� IKEv2 ֤��ģʽ��===
+RADIUS 1812 secret=mytestkey �ͻ���֤��=a66de5fea3df44c8f8687f31d75384d
+java : Exception in thread "main" java.lang.NoClassDefFoundError: modpkica/PemIO
+所在位置 行:1 字符: 559
++ ... es.Count)"; java "-Dfile.encoding=UTF-8" -cp "out;BC185\*;debug_test" ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Exception in th... modpkica/PemIO:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+	at EapTlsCertSmoke.main(EapTlsCertSmoke.java:366)
+Caused by: java.lang.ClassNotFoundException: modpkica.PemIO
+	at java.base/jdk.internal.loader.BuiltinClassLoader.loadClass(BuiltinClassLoader.java:580)
+	at java.base/java.lang.ClassLoader.loadClass(ClassLoader.java:502)
+	... 1 more

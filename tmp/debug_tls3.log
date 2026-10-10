@@ -1,0 +1,12 @@
+手机 ClientHello 216B
+异常: java.io.IOException: SERVER:getCredentials 被调用（说明 ClientHello 协商已通过）
+    at DebugTlsServer$1.getCredentials(DebugTlsServer.java:56)
+    at org.bouncycastle.tls.TlsUtils.establishServerCredentials(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.handleHandshakeMessage(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.processHandshakeQueue(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.processRecord(Unknown Source)
+    at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at DebugTlsServer.main(DebugTlsServer.java:61)

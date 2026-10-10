@@ -1,0 +1,199 @@
+﻿=== EAP-TLS ֤���¼ȫ��·ð�̲��ԣ�ģ�� Windows ԭ�� IKEv2 ֤��ģʽ��===
+RADIUS 1812 secret=mytestkey �ͻ���֤��=a66de5fea3df44c8f8687f31d75384d
+[0] �ͻ���֤�� CN=CN=localhost �㷨=RSA
+[1] ���� Access-Request��User-Name=localhost + EAP-Identity(localhost)
+[2] �յ� EAP-Request type=26������ 26=MSCHAPV2��ʵ��=26��
+[3] ���� EAP-NAK������֧�� EAP-TLS Type=13��
+[4] �յ� EAP-Request/TLS Start��flags=0x10���������������л��� EAP-TLS
+[pollOutput] cur=0 start=0 done=false err=null
+[pollOutput] cur=0 start=0 done=false err=null
+[pollOutput] cur=159 start=0 done=false err=null
+[5] �ͻ��� ClientHello 159B hex=160301009a0100009603036ed2c6b06f88313364c3433ec15a752b76df28bace8b713825d3dc53475a444700000ec02fc02bc013c009002f009c00ff0100005f0017000000160000000a000a0008001d
+[CLI��] TLSƬ 164B flags=0x40 total=159 sent=159/159
+[����] �ͻ����߳�=TIMED_WAITING done=false err=null out.size=159 inQ=0
+      at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      at java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:271)
+      at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1803)
+      at java.base/java.util.concurrent.LinkedBlockingQueue.poll(LinkedBlockingQueue.java:460)
+      at EapTlsCertSmoke$BlockingInput.read(EapTlsCertSmoke.java:170)
+      at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+      at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+      at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+      at org.bouncycastle.tls.TlsClientProtocol.connect(Unknown Source)
+      at EapTlsCertSmoke.lambda$main$0(EapTlsCertSmoke.java:438)
+      at java.base/java.lang.Thread.run(Thread.java:1516)
+[sendRecv] ���� 290B code=11 hex=0b030122766e443d355ce2a8f3b56986
+[SVR��] TLSƬ 245B flags=0x60
+[CLI��] ��ȡ��Ƭ���հ� flags=0��
+[sendRecv] ���� 286B code=11 hex=0b04011eb1b8dd459f3218221faf3d9e
+[SVR��] TLSƬ 241B flags=0x20
+[CLI��] ��ȡ��Ƭ���հ� flags=0��
+[sendRecv] ���� 286B code=11 hex=0b05011e8837e16d9ab599ed65f94c1b
+[SVR��] TLSƬ 241B flags=0x20
+[CLI��] ��ȡ��Ƭ���հ� flags=0��
+[sendRecv] ���� 286B code=11 hex=0b06011e290fcb3debd492171e16c5b9
+[SVR��] TLSƬ 241B flags=0x20
+[CLI��] ��ȡ��Ƭ���հ� flags=0��
+[sendRecv] ���� 286B code=11 hex=0b07011e2a8cc2a8bdd7070c86cad54b
+[SVR��] TLSƬ 241B flags=0x20
+[CLI��] ��ȡ��Ƭ���հ� flags=0��
+[sendRecv] ���� 246B code=11 hex=0b0800f6f147709fa87457f68887fe1b
+[SVR��] TLSƬ 201B flags=0x0
+[SVR flight] 1400B rec type=22 len=63(hs msg=2 len=59) rec type=22 len=1121(hs msg=11 len=1117) rec type=22 len=172(hs msg=12 len=168) rec type=22 len=15(hs msg=13 len=11) rec type=22 len=4(hs msg=14 len=0)
+[pollOutput] cur=159 start=159 done=false err=null
+[pollOutput] cur=159 start=159 done=false err=null
+[pollOutput] cur=1825 start=159 done=false err=null
+[����] 1666B records: type=22 len=1661
+[handshake] msg=11 len=1657 �ѽ���=1666/1666
+[CLI��] TLSƬ 245B flags=0x60 total=1666 sent=240/1666
+[sendRecv] ���� 46B code=11 hex=0b09002e8a0770688ac697cacbc3c749
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 241B flags=0x20 total=-263440488 sent=480/1666
+[sendRecv] ���� 46B code=11 hex=0b0a002e2a9548739164b926adae449c
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 241B flags=0x20 total=721813765 sent=720/1666
+[sendRecv] ���� 46B code=11 hex=0b0b002e2ab08475e2f253b918d5025b
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 241B flags=0x20 total=1936996920 sent=960/1666
+[sendRecv] ���� 46B code=11 hex=0b0c002e5f260fa372fd915b29ce1d03
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 241B flags=0x20 total=2030175234 sent=1200/1666
+[sendRecv] ���� 46B code=11 hex=0b0d002e8d4f51e04ae9a1bbc93387ce
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 241B flags=0x20 total=-1810094098 sent=1440/1666
+[sendRecv] ���� 46B code=11 hex=0b0e002ec0b5839770998d1f84e4ef2c
+[SVR��] TLSƬ 1B flags=0x0
+[CLI��] TLSƬ 227B flags=0x0 total=314371831 sent=1666/1666
+[����] �ͻ����߳�=TIMED_WAITING done=false err=null out.size=2059 inQ=0
+[outʣ��hex] 16030300880f000084040100801eb0b265ead8dec55095953c02b775776be2d69f895dc3127768cbbabbc2d3ac2405bfed58fc9c7043969e6d52060628879f667401c9f247fcdc23d6e9ae6105f6edacc2361820d794ebc32e5f1f7f6638143fba10c3ee6efd9b1dbbcd23233135fb0524747dc91d4a33631d6add465389c887626cca40ddb7373b1ce02d7d8714030300010116030300280000000000000000f9877dc3aa589798c3ea7f89e29963ffee91564ad4c915029fecb128c3a1cd66
+      at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      at java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:271)
+      at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1803)
+      at java.base/java.util.concurrent.LinkedBlockingQueue.poll(LinkedBlockingQueue.java:460)
+      at EapTlsCertSmoke$BlockingInput.read(EapTlsCertSmoke.java:170)
+      at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+      at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+      at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+      at org.bouncycastle.tls.TlsClientProtocol.connect(Unknown Source)
+      at EapTlsCertSmoke.lambda$main$0(EapTlsCertSmoke.java:438)
+      at java.base/java.lang.Thread.run(Thread.java:1516)
+[sendRecv] ���� 46B code=11 hex=0b0f002e07760b14bb6ee7d83b74b4c3
+[SVR��] TLSƬ 1B flags=0x0
+[pollOutput] cur=2059 start=1825 done=false err=null
+[����] 234B records: type=22 len=37 type=22 len=136 type=20 len=1 type=22 len=40
+[handshake] msg=16 len=33 msg=22 len=197376 �ѽ���=197422/234
+[CLI��] TLSƬ 239B flags=0x40 total=234 sent=234/234
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[CLI��] ά�ְ���flags=0�� done=false err=null �߳�=TIMED_WAITING
+      at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      at java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:271)
+      at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1803)
+      at java.base/java.util.concurrent.LinkedBlockingQueue.poll(LinkedBlockingQueue.java:460)
+      at EapTlsCertSmoke$BlockingInput.read(EapTlsCertSmoke.java:170)
+      at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+      at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+      at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+      at org.bouncycastle.tls.TlsClientProtocol.connect(Unknown Source)
+      at EapTlsCertSmoke.lambda$main$0(EapTlsCertSmoke.java:438)
+      at java.base/java.lang.Thread.run(Thread.java:1516)
+[sendRecv] ���� 46B code=11 hex=0b10002e8cb9b8a8ffc618c797755422
+[SVR��] TLSƬ 1B flags=0x0
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2059 start=2059 done=false err=null
+[pollOutput] cur=2090 start=2059 done=true err=java.io.IOException: EAP-TLS ���ݳ�ʱ
+[����] 31B records: type=21 len=26
+[CLI��] TLSƬ 36B flags=0x40 total=31 sent=31/31
+[pollOutput] cur=2090 start=2090 done=true err=java.io.IOException: EAP-TLS ���ݳ�ʱ
+FAIL [6] TLS ����ʧ��: java.io.IOException: EAP-TLS ���ݳ�ʱ

@@ -1,0 +1,36 @@
+
+=== 校验 ===
+charon {
+    filelog {
+        charon {
+            path = "/var/log/charon.log"
+            time_format = %b %e %T
+            ike_name = yes
+            append = no
+            default = 3
+            flush_line = yes
+        }
+    }
+}
+
+=== 重启 ===
+active
+
+=== 加载 ===
+loaded certificate from '/etc/swanctl/x509/9f260af25264d331d3c9720dac37b505.crt'
+loaded certificate from '/etc/swanctl/x509/c8ffb3b6784947d79e977cbf6a12811a.crt'
+loaded certificate from '/etc/swanctl/x509/f7679b33352bd0d0e150e8594606c01f.crt'
+loaded certificate from '/etc/swanctl/x509/b53080fef0b95fd6730fec18d55b6ac8.crt'
+loaded certificate from '/etc/swanctl/x509ca/7712d9352e6038ce78e57e3f572cec74.crt'
+loaded RSA key from '/etc/swanctl/private/b53080fef0b95fd6730fec18d55b6ac8.key'
+loaded RSA key from '/etc/swanctl/private/9f260af25264d331d3c9720dac37b505.key'
+loaded RSA key from '/etc/swanctl/private/f7679b33352bd0d0e150e8594606c01f.key'
+loaded RSA key from '/etc/swanctl/private/c8ffb3b6784947d79e977cbf6a12811a.key'
+loaded ike secret 'ike-1'
+
+=== charon.log ===
+Oct 10 21:12:35 12[JOB] removed fd 27[r] from watcher after callback
+Oct 10 21:12:35 12[CFG] vici client 2 disconnected
+Oct 10 21:12:35 02[JOB] watcher got notification, rebuilding
+Oct 10 21:12:35 02[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:12:35 02[JOB] watcher is observing 9 fds

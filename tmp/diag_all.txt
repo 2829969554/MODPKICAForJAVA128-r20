@@ -1,0 +1,21 @@
+########## CAPI2 20:54:35-20:55:20 ##########
+
+########## IKEEXT 鏈€杩?15 ##########
+
+########## Application RasClient 鏈€杩?8 ##########
+[10/10/2026 20:56:41] Id=20227: CoId={D44E6D3D-469B-0003-2621-44D99B46DD01}: 用户 SYSTEM 已进行名为 CRT10.255.228.225 的拨号连接，该连接已失败。失败后返回的错误代码为 628。
+
+[10/10/2026 20:56:41] Id=20291: CRT10.255.228.225 需要引起注意。
+
+[10/10/2026 20:56:41] Id=20224: CoID={D44E6D3D-469B-0003-2621-44D99B46DD01}: 用户 SYSTEM 已建立到远程访问服务器的链接。
+
+[10/10/2026 20:56:41] Id=20223: CoId={D44E6D3D-469B-0003-2621-44D99B46DD01}: 用户 SYSTEM 已使用以下设备成功建立到远程访问服务器的链接: Server address/Phone Number = 10.255.228.225 Device = WAN Miniport (IKEv2) Port = VPN2-1 MediaType = VPN。
+
+[10/10/2026 20:56:41] Id=20222: CoId={D44E6D3D-469B-0003-2621-44D99B46DD01}: 用户 SYSTEM 正尝试使用以下设备为名为 CRT10.255.228.225 的连接建立到远程访问服务器的链接: Server address/Phone Number = 10.255.228.225 Device = WAN Miniport (IKEv2) Port = VPN2-1 MediaType = VPN。
+
+[10/10/2026 20:56:41] Id=20221: CoId={D44E6D3D-469B-0003-2621-44D99B46DD01}: 用户 SYSTEM 已使用名为 CRT10.255.228.225 的 per-user 连接配置文件启动 VPN 拨号连接。连接设置为: Dial-in User = VpnStrategy = IKEv2 DataEncryption = Requested PrerequisiteEntry = AutoLogon = No UseRasCredentials = Yes Authentication Type = Machine Certificate Ipv4DefaultGateway = Yes Ipv4AddressAssignment = By Server Ipv4DNSServerAssignment = By Server Ipv6DefaultGateway = Yes Ipv6AddressAssignment = By Server Ipv6DNSServerAssignment = By Server IpDnsFlags = IpNBTEnabled = Yes UseFlags = Private Connection ConnectOnWinlogon = No Mobility enabled for IKEv2 = Yes。
+
+[10/10/2026 20:56:38] Id=20227: CoId={D44E6D3D-469B-0001-B58F-81D99B46DD01}: 用户 SYSTEM 已进行名为 CRT10.255.228.225 的拨号连接，该连接已失败。失败后返回的错误代码为 628。
+
+[10/10/2026 20:56:38] Id=20291: CRT10.255.228.225 需要引起注意。
+

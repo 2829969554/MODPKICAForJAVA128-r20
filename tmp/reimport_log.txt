@@ -1,0 +1,3 @@
+IMPORT_OK subject=CN=vpn.local, OU=IT Clubs, O=China IT Boys, L=newer york sn=00B53080FEF0B95FD6730FEC18D55B6AC8 thumb=7927C712EB3B0E9A08B0D1B88F3A5CF70FCB9792
+KEYTYPE=CNG provider=Microsoft Software Key Storage Provider
+EXITCODE=0

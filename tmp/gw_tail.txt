@@ -1,0 +1,66 @@
+=== charon.log 最后 40 行 ===
+Oct 10 21:40:50 05[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:40:50 05[JOB] watcher is observing 9 fds
+Oct 10 21:40:50 05[JOB] watcher got notification, rebuilding
+Oct 10 21:40:50 05[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:40:50 05[JOB] watcher is observing 9 fds
+Oct 10 21:40:51 05[JOB] events on fds: 9[r]
+Oct 10 21:40:51 11[NET] not sending ARP reply, no tunnel between 10.255.228.118 -> 10.255.228.55
+Oct 10 21:40:51 05[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:40:51 05[JOB] watcher is observing 9 fds
+Oct 10 21:40:51 05[JOB] watcher got notification, rebuilding
+Oct 10 21:40:51 05[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:40:51 05[JOB] watcher is observing 9 fds
+Oct 10 21:40:58 05[JOB] events on fds: 22[r]
+Oct 10 21:40:58 08[NET] forecast intercepted packet: 10.255.228.118 to 224.0.0.251
+Oct 10 21:40:58 05[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:40:58 05[JOB] watcher is observing 9 fds
+Oct 10 21:40:58 05[JOB] watcher got notification, rebuilding
+Oct 10 21:40:58 05[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:40:58 05[JOB] watcher is observing 9 fds
+Oct 10 21:41:08 05[JOB] events on fds: 22[r]
+Oct 10 21:41:08 02[NET] forecast intercepted packet: 10.255.228.118 to 224.0.0.251
+Oct 10 21:41:08 05[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:41:08 05[JOB] watcher is observing 9 fds
+Oct 10 21:41:08 05[JOB] watcher got notification, rebuilding
+Oct 10 21:41:08 05[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:41:08 05[JOB] watcher is observing 9 fds
+Oct 10 21:41:10 05[JOB] events on fds: 22[r]
+Oct 10 21:41:10 05[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 24[r] 26[r]
+Oct 10 21:41:10 05[JOB] watcher is observing 8 fds
+Oct 10 21:41:10 12[NET] forecast intercepted packet: 10.255.228.118 to 224.0.0.251
+Oct 10 21:41:10 05[JOB] watcher got notification, rebuilding
+Oct 10 21:41:10 05[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:41:10 05[JOB] watcher is observing 9 fds
+Oct 10 21:41:10 05[JOB] events on fds: 9[r]
+Oct 10 21:41:10 05[JOB] observing fds: 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:41:10 05[JOB] watcher is observing 8 fds
+Oct 10 21:41:10 09[NET] not sending ARP reply, no tunnel between 10.255.228.118 -> 10.255.228.55
+Oct 10 21:41:10 05[JOB] watcher got notification, rebuilding
+Oct 10 21:41:10 05[JOB] observing fds: 9[r] 10[r] 11[r] 13[r] 14[r] 21[r] 22[r] 24[r] 26[r]
+Oct 10 21:41:10 05[JOB] watcher is observing 9 fds
+
+=== date ===
+2026年 10月 10日 星期六 21:41:10 CST
+
+=== journalctl 最后 20 行 ===
+10月 10 21:39:36 server charon-systemd[2919]: received EAP identity 'L=newer york, O=China IT Boys, OU=IT Clubs, CN=vpn.local'
+10月 10 21:39:36 server charon-systemd[2919]: sending RADIUS Access-Request to server 'primary'
+10月 10 21:39:36 server charon-systemd[2919]: received RADIUS Access-Challenge from server 'primary'
+10月 10 21:39:36 server charon-systemd[2919]: initiating EAP_MSCHAPV2 method (id 0x01)
+10月 10 21:39:36 server charon-systemd[2919]: generating IKE_AUTH response 2 [ EAP/REQ/MSCHAPV2 ]
+10月 10 21:39:36 server charon-systemd[2919]: sending packet: from 10.255.228.225[4500] to 10.255.228.118[55689] (112 bytes)
+10月 10 21:39:36 server charon-systemd[2919]: received packet: from 10.255.228.118[55689] to 10.255.228.225[4500] (80 bytes)
+10月 10 21:39:36 server charon-systemd[2919]: parsed IKE_AUTH request 3 [ EAP/RES/NAK ]
+10月 10 21:39:36 server charon-systemd[2919]: sending RADIUS Access-Request to server 'primary'
+10月 10 21:39:36 server charon-systemd[2919]: received RADIUS Access-Challenge from server 'primary'
+10月 10 21:39:36 server charon-systemd[2919]: generating IKE_AUTH response 3 [ EAP/REQ/TLS ]
+10月 10 21:39:36 server charon-systemd[2919]: sending packet: from 10.255.228.225[4500] to 10.255.228.118[55689] (80 bytes)
+10月 10 21:39:36 server charon-systemd[2919]: received packet: from 10.255.228.118[55689] to 10.255.228.225[4500] (304 bytes)
+10月 10 21:39:36 server charon-systemd[2919]: parsed IKE_AUTH request 4 [ EAP/RES/TLS ]
+10月 10 21:39:36 server charon-systemd[2919]: sending RADIUS Access-Request to server 'primary'
+10月 10 21:39:36 server charon-systemd[2919]: received RADIUS Access-Reject from server 'primary'
+10月 10 21:39:36 server charon-systemd[2919]: RADIUS authentication of 'L=newer york, O=China IT Boys, OU=IT Clubs, CN=vpn.local' failed
+10月 10 21:39:36 server charon-systemd[2919]: EAP method EAP_TLS failed for peer L=newer york, O=China IT Boys, OU=IT Clubs, CN=vpn.local
+10月 10 21:39:36 server charon-systemd[2919]: generating IKE_AUTH response 4 [ EAP/FAIL ]
+10月 10 21:39:36 server charon-systemd[2919]: sending packet: from 10.255.228.225[4500] to 10.255.228.118[55689] (80 bytes)

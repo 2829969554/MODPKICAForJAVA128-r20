@@ -1,0 +1,16 @@
+debug_test\EapTlsCertSmoke.java:404: 警告: [unchecked] 未经检查的转换
+        byte[] eap1 = findAttr((List<Attr>) r1[3], ATTR_EAP_MESSAGE);
+                                              ^
+  需要: List<Attr>
+  找到:    Object
+debug_test\EapTlsCertSmoke.java:426: 警告: [unchecked] 未经检查的转换
+        byte[] eap2 = findAttr((List<Attr>) r2[3], ATTR_EAP_MESSAGE);
+                                              ^
+  需要: List<Attr>
+  找到:    Object
+debug_test\EapTlsCertSmoke.java:593: 警告: [unchecked] 未经检查的转换
+            byte[] ee = findAttr((List<Attr>) rr[3], ATTR_EAP_MESSAGE);
+                                                ^
+  需要: List<Attr>
+  找到:    Object
+3 个警告

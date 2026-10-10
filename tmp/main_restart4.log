@@ -1,0 +1,38 @@
+CRL 已生成: 7712d9352e6038ce78e57e3f572cec74 (算法 RSA/sha256, 吊销 0 条)
+CRL 生成完成，共处理颁发者 1 个
+MOD PKI CA 可视化管理界面启动: http://localhost:8080
+MOD PKI CA RADIUS服务已自动启动: 认证UDP/1812 计费UDP/1813（RFC 2138/2139/2865-2869 + EAP，账号 PKI/USERS.txt，可在面板关闭）
+MOD PKI CA PPPoE服务已自动启动: Discovery UDP/512 Session UDP/513（RFC 2516 + PPP LCP/PAP/CHAP，账号 PKI/USERS.txt，可在面板关闭）
+MOD PKI CA Server is running on http://localhost:80
+MOD PKI CA 服务端启动: http://localhost:80
+MOD PKI CA OCSP服务启动: http://localhost:80/OCSP（RSA/ECC/SM2，摘要自适应 SHA1/SHA256/SHA384/SHA512/SM3）
+MOD PKI CA 微软Authenticode时间戳SHA1 服务启动: http://localhost:80/timestamp/sha1
+MOD PKI CA 微软Authenticode时间戳SHA256 服务启动: http://localhost:80/timestamp（SM2/SM3 自适应）
+MOD PKI CA RFC3161文档签名专用时间戳(SHA1&SHA256&SM3自适应) 服务启动: http://localhost:80/rfc3161
+MOD PKI CA CT日志服务启动: http://localhost:80/ct/add（RFC 6962 / Certificate Transparency，接收 PEM 预证书+颁发者证书）
+MOD PKI CA CT标准API启动(RFC 6962 §4): http://localhost:80/ct/v1/add-chain | add-pre-chain | get-sth | get-roots | get-entries | get-proof-by-hash | get-sth-consistency | get-entry-and-proof
+MOD PKI CA 监听端口  :80
+如需修改配置请编辑./PKI/CONFIG.txt文件
+本程序作者：@魔帝本尊  QQ：2829969554
+MOD PKI CA SERVER支持x.509 证书管理、CRL吊销列表、时间戳服务器、OCSP在线状态协议、自动化签发。
+本系统仅供学习 x.509 ASN.1编码使用。作者不承担任何由此产生的一切问题。
+[EAP-TLS][t=26745] 握手异常: java.io.IOException: EAP-TLS 客户端数据超时 inQ残留=0
+    at modpkica.RadiusServer$BlockingInput.read(RadiusServer.java:328)
+    at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+    at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+    at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1615)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+[EAP-TLS][t=33860] 握手异常: org.bouncycastle.tls.TlsFatalAlertReceived: bad_certificate(42) inQ残留=0
+    at org.bouncycastle.tls.TlsProtocol.handleAlertMessage(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.processAlertQueue(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.processRecord(Unknown Source)
+    at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1615)
+    at java.base/java.lang.Thread.run(Thread.java:1516)

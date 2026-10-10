@@ -1,0 +1,166 @@
+public abstract class org.bouncycastle.tls.AbstractTlsPeer implements org.bouncycastle.tls.TlsPeer {
+  private final org.bouncycastle.tls.crypto.TlsCrypto crypto;
+
+  private volatile org.bouncycastle.tls.TlsCloseable closeHandle;
+
+  protected org.bouncycastle.tls.AbstractTlsPeer(org.bouncycastle.tls.crypto.TlsCrypto);
+    Code:
+         0: aload_0
+         1: invokespecial #84                 // Method java/lang/Object."<init>":()V
+         4: aload_0
+         5: aload_1
+         6: putfield      #81                 // Field crypto:Lorg/bouncycastle/tls/crypto/TlsCrypto;
+         9: return
+
+  protected org.bouncycastle.tls.ProtocolVersion[] getSupportedVersions();
+    Code:
+         0: getstatic     #83                 // Field org/bouncycastle/tls/ProtocolVersion.TLSv13:Lorg/bouncycastle/tls/ProtocolVersion;
+         3: getstatic     #82                 // Field org/bouncycastle/tls/ProtocolVersion.TLSv12:Lorg/bouncycastle/tls/ProtocolVersion;
+         6: invokevirtual #86                 // Method org/bouncycastle/tls/ProtocolVersion.downTo:(Lorg/bouncycastle/tls/ProtocolVersion;)[Lorg/bouncycastle/tls/ProtocolVersion;
+         9: areturn
+
+  protected abstract int[] getSupportedCipherSuites();
+
+  public void cancel() throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #80                 // Field closeHandle:Lorg/bouncycastle/tls/TlsCloseable;
+         4: astore_1
+         5: aconst_null
+         6: aload_1
+         7: if_acmpeq     16
+        10: aload_1
+        11: invokeinterface #88,  1           // InterfaceMethod org/bouncycastle/tls/TlsCloseable.close:()V
+        16: return
+
+  public org.bouncycastle.tls.crypto.TlsCrypto getCrypto();
+    Code:
+         0: aload_0
+         1: getfield      #81                 // Field crypto:Lorg/bouncycastle/tls/crypto/TlsCrypto;
+         4: areturn
+
+  public void notifyCloseHandle(org.bouncycastle.tls.TlsCloseable);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: putfield      #80                 // Field closeHandle:Lorg/bouncycastle/tls/TlsCloseable;
+         5: return
+
+  public void notifyHandshakeBeginning() throws java.io.IOException;
+    Code:
+         0: return
+
+  public int getHandshakeTimeoutMillis();
+    Code:
+         0: iconst_0
+         1: ireturn
+
+  public int getHandshakeResendTimeMillis();
+    Code:
+         0: sipush        1000
+         3: ireturn
+
+  public boolean allowLegacyResumption();
+    Code:
+         0: iconst_0
+         1: ireturn
+
+  public int getMaxCertificateChainLength();
+    Code:
+         0: bipush        10
+         2: ireturn
+
+  public int getMaxHandshakeMessageSize();
+    Code:
+         0: ldc           #1                  // int 32768
+         2: ireturn
+
+  public short[] getPskKeyExchangeModes();
+    Code:
+         0: iconst_1
+         1: newarray       short
+         3: dup
+         4: iconst_0
+         5: iconst_1
+         6: sastore
+         7: areturn
+
+  public boolean requiresCloseNotify();
+    Code:
+         0: iconst_1
+         1: ireturn
+
+  public boolean requiresExtendedMasterSecret();
+    Code:
+         0: iconst_0
+         1: ireturn
+
+  public boolean shouldCheckSigAlgOfPeerCerts();
+    Code:
+         0: iconst_1
+         1: ireturn
+
+  public boolean shouldUseExtendedMasterSecret();
+    Code:
+         0: iconst_1
+         1: ireturn
+
+  public boolean shouldUseExtendedPadding();
+    Code:
+         0: iconst_0
+         1: ireturn
+
+  public boolean shouldUseGMTUnixTime();
+    Code:
+         0: iconst_0
+         1: ireturn
+
+  public void notifySecureRenegotiation(boolean) throws java.io.IOException;
+    Code:
+         0: iload_1
+         1: ifne          14
+         4: new           #59                 // class org/bouncycastle/tls/TlsFatalAlert
+         7: dup
+         8: bipush        40
+        10: invokespecial #87                 // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        13: athrow
+        14: return
+
+  public org.bouncycastle.tls.TlsKeyExchangeFactory getKeyExchangeFactory() throws java.io.IOException;
+    Code:
+         0: new           #56                 // class org/bouncycastle/tls/DefaultTlsKeyExchangeFactory
+         3: dup
+         4: invokespecial #85                 // Method org/bouncycastle/tls/DefaultTlsKeyExchangeFactory."<init>":()V
+         7: areturn
+
+  public void notifyAlertRaised(short, short, java.lang.String, java.lang.Throwable);
+    Code:
+         0: return
+
+  public void notifyAlertReceived(short, short);
+    Code:
+         0: return
+
+  public void notifyConnectionClosed();
+    Code:
+         0: return
+
+  public void notifyHandshakeComplete() throws java.io.IOException;
+    Code:
+         0: return
+
+  public org.bouncycastle.tls.TlsHeartbeat getHeartbeat();
+    Code:
+         0: aconst_null
+         1: areturn
+
+  public short getHeartbeatPolicy();
+    Code:
+         0: iconst_2
+         1: ireturn
+
+  public int getRenegotiationPolicy();
+    Code:
+         0: iconst_0
+         1: ireturn
+}

@@ -1,0 +1,19 @@
+﻿public interface org.bouncycastle.tls.TlsContext {
+  public abstract org.bouncycastle.tls.crypto.TlsCrypto getCrypto();
+  public abstract org.bouncycastle.tls.crypto.TlsNonceGenerator getNonceGenerator();
+  public abstract org.bouncycastle.tls.SecurityParameters getSecurityParameters();
+  public abstract org.bouncycastle.tls.SecurityParameters getSecurityParametersConnection();
+  public abstract org.bouncycastle.tls.SecurityParameters getSecurityParametersHandshake();
+  public abstract boolean isServer();
+  public abstract org.bouncycastle.tls.ProtocolVersion[] getClientSupportedVersions();
+  public abstract org.bouncycastle.tls.ProtocolVersion getClientVersion();
+  public abstract org.bouncycastle.tls.ProtocolVersion getRSAPreMasterSecretVersion();
+  public abstract org.bouncycastle.tls.ProtocolVersion getServerVersion();
+  public abstract org.bouncycastle.tls.TlsSession getResumableSession();
+  public abstract org.bouncycastle.tls.TlsSession getSession();
+  public abstract java.lang.Object getUserObject();
+  public abstract void setUserObject(java.lang.Object);
+  public abstract byte[] exportChannelBinding(int);
+  public abstract byte[] exportEarlyKeyingMaterial(java.lang.String, byte[], int);
+  public abstract byte[] exportKeyingMaterial(java.lang.String, byte[], int);
+}

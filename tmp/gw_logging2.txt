@@ -1,0 +1,25 @@
+
+=== 校验 ===
+charon {
+    filelog "/var/log/charon.log" {
+        time_format = %b %e %T
+        ike_name = yes
+        append = no
+        default = 3
+        flush_line = yes
+    }
+}
+
+=== 重启 ===
+Job for strongswan.service failed because the control process exited with error code.
+See "systemctl status strongswan.service" and "journalctl -xeu strongswan.service" for details.
+failed
+
+=== 加载 ===
+/etc/strongswan.d/charon-logging.conf:2: unexpected string detected
+/etc/strongswan.d/charon-logging.conf:2: syntax error, unexpected STRING_ERROR, expecting : or '{' or '='
+invalid config file '/etc/strongswan.conf'
+abort initialization due to invalid configuration
+
+=== charon.log 确认 ===
+tail: 无法以读模式打开 '/var/log/charon.log': 没有那个文件或目录

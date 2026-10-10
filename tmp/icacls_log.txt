@@ -1,0 +1,9 @@
+﻿已处理的文件: C:\ProgramData\Microsoft\Crypto\Keys\675219eb4ef92aff7929afae7a01cc74_020a3e96-5806-4310-b329-a19109280a1d
+已成功处理 1 个文件; 处理 0 个文件时失败
+C:\ProgramData\Microsoft\Crypto\Keys\675219eb4ef92aff7929afae7a01cc74_020a3e96-5806-4310-b329-a19109280a1d BUILTIN\Users:(R)
+                                                                                                           BUILTIN\Administrators:(R)
+                                                                                                           NT AUTHORITY\SYSTEM:(R)
+                                                                                                           NT AUTHORITY\SYSTEM:(F)
+                                                                                                           BUILTIN\Administrators:(F)
+
+已成功处理 1 个文件; 处理 0 个文件时失败

@@ -1,0 +1,55 @@
+public interface org.bouncycastle.tls.TlsPeer {
+  public abstract org.bouncycastle.tls.crypto.TlsCrypto getCrypto();
+
+  public abstract void notifyCloseHandle(org.bouncycastle.tls.TlsCloseable);
+
+  public abstract void cancel() throws java.io.IOException;
+
+  public abstract org.bouncycastle.tls.ProtocolVersion[] getProtocolVersions();
+
+  public abstract int[] getCipherSuites();
+
+  public abstract void notifyHandshakeBeginning() throws java.io.IOException;
+
+  public abstract int getHandshakeTimeoutMillis();
+
+  public abstract int getHandshakeResendTimeMillis();
+
+  public abstract boolean allowLegacyResumption();
+
+  public abstract int getMaxCertificateChainLength();
+
+  public abstract int getMaxHandshakeMessageSize();
+
+  public abstract short[] getPskKeyExchangeModes();
+
+  public abstract boolean requiresCloseNotify();
+
+  public abstract boolean requiresExtendedMasterSecret();
+
+  public abstract boolean shouldCheckSigAlgOfPeerCerts();
+
+  public abstract boolean shouldUseExtendedMasterSecret();
+
+  public abstract boolean shouldUseExtendedPadding();
+
+  public abstract boolean shouldUseGMTUnixTime();
+
+  public abstract void notifySecureRenegotiation(boolean) throws java.io.IOException;
+
+  public abstract org.bouncycastle.tls.TlsKeyExchangeFactory getKeyExchangeFactory() throws java.io.IOException;
+
+  public abstract void notifyAlertRaised(short, short, java.lang.String, java.lang.Throwable);
+
+  public abstract void notifyAlertReceived(short, short);
+
+  public abstract void notifyConnectionClosed();
+
+  public abstract void notifyHandshakeComplete() throws java.io.IOException;
+
+  public abstract org.bouncycastle.tls.TlsHeartbeat getHeartbeat();
+
+  public abstract short getHeartbeatPolicy();
+
+  public abstract int getRenegotiationPolicy();
+}

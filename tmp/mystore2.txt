@@ -1,0 +1,14 @@
+﻿My "����"
+================ ֤�� 0 ================
+���к�: b53080fef0b95fd6730fec18d55b6ac8
+�䷢��: CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN
+ NotBefore: 2026/10/5 22:43
+ NotAfter: 2028/10/4 22:43
+ʹ����: CN=vpn.local, OU=IT Clubs, O=China IT Boys, L=newer york
+�Ǹ�֤��
+֤���ϣ(sha1): 7927c712eb3b0e9a08b0d1b88f3a5cf70fcb9792
+  ��Կ���� = vpn.local-eea39d6b-9184-4429-a311-cac38fe9d777
+  �ṩ���� = Microsoft Software Key Storage Provider
+�޷��Դ��ı���ʽ����˽Կ
+ͨ���˼��ܲ���
+CertUtil: -store ����ɹ���ɡ�

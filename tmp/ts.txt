@@ -1,0 +1,10 @@
+﻿public interface org.bouncycastle.tls.crypto.TlsSecret {
+  public abstract byte[] calculateHMAC(int, byte[], int, int);
+  public abstract org.bouncycastle.tls.crypto.TlsSecret deriveUsingPRF(int, java.lang.String, byte[], int);
+  public abstract void destroy();
+  public abstract byte[] encrypt(org.bouncycastle.tls.crypto.TlsEncryptor) throws java.io.IOException;
+  public abstract byte[] extract();
+  public abstract org.bouncycastle.tls.crypto.TlsSecret hkdfExpand(int, byte[], int);
+  public abstract org.bouncycastle.tls.crypto.TlsSecret hkdfExtract(int, org.bouncycastle.tls.crypto.TlsSecret);
+  public abstract boolean isAlive();
+}

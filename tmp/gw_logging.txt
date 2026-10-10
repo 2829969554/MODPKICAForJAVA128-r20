@@ -1,0 +1,38 @@
+=== 当前日志配置 ===
+总计 28
+drwxr-xr-x   3 root root 4096 10月 8日 22:10 .
+drwxr-xr-x 105 root root 4096 10月10日 20:36 ..
+drwxr-xr-x   2 root root 4096 10月 9日 20:05 charon
+-rw-r--r--   1 root root  332 10月 8日 22:15 charon-systemd.conf
+-rw-r--r--   1 root root  421 10月 8日 22:15 pki.conf
+-rw-r--r--   1 root root  151 10月 8日 22:15 swanctl.conf
+-rw-r--r--   1 root root  113 10月 8日 22:15 tnc.conf
+cat: /etc/strongswan.d/charon-logging.conf: 没有那个文件或目录
+
+=== 写入详细日志配置 ===
+WRITTEN
+charon {
+    filelog {
+        /var/log/charon.log {
+            time_format = %b %e %T
+            ike_name = yes
+            append = no
+            default = 3
+            flush_line = yes
+        }
+        stderr {
+            ike_name = yes
+            default = 3
+        }
+    }
+}
+
+=== 重启 strongswan ===
+Job for strongswan.service failed because the control process exited with error code.
+See "systemctl status strongswan.service" and "journalctl -xeu strongswan.service" for details.
+failed
+
+=== 加载连接 ===
+/etc/strongswan.d/charon-logging.conf:3: syntax error, unexpected ., expecting : or '{' or '='
+invalid config file '/etc/strongswan.conf'
+abort initialization due to invalid configuration

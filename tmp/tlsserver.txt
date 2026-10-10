@@ -1,0 +1,28 @@
+public interface org.bouncycastle.tls.TlsServer extends org.bouncycastle.tls.TlsPeer {
+  public abstract boolean preferLocalSupportedGroups();
+  public abstract void init(org.bouncycastle.tls.TlsServerContext);
+  public abstract org.bouncycastle.tls.TlsSession getSessionToResume(byte[]);
+  public abstract byte[] getNewSessionID();
+  public abstract org.bouncycastle.tls.TlsPSKExternal getExternalPSK(java.util.Vector) throws java.io.IOException;
+  public abstract void notifySession(org.bouncycastle.tls.TlsSession);
+  public abstract void notifyClientVersion(org.bouncycastle.tls.ProtocolVersion) throws java.io.IOException;
+  public abstract void notifyFallback(boolean) throws java.io.IOException;
+  public abstract void notifyOfferedCipherSuites(int[]) throws java.io.IOException;
+  public abstract void processClientExtensions(java.util.Hashtable) throws java.io.IOException;
+  public abstract org.bouncycastle.tls.ProtocolVersion getServerVersion() throws java.io.IOException;
+  public abstract int[] getSupportedGroups() throws java.io.IOException;
+  public abstract int getSelectedCipherSuite() throws java.io.IOException;
+  public abstract java.util.Hashtable getServerExtensions() throws java.io.IOException;
+  public abstract void getServerExtensionsForConnection(java.util.Hashtable) throws java.io.IOException;
+  public abstract java.util.Vector getServerSupplementalData() throws java.io.IOException;
+  public abstract org.bouncycastle.tls.TlsCredentials getCredentials() throws java.io.IOException;
+  public abstract org.bouncycastle.tls.CertificateStatus getCertificateStatus() throws java.io.IOException;
+  public abstract org.bouncycastle.tls.CertificateRequest getCertificateRequest() throws java.io.IOException;
+  public abstract org.bouncycastle.tls.TlsPSKIdentityManager getPSKIdentityManager() throws java.io.IOException;
+  public abstract org.bouncycastle.tls.TlsSRPLoginParameters getSRPLoginParameters() throws java.io.IOException;
+  public abstract org.bouncycastle.tls.crypto.TlsDHConfig getDHConfig() throws java.io.IOException;
+  public abstract org.bouncycastle.tls.crypto.TlsECConfig getECDHConfig() throws java.io.IOException;
+  public abstract void processClientSupplementalData(java.util.Vector) throws java.io.IOException;
+  public abstract void notifyClientCertificate(org.bouncycastle.tls.Certificate) throws java.io.IOException;
+  public abstract org.bouncycastle.tls.NewSessionTicket getNewSessionTicket() throws java.io.IOException;
+}

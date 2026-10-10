@@ -1,4 +1,4 @@
-# MODPKICA Java 复刻版 v1.28-r15（BC 1.85 离线）
+# MODPKICA Java 复刻版 v1.28-r16（BC 1.85 离线）
 
 > 使用 **Java + BouncyCastle 1.85** 离线复刻 Go 版 MODPKICA 全套 PKI 功能：X.509 证书签发、CRL 吊销列表、OCSP 在线状态、RFC3161 / Authenticode 时间戳、RFC 6962 CT 日志服务（SCT 服务管理）、WebAdmin 浏览器管理面板。
 >
@@ -183,14 +183,18 @@ UDP 认证端口（默认 1812）+ 计费端口（默认 1813）双线程；账�
 | 4 | MS-CHAPv2 | RFC 2759 | 8B 挑战 + 50B 响应（Ident+Pad+PeerChallenge16+Reserved8+NT-Response24），服务端单包携带挑战+响应 |
 | 5 | EAP-MD5 | RFC 3748 §5.4 | 16B 挑战，`MD5(InnerId‖密码‖挑战)` |
 | 6 | EAP-GTC | RFC 3748 §5.6 | 明文令牌挑战（"Enter Password:" 提示），常数时间比对 |
-| 7 | EAP-TLS | RFC 5216 | BC 1.85 `bctls` TLS 1.2 完整握手；RFC 5216 §2.1 240B 分片每片一个 EAP 包；RFC 3579 §2.1 EAP-Message 属性切分拼接；TLS 1.2 RSA 签名 PKCS#1 v1.5 填充 |
+| 7 | EAP-TLS | RFC 5216 | BC 1.85 `bctls` TLS 1.2 完整握手；RFC 5216 §2.1 240B 分片每片一个 EAP 包；RFC 3579 §2.1 EAP-Message 属性切分拼接；TLS 1.2 RSA 签名 PKCS#1 v1.5 填充；握手完成后按 RFC 5216 §2.4 手工导出 64B MSK（`PRF(master_secret,"client EAP encryption",client_random‖server_random)`，TLS 1.2 P_SHA256）并经 **MS-MPPE-Recv/Send-Key 32+32B** 随 Access-Accept 下发（RFC 2548 §2.4.3），strongSwan 手机 EAP-TLS 证书登录实测打通 |
 | 8 | EAP-TTLS | RFC 5281 | 外层 TLS 隧道 + **内层 PAP AVP 交换**（RFC 5281 §8.5：Type(1)+Length(1)+Value，User-Name/User-Password） |
 | 9 | PEAP-MD5 | RFC 5216 隧道 + 内层 EAP-MD5 | 外层 PEAP Start→TLS 隧道→内层 MD5 挑战/响应 |
 | 10 | PEAP-MSCHAPv2 | RFC 5216 + RFC 2759 | 内层 MS-CHAPv2 两轮隧道交换（Challenge→NT-Response 50B） |
 | 11 | PEAP-GTC | RFC 5216 隧道 + RFC 3748 §5.6 | 内层 GTC 明文令牌 |
 | 12 | EAP-pwd | RFC 5931（P-256） | 四轮密钥交换：ID(Group=6)→Commit(标量32B+SEC1 压缩点33B)→双向 Confirm(HMAC-SHA256)→Success；猎取-啄食法 PWE 派生（HKDF-SHA256，p≡3 mod 4 开根） |
 
-**EAP 会话密钥（MSK）下发**：EAP-MSCHAPv2 认证通过后，Access-Accept 自动携带 **MS-MPPE-Recv-Key(type17)/MS-MPPE-Send-Key(type16)**（RFC 2548 §2.4.3 加密 + §2.4.2 语义）——密钥按 RFC 3079 §3.1 由 `SHA1(MD4(NT-Hash)‖NT-Response‖MPPE 魔数)` 派生（magic2=客户端 send / 服务器 receive、magic3=客户端 recv / 服务器 send）；strongSwan `eap-radius` 网关解密后重组 `recv‖send‖补零 64B` 即得到与客户端完全一致的 64 字节 EAP MSK（RFC 5247），**IKEv2（手机 strongSwan）+ PEAP + TTLS 会话密钥链路实测打通**；属性布局与 strongSwan `radius_socket.decrypt_msk` 的 `mppe_key_t` 逐字节对齐（`Vendor-ID(311)‖Type‖Length‖Salt‖Cipher`，Length=4+N，加密种子=对应 Access-Request 的 Request-Authenticator）。
+**EAP 会话密钥（MSK）下发**：
+- **EAP-MSCHAPv2**：认证通过后 Access-Accept 自动携带 **MS-MPPE-Recv-Key(type17)/MS-MPPE-Send-Key(type16)**（RFC 2548 §2.4.3 加密 + §2.4.2 语义）——密钥按 RFC 3079 §3.1 由 `SHA1(MD4(NT-Hash)‖NT-Response‖MPPE 魔数)` 派生（magic2=客户端 send / 服务器 receive、magic3=客户端 recv / 服务器 send），**16+16 字节**；strongSwan `eap-radius` 网关解密后重组 `recv‖send‖补零 64B` 即得到与客户端完全一致的 64 字节 EAP MSK（RFC 5247），**IKEv2（手机 strongSwan）+ PEAP + TTLS 会话密钥链路实测打通**
+- **EAP-TLS**：握手线程 `proto.accept()` 返回后按 RFC 5216 §2.4 导出 `MSK = PRF(master_secret,"client EAP encryption",client_random‖server_random)[0..63]`（BC 1.85 无公开 exporter 且 RFC 5705 exporter 强制要求 EMS——strongSwan 不支持已关闭，故用 TLS 1.2 `P_SHA256` 手工实现；master secret 三级获取：`SecurityParameters.getMasterSecret()` → 反射 `TlsProtocol.sessionMasterSecret` → `SessionParameters.getMasterSecret()`）；Access-Accept 按 RFC 2548 §2.4.3 下发 **MS-MPPE-Recv-Key = MSK[0..32) / MS-MPPE-Send-Key = MSK[32..64)（32+32 字节）**，strongSwan 网关据此恢复 64B MSK 完成 IKEv2 AUTH（RFC 7296 §2.16）——**手机 strongSwan 6.0.3 EAP-TLS 证书登录全链路实测打通**（服务端/客户端 MSK 64B 逐字节一致）
+
+属性布局与 strongSwan `radius_socket.decrypt_msk` 的 `mppe_key_t` 逐字节对齐（`Vendor-ID(311)‖Type‖Length‖Salt‖Cipher`，Length=4+N，加密种子=对应 Access-Request 的 Request-Authenticator，RFC 2548 §2.4.3 MD5 链式）。
 
 **属性支持**：`User-Name` / `User-Password` / `CHAP-Password`+`CHAP-Challenge` / `NAS-*`；**Vendor-Specific（微软，RFC 2548）**：MS-CHAP-Challenge / MS-CHAP-Response / MS-CHAP2-Response（按 Vendor-Type 自动分流 v1/v2）；**MS-MPPE-Send/Recv-Key（type16/17，会话密钥下发）**；**隧道属性（RFC 2867/2868）**：Tunnel-Type / Tunnel-Medium-Type / Tunnel-Client-Server-Endpoint / Tunnel-Password 自动解析成文字记录（PPTP/L2TP/IPsec/GRE 场景可见）；`Message-Authenticator`（RFC 2869 §5.3，HMAC-MD5）；`EAP-Message`（RFC 3579 §2.1，>253B 自动切分、响应端按出现顺序拼接还原）。
 
@@ -570,6 +574,13 @@ A：离线 / 无外网环境会请求失败，但签名**不中断**——时间
 ---
 
 ## 更新记录
+- **v1.28-r16（2026-10-10）——EAP-TLS 证书登录全链路打通：MSK 手工导出 + MS-MPPE 32+32B 下发 + strongSwan 接入文档/一键脚本**
+  - **背景**：手机 strongSwan 6.0.3（EAP-TLS 证书登录）经 Debian eap-radius 网关转发到本 Java RADIUS——EAP 握手、服务端证书链（END→ROOT）、客户端证书+签名全部成功（日志实证 `EAP method EAP_TLS succeeded, MSK established`），但客户端 IKE_AUTH 后网关仍回 `N(AUTH_FAILED)`——**根因：Access-Accept 未下发可用的 MS-MPPE 密钥**，网关无法恢复与手机一致的 MSK 派生 IKEv2 密钥
+  - **核心修复一（EAP-TLS MSK 导出，RFC 5216 §2.4）**：`EapTlsSession` 新增 `volatile byte[] msk`；握手线程 `proto.accept()` 返回后导出 `MSK = PRF(master_secret, "client EAP encryption", client_random ‖ server_random)[0..63]`，PRF 用 TLS 1.2 `P_SHA256`（HMAC-SHA256 迭代，RFC 5246 §5）手工实现；**BC 1.85 踩坑**：`TlsProtocol` 无公开 `exportKeyingMaterial`（javap 证实），`TlsContext.exportKeyingMaterial()` 存在但强制要求 EMS（`IllegalStateException: Export of key material requires extended_master_secret`），而 strongSwan ClientHello 无 `extended_master_secret` 已关闭——故走手工 PRF；master secret 三级获取：`SecurityParameters.getMasterSecret()`（TLS1.2 下为 null，该字段供 TLS1.3）→ 反射 `TlsProtocol.sessionMasterSecret`（protected，`cancelSession()` 会销毁置 null）→ `SessionParameters.getMasterSecret()`（public，经 `ctx.getSession().exportSessionParameters()`）
+  - **核心修复二（MS-MPPE 32+32B 下发，RFC 2548 §2.4.3）**：`eapTlsAccept` 改按标准切分——**MS-MPPE-Recv-Key = MSK[0..32) / MS-MPPE-Send-Key = MSK[32..64)**（此前误用 16+16 字节，网关恢复的密钥与手机 64B MSK 不一致 → AUTH_FAILED）；加密仍走 `encryptMppeKey()`（RFC 2548 §2.4.3：`b1=MD5(Secret‖Request-Authenticator‖Salt)`、`b(i)=MD5(Secret‖c(i-1))`，明文=keyLen(1B)‖key‖补零 16 倍数），`msMppeAttr()` 的 strongSwan `mppe_key_t` 布局不变；EAP-MSCHAPv2 的 16+16 字节（§2.4.2）保持不变
+  - **验证**：`EapTlsCertSmoke` 全链路冒烟 **RESULT=PASS**（真实走 UDP 1812、内嵌服务端=真实 RadiusServer）；服务端/客户端 MSK 64B **逐字节完全一致**（冒烟打印对照 `a8fb1609...` / `db2687ad...`，MPPE-Recv 前 16B 两端相同）；用户实机：**手机 strongSwan 6.0.3 EAP-TLS 证书登录认证成功**
+  - **配套**：新增 `linux/install_strongswan.sh` 一键安装脚本（安装 strongSwan 6.x → 部署网关证书/根证书 → 写 `swanctl.conf`（EAP-MSCHAPv2 + EAP-TLS 双连接）→ 写 `eap-radius.conf` → 内核转发+NAT → 启动验证）；`strongSwan接入指南.md` 补 EAP-TLS 手机 strongSwan App 配置（导入 `PKI/b53080_client_2048.pfx`、远程 ID `vpn.local`、根证书信任）、MSK/MS-MPPE 标准说明与 `AUTH_FAILED` 排查；README 升 v1.28-r16
+
 - **v1.28-r15（2026-10-07）——统一版接入服务与多客户端兼容能力整理**
   - **RADIUS 服务统一整合**：`RadiusServer` 提供 UDP/1812 认证、UDP/1813 计费服务，共享密钥可配置，账号统一使用 `PKI/USERS.txt`；WebAdmin 支持服务启动、停止、配置保存、状态统计、认证/计费日志查看与清空。
   - **认证方式扩展**：统一 RADIUS 服务支持 PAP、CHAP、MS-CHAPv1、MS-CHAPv2，以及 EAP-MD5、EAP-GTC、EAP-MSCHAPv2、EAP-TLS、EAP-TTLS、EAP-pwd、PEAP-MD5、PEAP-MSCHAPv2、PEAP-GTC 等认证流程；客户端调试区同步提供对应认证方式的模拟拨号入口。

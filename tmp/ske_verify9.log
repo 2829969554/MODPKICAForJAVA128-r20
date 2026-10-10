@@ -1,0 +1,28 @@
+=== EAP-TLS SKE 签名 OpenSSL 兼容性验证（SunJCE 严格 PKCS#1）===
+重组 TLS 数据 3103B, 分片数=13
+  分片[0] flags=0x01 len=250 首16B=010200fa0dc000000c1f160303003202...(+234B)
+  分片[1] flags=0x01 len=246 首16B=010200f60d400b300906035504061302...(+230B)
+  分片[2] flags=0x01 len=246 首16B=010200f60d4001d52b9a2ac606d93e05...(+230B)
+  分片[3] flags=0x01 len=246 首16B=010200f60d40f9399f8871809c606f08...(+230B)
+  分片[4] flags=0x01 len=246 首16B=010200f60d40c1d17bb9000001a1209c...(+230B)
+  分片[5] flags=0x01 len=246 首16B=010200f60d404c0c9b2618e07ccc7ad5...(+230B)
+  分片[6] flags=0x01 len=246 首16B=010200f60d40022100e09de3831e2111...(+230B)
+  分片[7] flags=0x01 len=246 首16B=010200f60d4004061302434e31133011...(+230B)
+  分片[8] flags=0x01 len=246 首16B=010200f60d4094a220722434062f13ed...(+230B)
+  分片[9] flags=0x01 len=246 首16B=010200f60d4004723070302406082b06...(+230B)
+  分片[10] flags=0x01 len=246 首16B=010200f60d4036303338636537386535...(+230B)
+  分片[11] flags=0x01 len=246 首16B=010200f60d404cca1a15ca52a3b610c2...(+230B)
+  分片[12] flags=0x01 len=229 首16B=010200e50d00d30ef7ddfbcba0d084b9...(+213B)
+ServerHello random=126b30bc239f0dfd...(+24B)
+Certificate 链条数=1 证书=1552B
+ServerKeyExchange 329B
+ServerHelloDone
+SKE: curveType=3 namedCurve=0x0017 sigAlg=0x0401 sigLen=256
+证书公钥算法=1.2.840.113549.1.1.1
+client_random=6aca475423be48c6942a2b0cfc56053db8ddb51cdd2d5593523807c256a0d645
+server_random=126b30bc239f0dfd18eb85cda65cfa7d6709fa7769112eb5efa7aab4bb4f8f54
+skeParams=03001741044cf796d801bffe3742f9212379b6656b670f878d5957037447dc8a
+557590c1ba415a93c93b3e9d42ff3bfd90809d1317d55a092359ee3983707a53
+69b2b3a029
+已写出 tmp/ske_hash_input.bin, tmp/ske_sig.bin, tmp/ske_pub.der
+SunJCE 严格验证 ECDHE_RSA SKE 签名: PASS ?（OpenSSL 应可验证）

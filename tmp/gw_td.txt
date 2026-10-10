@@ -1,0 +1,12 @@
+=== which tcpdump ===
+/usr/bin/tcpdump
+=== pgrep tcpdump ===
+3140 tcpdump -i any -s 0 -w /tmp/radius_eap.pcap port 1812
+=== pcap files ===
+-rw-r--r-- 1 tcpdump tcpdump   0 10月10日 21:30 /tmp/radius_eap.pcap
+-rw-r--r-- 1 tcpdump tcpdump 326 10月10日 20:38 /tmp/t.pcap
+=== 尝试启动 ===
+bg=3165
+=== 启动后 ===
+3140 tcpdump -i any -s 0 -w /tmp/radius_eap.pcap port 1812
+-rw-r--r-- 1 tcpdump tcpdump 0 10月10日 21:30 /tmp/radius_eap.pcap

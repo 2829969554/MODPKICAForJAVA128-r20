@@ -1,0 +1,7 @@
+=== vpn_cap.pcap ===
+NO_CAP
+
+=== tcpdump 进程 ===
+1933 bash -c pgrep -af tcpdump | head -3 || echo NONE
+
+=== tcpdump.log ===

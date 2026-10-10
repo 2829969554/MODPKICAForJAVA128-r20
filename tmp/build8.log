@@ -1,0 +1,12 @@
+============================================
+  MODPKICA Java One-Click Build (offline)
+============================================
+[1/2] Compiling shared library and all 7 main programs...
+src\modpkica\RadiusServer.java:1625: 错误: 找不到符号
+                    s.msk = proto.exportKeyingMaterial(64, "client EAP encryption", null, 0, 0);
+                                 ^
+  符号:   方法 exportKeyingMaterial(int,String,<空值>,int,int)
+  位置: 类型为TlsServerProtocol的变量 proto
+1 个错误
+[ERROR] Compilation FAILED. See messages above.
+        Build aborted. Command # was NOT executed.

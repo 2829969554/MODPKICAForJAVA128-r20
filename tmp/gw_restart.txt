@@ -1,0 +1,79 @@
+=== 服务名 ===
+  strongswan.service                       loaded active running strongSwan IPsec IKEv1/IKEv2 daemon using swanctl
+  strongswan.service                       loaded active running strongSwan IPsec IKEv1/IKEv2 daemon using swanctl
+
+=== 重启 ===
+● strongswan.service - strongSwan IPsec IKEv1/IKEv2 daemon using swanctl
+     Loaded: loaded (/usr/lib/systemd/system/strongswan.service; enabled; preset: enabled)
+     Active: active (running) since Sat 2026-10-10 20:52:38 CST; 3s ago
+ Invocation: b0887dde9dd142f7beff6d9868ba2765
+    Process: 2227 ExecStartPost=/usr/sbin/swanctl --load-all --noprompt (code=exited, status=0/SUCCESS)
+   Main PID: 2205 (charon-systemd)
+     Status: "charon-systemd running, strongSwan 6.0.1, Linux 6.12.107+deb13-amd64, x86_64"
+      Tasks: 17 (limit: 1080)
+Unit strongswan-starter.service could not be found.
+
+=== 加载配置 ===
+plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'aes': failed to load - aes_plugin_create not found and no plugin file available
+plugin 'rc2': failed to load - rc2_plugin_create not found and no plugin file available
+plugin 'sha2': failed to load - sha2_plugin_create not found and no plugin file available
+plugin 'sha1': failed to load - sha1_plugin_create not found and no plugin file available
+plugin 'md5': failed to load - md5_plugin_create not found and no plugin file available
+plugin 'mgf1': failed to load - mgf1_plugin_create not found and no plugin file available
+plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
+plugin 'pkcs12': failed to load - pkcs12_plugin_create not found and no plugin file available
+plugin 'pgp': failed to load - pgp_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'fips-prf': failed to load - fips_prf_plugin_create not found and no plugin file available
+plugin 'gmp': failed to load - gmp_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+agent plugin requires CAP_SETUID/CAP_SETGID capability
+plugin 'agent': failed to load - agent_plugin_create returned NULL
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+RC=0
+
+=== 当前加载证书 ===
+plugin 'test-vectors': failed to load - test_vectors_plugin_create not found and no plugin file available
+plugin 'ldap': failed to load - ldap_plugin_create not found and no plugin file available
+plugin 'pkcs11': failed to load - pkcs11_plugin_create not found and no plugin file available
+plugin 'aes': failed to load - aes_plugin_create not found and no plugin file available
+plugin 'rc2': failed to load - rc2_plugin_create not found and no plugin file available
+plugin 'sha2': failed to load - sha2_plugin_create not found and no plugin file available
+plugin 'sha1': failed to load - sha1_plugin_create not found and no plugin file available
+plugin 'md5': failed to load - md5_plugin_create not found and no plugin file available
+plugin 'mgf1': failed to load - mgf1_plugin_create not found and no plugin file available
+plugin 'rdrand': failed to load - rdrand_plugin_create not found and no plugin file available
+plugin 'pkcs12': failed to load - pkcs12_plugin_create not found and no plugin file available
+plugin 'pgp': failed to load - pgp_plugin_create not found and no plugin file available
+plugin 'gcrypt': failed to load - gcrypt_plugin_create not found and no plugin file available
+plugin 'af-alg': failed to load - af_alg_plugin_create not found and no plugin file available
+plugin 'fips-prf': failed to load - fips_prf_plugin_create not found and no plugin file available
+plugin 'gmp': failed to load - gmp_plugin_create not found and no plugin file available
+plugin 'curve25519': failed to load - curve25519_plugin_create not found and no plugin file available
+agent plugin requires CAP_SETUID/CAP_SETGID capability
+plugin 'agent': failed to load - agent_plugin_create returned NULL
+plugin 'chapoly': failed to load - chapoly_plugin_create not found and no plugin file available
+plugin 'xcbc': failed to load - xcbc_plugin_create not found and no plugin file available
+plugin 'cmac': failed to load - cmac_plugin_create not found and no plugin file available
+plugin 'hmac': failed to load - hmac_plugin_create not found and no plugin file available
+plugin 'kdf': failed to load - kdf_plugin_create not found and no plugin file available
+plugin 'ctr': failed to load - ctr_plugin_create not found and no plugin file available
+plugin 'ccm': failed to load - ccm_plugin_create not found and no plugin file available
+plugin 'curl': failed to load - curl_plugin_create not found and no plugin file available
+ikev2-mschapv2: IKEv2, no reauthentication, rekeying every 14400s
+  local:  %any
+  remote: %any
+  local public key authentication:
+    id: vpn.local
+    certs: C=CN, L=newer york, O=China IT Boys, OU=IT Clubs, CN=vpn.local
+  remote EAP_RADIUS authentication:
+    eap_id: %any
+  ikev2-mschapv2: TUNNEL, rekeying every 3600s
+    local:  dynamic
+    remote: 0.0.0.0/0
+ikev2-eaptls: IKEv2, no reauthentication, rekeying every 14400s
+  local:  %any

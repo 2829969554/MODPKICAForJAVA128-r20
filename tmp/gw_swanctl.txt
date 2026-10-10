@@ -1,0 +1,101 @@
+=== swanctl.conf ===
+connections {
+    ikev2-mschapv2 {
+        version = 2
+        send_cert = always
+        pools = vpnpool
+        proposals = aes256-sha256-modp1024, aes256-sha1-modp1024, aes256-sha384-modp1024, aes128-sha256-modp1024, aes128-sha1-modp1024, aes128-sha384-modp1024, aes192-sha256-modp1024, aes192-sha1-modp1024, aes192-sha384-modp1024, 3des-sha256-modp1024, 3des-sha1-modp1024, 3des-sha384-modp1024, aes256gcm16-prfsha256-modp1024, aes256gcm16-prfsha1-modp1024, aes256gcm16-prfsha384-modp1024, aes128gcm16-prfsha256-modp1024, aes128gcm16-prfsha1-modp1024, aes128gcm16-prfsha384-modp1024, aes256-sha256-ecp256, aes256-sha256-modp2048, aes128-sha256-ecp256, aes128-sha256-modp2048
+        local {
+            auth = pubkey
+            certs = f7679b33352bd0d0e150e8594606c01f.crt
+            id = vpn.local
+        }
+        remote {
+            auth = eap-radius
+            eap_id = %any
+        }
+        children {
+            ikev2-mschapv2 {
+                remote_ts = 0.0.0.0/0
+            }
+        }
+    }
+    ikev2-eaptls {
+        version = 2
+        send_cert = always
+        pools = vpnpool
+        proposals = aes256-sha256-modp1024, aes256-sha1-modp1024, aes256-sha384-modp1024, aes128-sha256-modp1024, aes128-sha1-modp1024, aes128-sha384-modp1024, aes192-sha256-modp1024, aes192-sha1-modp1024, aes192-sha384-modp1024, 3des-sha256-modp1024, 3des-sha1-modp1024, 3des-sha384-modp1024, aes256gcm16-prfsha256-modp1024, aes256gcm16-prfsha1-modp1024, aes256gcm16-prfsha384-modp1024, aes128gcm16-prfsha256-modp1024, aes128gcm16-prfsha1-modp1024, aes128gcm16-prfsha384-modp1024, aes256-sha256-ecp256, aes256-sha256-modp2048, aes128-sha256-ecp256, aes128-sha256-modp2048
+        local {
+            auth = pubkey
+            certs = f7679b33352bd0d0e150e8594606c01f.crt
+            id = vpn.local
+        }
+        remote {
+            auth = eap-tls
+            eap_id = %any
+            cacerts = 7712d9352e6038ce78e57e3f572cec74.crt
+        }
+        children {
+            ikev2-eaptls {
+                remote_ts = 0.0.0.0/0
+            }
+        }
+    }
+}
+
+pools {
+    vpnpool {
+        addrs = 10.10.0.0/24
+        dns = 223.5.5.5,8.8.8.8
+    }
+}
+
+secrets {
+    ike-1 {
+        id-remote = cisco-group
+        secret = group123456
+    }
+}
+---
+# strongswan.conf - strongSwan configuration file
+#
+# Refer to the strongswan.conf(5) manpage for details
+#
+# Configuration changes should be made in the included files
+
+charon {
+	load_modular = yes
+	plugins {
+		include strongswan.d/charon/*.conf
+	}
+}
+
+include strongswan.d/*.conf
+
+=== /etc/swanctl/x509 ===
+总计 24
+drwxr-xr-x  2 root root 4096 10月 9日 20:21 .
+drwxr-xr-x 16 root root 4096 10月 9日 20:22 ..
+-rw-r--r--  1 root root 2458 10月 8日 22:15 9f260af25264d331d3c9720dac37b505.crt
+-rw-r--r--  1 root root 2590 10月 8日 22:15 b53080fef0b95fd6730fec18d55b6ac8.crt
+-rw-r--r--  1 root root 2486 10月 8日 22:15 c8ffb3b6784947d79e977cbf6a12811a.crt
+-rw-r--r--  1 root root 2194 10月 9日 20:21 f7679b33352bd0d0e150e8594606c01f.crt
+---
+总计 8
+drwx------  2 root root 4096  9月 1日 19:29 .
+drwxr-xr-x 16 root root 4096 10月 9日 20:22 ..
+---
+总计 8
+drwx------  2 root root 4096  9月 1日 19:29 .
+drwxr-xr-x 16 root root 4096 10月 9日 20:22 ..
+---
+总计 24
+drwx------  2 root root 4096 10月 9日 20:21 .
+drwxr-xr-x 16 root root 4096 10月 9日 20:22 ..
+-rw-------  1 root root 1706 10月 8日 22:15 9f260af25264d331d3c9720dac37b505.key
+-rw-------  1 root root 1702 10月 8日 22:15 b53080fef0b95fd6730fec18d55b6ac8.key
+-rw-------  1 root root  902 10月 8日 22:15 c8ffb3b6784947d79e977cbf6a12811a.key
+-rw-------  1 root root 1702 10月 9日 20:21 f7679b33352bd0d0e150e8594606c01f.key
+
+=== 证书 CN 对应 ===
+== /etc/swanctl/x509/*.pem

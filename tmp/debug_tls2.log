@@ -1,0 +1,12 @@
+ÊÖ»ú ClientHello 216B
+TlsFatalAlert=alert(40)
+    at org.bouncycastle.tls.AbstractTlsPeer.notifySecureRenegotiation(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.generateServerHello(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.handleHandshakeMessage(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.processHandshakeQueue(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.processRecord(Unknown Source)
+    at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at DebugTlsServer.main(DebugTlsServer.java:57)

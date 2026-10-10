@@ -1,0 +1,3042 @@
+﻿public class org.bouncycastle.tls.TlsClientProtocol extends org.bouncycastle.tls.TlsProtocol {
+  protected org.bouncycastle.tls.TlsClient tlsClient;
+
+  org.bouncycastle.tls.TlsClientContextImpl tlsClientContext;
+
+  protected java.util.Hashtable clientAgreements;
+
+  org.bouncycastle.tls.OfferedPsks$BindersConfig clientBinders;
+
+  protected org.bouncycastle.tls.ClientHello clientHello;
+
+  protected org.bouncycastle.tls.TlsKeyExchange keyExchange;
+
+  protected org.bouncycastle.tls.TlsAuthentication authentication;
+
+  protected org.bouncycastle.tls.CertificateStatus certificateStatus;
+
+  protected org.bouncycastle.tls.CertificateRequest certificateRequest;
+
+  public org.bouncycastle.tls.TlsClientProtocol();
+    Code:
+         0: aload_0
+         1: invokespecial #1110               // Method org/bouncycastle/tls/TlsProtocol."<init>":()V
+         4: aload_0
+         5: aconst_null
+         6: putfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+         9: aload_0
+        10: aconst_null
+        11: putfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        14: aload_0
+        15: aconst_null
+        16: putfield      #929                // Field clientAgreements:Ljava/util/Hashtable;
+        19: aload_0
+        20: aconst_null
+        21: putfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+        24: aload_0
+        25: aconst_null
+        26: putfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+        29: aload_0
+        30: aconst_null
+        31: putfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+        34: aload_0
+        35: aconst_null
+        36: putfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+        39: aload_0
+        40: aconst_null
+        41: putfield      #933                // Field certificateStatus:Lorg/bouncycastle/tls/CertificateStatus;
+        44: aload_0
+        45: aconst_null
+        46: putfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+        49: return
+
+  public org.bouncycastle.tls.TlsClientProtocol(java.io.InputStream, java.io.OutputStream);
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aload_2
+         3: invokespecial #1113               // Method org/bouncycastle/tls/TlsProtocol."<init>":(Ljava/io/InputStream;Ljava/io/OutputStream;)V
+         6: aload_0
+         7: aconst_null
+         8: putfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+        11: aload_0
+        12: aconst_null
+        13: putfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        16: aload_0
+        17: aconst_null
+        18: putfield      #929                // Field clientAgreements:Ljava/util/Hashtable;
+        21: aload_0
+        22: aconst_null
+        23: putfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+        26: aload_0
+        27: aconst_null
+        28: putfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+        31: aload_0
+        32: aconst_null
+        33: putfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+        36: aload_0
+        37: aconst_null
+        38: putfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+        41: aload_0
+        42: aconst_null
+        43: putfield      #933                // Field certificateStatus:Lorg/bouncycastle/tls/CertificateStatus;
+        46: aload_0
+        47: aconst_null
+        48: putfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+        51: return
+
+  public void connect(org.bouncycastle.tls.TlsClient) throws java.io.IOException;
+    Code:
+         0: aload_1
+         1: ifnonnull     14
+         4: new           #403                // class java/lang/IllegalArgumentException
+         7: dup
+         8: ldc           #2                  // String \'tlsClient\' cannot be null
+        10: invokespecial #954                // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+        13: athrow
+        14: aload_0
+        15: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+        18: ifnull        31
+        21: new           #404                // class java/lang/IllegalStateException
+        24: dup
+        25: ldc           #1                  // String \'connect\' can only be called once
+        27: invokespecial #955                // Method java/lang/IllegalStateException."<init>":(Ljava/lang/String;)V
+        30: athrow
+        31: aload_0
+        32: aload_1
+        33: putfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+        36: aload_0
+        37: new           #430                // class org/bouncycastle/tls/TlsClientContextImpl
+        40: dup
+        41: aload_1
+        42: invokeinterface #1196,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.getCrypto:()Lorg/bouncycastle/tls/crypto/TlsCrypto;
+        47: invokespecial #1040               // Method org/bouncycastle/tls/TlsClientContextImpl."<init>":(Lorg/bouncycastle/tls/crypto/TlsCrypto;)V
+        50: putfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        53: aload_1
+        54: aload_0
+        55: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        58: invokeinterface #1191,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.init:(Lorg/bouncycastle/tls/TlsClientContext;)V
+        63: aload_1
+        64: aload_0
+        65: invokeinterface #1192,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifyCloseHandle:(Lorg/bouncycastle/tls/TlsCloseable;)V
+        70: aload_0
+        71: iconst_0
+        72: invokevirtual #1062               // Method beginHandshake:(Z)V
+        75: aload_0
+        76: getfield      #924                // Field blocking:Z
+        79: ifeq          86
+        82: aload_0
+        83: invokevirtual #1042               // Method blockForHandshake:()V
+        86: return
+
+  protected void beginHandshake(boolean) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: iload_1
+         2: invokespecial #1112               // Method org/bouncycastle/tls/TlsProtocol.beginHandshake:(Z)V
+         5: aload_0
+         6: invokevirtual #1051               // Method sendClientHello:()V
+         9: aload_0
+        10: iconst_1
+        11: putfield      #923                // Field connection_state:S
+        14: return
+
+  protected void cleanupHandshake();
+    Code:
+         0: aload_0
+         1: invokespecial #1111               // Method org/bouncycastle/tls/TlsProtocol.cleanupHandshake:()V
+         4: aload_0
+         5: aconst_null
+         6: putfield      #929                // Field clientAgreements:Ljava/util/Hashtable;
+         9: aload_0
+        10: aconst_null
+        11: putfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+        14: aload_0
+        15: aconst_null
+        16: putfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+        19: aload_0
+        20: aconst_null
+        21: putfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+        24: aload_0
+        25: aconst_null
+        26: putfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+        29: aload_0
+        30: aconst_null
+        31: putfield      #933                // Field certificateStatus:Lorg/bouncycastle/tls/CertificateStatus;
+        34: aload_0
+        35: aconst_null
+        36: putfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+        39: return
+
+  protected org.bouncycastle.tls.TlsContext getContext();
+    Code:
+         0: aload_0
+         1: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+         4: areturn
+
+  org.bouncycastle.tls.AbstractTlsContext getContextAdmin();
+    Code:
+         0: aload_0
+         1: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+         4: areturn
+
+  protected org.bouncycastle.tls.TlsPeer getPeer();
+    Code:
+         0: aload_0
+         1: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+         4: areturn
+
+  protected void handle13HandshakeMessage(short, org.bouncycastle.tls.HandshakeMessageInput) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: invokevirtual #1060               // Method isTLSv13ConnectionState:()Z
+         4: ifne          17
+         7: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        10: dup
+        11: bipush        80
+        13: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        16: athrow
+        17: iload_1
+        18: lookupswitch  { // 20
+
+                       0: 763
+
+                       1: 763
+
+                       2: 660
+
+                       3: 763
+
+                       4: 652
+
+                       5: 763
+
+                       8: 368
+
+                      11: 188
+
+                      12: 763
+
+                      13: 248
+
+                      14: 763
+
+                      15: 315
+
+                      16: 763
+
+                      20: 415
+
+                      21: 763
+
+                      22: 763
+
+                      23: 763
+
+                      24: 644
+
+                      25: 763
+
+                     254: 763
+                 default: 763
+            }
+       188: aload_0
+       189: getfield      #923                // Field connection_state:S
+       192: lookupswitch  { // 2
+
+                       5: 220
+
+                      11: 224
+                 default: 238
+            }
+       220: aload_0
+       221: invokevirtual #1055               // Method skip13CertificateRequest:()V
+       224: aload_0
+       225: aload_2
+       226: invokevirtual #1070               // Method receive13ServerCertificate:(Ljava/io/ByteArrayInputStream;)V
+       229: aload_0
+       230: bipush        7
+       232: putfield      #923                // Field connection_state:S
+       235: goto          773
+       238: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       241: dup
+       242: bipush        10
+       244: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       247: athrow
+       248: aload_0
+       249: getfield      #923                // Field connection_state:S
+       252: lookupswitch  { // 2
+
+                       5: 290
+
+                      21: 280
+                 default: 305
+            }
+       280: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       283: dup
+       284: bipush        10
+       286: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       289: athrow
+       290: aload_0
+       291: aload_2
+       292: iconst_0
+       293: invokevirtual #1075               // Method receive13CertificateRequest:(Ljava/io/ByteArrayInputStream;Z)V
+       296: aload_0
+       297: bipush        11
+       299: putfield      #923                // Field connection_state:S
+       302: goto          773
+       305: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       308: dup
+       309: bipush        10
+       311: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       314: athrow
+       315: aload_0
+       316: getfield      #923                // Field connection_state:S
+       319: lookupswitch  { // 1
+
+                       7: 336
+                 default: 358
+            }
+       336: aload_0
+       337: aload_2
+       338: invokevirtual #1071               // Method receive13ServerCertificateVerify:(Ljava/io/ByteArrayInputStream;)V
+       341: aload_2
+       342: aload_0
+       343: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       346: invokevirtual #981                // Method org/bouncycastle/tls/HandshakeMessageInput.updateHash:(Lorg/bouncycastle/tls/crypto/TlsHash;)V
+       349: aload_0
+       350: bipush        9
+       352: putfield      #923                // Field connection_state:S
+       355: goto          773
+       358: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       361: dup
+       362: bipush        10
+       364: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       367: athrow
+       368: aload_0
+       369: getfield      #923                // Field connection_state:S
+       372: lookupswitch  { // 1
+
+                       4: 392
+                 default: 405
+            }
+       392: aload_0
+       393: aload_2
+       394: invokevirtual #1067               // Method receive13EncryptedExtensions:(Ljava/io/ByteArrayInputStream;)V
+       397: aload_0
+       398: iconst_5
+       399: putfield      #923                // Field connection_state:S
+       402: goto          773
+       405: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       408: dup
+       409: bipush        10
+       411: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       414: athrow
+       415: aload_0
+       416: getfield      #923                // Field connection_state:S
+       419: lookupswitch  { // 3
+
+                       5: 452
+
+                       9: 460
+
+                      11: 456
+                 default: 634
+            }
+       452: aload_0
+       453: invokevirtual #1055               // Method skip13CertificateRequest:()V
+       456: aload_0
+       457: invokevirtual #1056               // Method skip13ServerCertificate:()V
+       460: aload_0
+       461: aload_2
+       462: invokevirtual #1072               // Method receive13ServerFinished:(Ljava/io/ByteArrayInputStream;)V
+       465: aload_2
+       466: aload_0
+       467: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       470: invokevirtual #981                // Method org/bouncycastle/tls/HandshakeMessageInput.updateHash:(Lorg/bouncycastle/tls/crypto/TlsHash;)V
+       473: aload_0
+       474: bipush        20
+       476: putfield      #923                // Field connection_state:S
+       479: aload_0
+       480: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       483: invokestatic  #1131               // Method org/bouncycastle/tls/TlsUtils.getCurrentPRFHash:(Lorg/bouncycastle/tls/TlsHandshakeHash;)[B
+       486: astore_3
+       487: aload_0
+       488: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+       491: iconst_0
+       492: invokevirtual #1000               // Method org/bouncycastle/tls/RecordStream.setIgnoreChangeCipherSpec:(Z)V
+       495: aconst_null
+       496: aload_0
+       497: getfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+       500: if_acmpeq     590
+       503: aload_0
+       504: getfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+       507: aload_0
+       508: getfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+       511: invokestatic  #1155               // Method org/bouncycastle/tls/TlsUtils.establish13ClientCredentials:(Lorg/bouncycastle/tls/TlsAuthentication;Lorg/bouncycastle/tls/CertificateRequest;)Lorg/bouncycastle/tls/TlsCredentialedSigner;
+       514: astore        4
+       516: aconst_null
+       517: astore        5
+       519: aconst_null
+       520: aload         4
+       522: if_acmpeq     534
+       525: aload         4
+       527: invokeinterface #1197,  1         // InterfaceMethod org/bouncycastle/tls/TlsCredentialedSigner.getCertificate:()Lorg/bouncycastle/tls/Certificate;
+       532: astore        5
+       534: aconst_null
+       535: aload         5
+       537: if_acmpne     545
+       540: getstatic     #893                // Field org/bouncycastle/tls/Certificate.EMPTY_CHAIN_TLS13:Lorg/bouncycastle/tls/Certificate;
+       543: astore        5
+       545: aload_0
+       546: aload         5
+       548: invokevirtual #1079               // Method send13CertificateMessage:(Lorg/bouncycastle/tls/Certificate;)V
+       551: aload_0
+       552: bipush        15
+       554: putfield      #923                // Field connection_state:S
+       557: aconst_null
+       558: aload         4
+       560: if_acmpeq     590
+       563: aload_0
+       564: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       567: aload         4
+       569: aload_0
+       570: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       573: invokestatic  #1160               // Method org/bouncycastle/tls/TlsUtils.generate13CertificateVerify:(Lorg/bouncycastle/tls/TlsContext;Lorg/bouncycastle/tls/TlsCredentialedSigner;Lorg/bouncycastle/tls/TlsHandshakeHash;)Lorg/bouncycastle/tls/DigitallySigned;
+       576: astore        6
+       578: aload_0
+       579: aload         6
+       581: invokevirtual #1080               // Method send13CertificateVerifyMessage:(Lorg/bouncycastle/tls/DigitallySigned;)V
+       584: aload_0
+       585: bipush        17
+       587: putfield      #923                // Field connection_state:S
+       590: aload_0
+       591: invokevirtual #1048               // Method send13FinishedMessage:()V
+       594: aload_0
+       595: bipush        18
+       597: putfield      #923                // Field connection_state:S
+       600: aload_0
+       601: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       604: aload_3
+       605: aload_0
+       606: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+       609: invokestatic  #1139               // Method org/bouncycastle/tls/TlsUtils.establish13PhaseApplication:(Lorg/bouncycastle/tls/TlsContext;[BLorg/bouncycastle/tls/RecordStream;)V
+       612: aload_0
+       613: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+       616: invokevirtual #998                // Method org/bouncycastle/tls/RecordStream.enablePendingCipherWrite:()V
+       619: aload_0
+       620: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+       623: iconst_0
+       624: invokevirtual #999                // Method org/bouncycastle/tls/RecordStream.enablePendingCipherRead:(Z)V
+       627: aload_0
+       628: invokevirtual #1044               // Method completeHandshake:()V
+       631: goto          773
+       634: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       637: dup
+       638: bipush        10
+       640: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       643: athrow
+       644: aload_0
+       645: aload_2
+       646: invokevirtual #1068               // Method receive13KeyUpdate:(Ljava/io/ByteArrayInputStream;)V
+       649: goto          773
+       652: aload_0
+       653: aload_2
+       654: invokevirtual #1069               // Method receive13NewSessionTicket:(Ljava/io/ByteArrayInputStream;)V
+       657: goto          773
+       660: aload_0
+       661: getfield      #923                // Field connection_state:S
+       664: lookupswitch  { // 2
+
+                       1: 692
+
+                       3: 702
+                 default: 753
+            }
+       692: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       695: dup
+       696: bipush        80
+       698: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       701: athrow
+       702: aload_0
+       703: aload_2
+       704: invokevirtual #1091               // Method receiveServerHelloMessage:(Ljava/io/ByteArrayInputStream;)Lorg/bouncycastle/tls/ServerHello;
+       707: astore_3
+       708: aload_3
+       709: invokevirtual #1021               // Method org/bouncycastle/tls/ServerHello.isHelloRetryRequest:()Z
+       712: ifeq          725
+       715: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       718: dup
+       719: bipush        10
+       721: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       724: athrow
+       725: aload_0
+       726: aload_3
+       727: iconst_1
+       728: invokevirtual #1085               // Method process13ServerHello:(Lorg/bouncycastle/tls/ServerHello;Z)V
+       731: aload_2
+       732: aload_0
+       733: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       736: invokevirtual #981                // Method org/bouncycastle/tls/HandshakeMessageInput.updateHash:(Lorg/bouncycastle/tls/crypto/TlsHash;)V
+       739: aload_0
+       740: iconst_4
+       741: putfield      #923                // Field connection_state:S
+       744: aload_0
+       745: aload_3
+       746: iconst_1
+       747: invokevirtual #1086               // Method process13ServerHelloCoda:(Lorg/bouncycastle/tls/ServerHello;Z)V
+       750: goto          773
+       753: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       756: dup
+       757: bipush        10
+       759: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       762: athrow
+       763: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       766: dup
+       767: bipush        10
+       769: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       772: athrow
+       773: return
+
+  protected void handleHandshakeMessage(short, org.bouncycastle.tls.HandshakeMessageInput) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+         4: invokevirtual #1036               // Method org/bouncycastle/tls/TlsClientContextImpl.getSecurityParameters:()Lorg/bouncycastle/tls/SecurityParameters;
+         7: astore_3
+         8: aload_0
+         9: getfield      #923                // Field connection_state:S
+        12: iconst_1
+        13: if_icmple     50
+        16: aload_3
+        17: invokevirtual #1019               // Method org/bouncycastle/tls/SecurityParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+        20: invokestatic  #1124               // Method org/bouncycastle/tls/TlsUtils.isTLSv13:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        23: ifeq          50
+        26: aload_3
+        27: invokevirtual #1009               // Method org/bouncycastle/tls/SecurityParameters.isResumedSession:()Z
+        30: ifeq          43
+        33: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        36: dup
+        37: bipush        80
+        39: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        42: athrow
+        43: aload_0
+        44: iload_1
+        45: aload_2
+        46: invokevirtual #1082               // Method handle13HandshakeMessage:(SLorg/bouncycastle/tls/HandshakeMessageInput;)V
+        49: return
+        50: aload_0
+        51: invokevirtual #1059               // Method isLegacyConnectionState:()Z
+        54: ifne          67
+        57: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        60: dup
+        61: bipush        80
+        63: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        66: athrow
+        67: aload_3
+        68: invokevirtual #1009               // Method org/bouncycastle/tls/SecurityParameters.isResumedSession:()Z
+        71: ifeq          140
+        74: iload_1
+        75: ifeq          140
+        78: iload_1
+        79: bipush        20
+        81: if_icmpne     92
+        84: aload_0
+        85: getfield      #923                // Field connection_state:S
+        88: iconst_4
+        89: if_icmpeq     102
+        92: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        95: dup
+        96: bipush        10
+        98: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       101: athrow
+       102: aload_0
+       103: aload_2
+       104: invokevirtual #1066               // Method processFinishedMessage:(Ljava/io/ByteArrayInputStream;)V
+       107: aload_2
+       108: aload_0
+       109: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       112: invokevirtual #981                // Method org/bouncycastle/tls/HandshakeMessageInput.updateHash:(Lorg/bouncycastle/tls/crypto/TlsHash;)V
+       115: aload_0
+       116: bipush        20
+       118: putfield      #923                // Field connection_state:S
+       121: aload_0
+       122: invokevirtual #1049               // Method sendChangeCipherSpec:()V
+       125: aload_0
+       126: invokevirtual #1054               // Method sendFinishedMessage:()V
+       129: aload_0
+       130: bipush        18
+       132: putfield      #923                // Field connection_state:S
+       135: aload_0
+       136: invokevirtual #1044               // Method completeHandshake:()V
+       139: return
+       140: iload_1
+       141: lookupswitch  { // 20
+
+                       0: 1483
+
+                       1: 1502
+
+                       2: 537
+
+                       3: 1502
+
+                       4: 1392
+
+                       5: 1502
+
+                       8: 1502
+
+                      11: 312
+
+                      12: 1221
+
+                      13: 1310
+
+                      14: 753
+
+                      15: 1502
+
+                      16: 1502
+
+                      20: 461
+
+                      21: 1502
+
+                      22: 387
+
+                      23: 708
+
+                      24: 1502
+
+                      25: 1502
+
+                     254: 1502
+                 default: 1502
+            }
+       312: aload_0
+       313: getfield      #923                // Field connection_state:S
+       316: lookupswitch  { // 2
+
+                       4: 344
+
+                       6: 349
+                 default: 368
+            }
+       344: aload_0
+       345: aconst_null
+       346: invokevirtual #1077               // Method handleSupplementalData:(Ljava/util/Vector;)V
+       349: aload_0
+       350: aload_0
+       351: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       354: aload_0
+       355: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       358: aload_2
+       359: invokestatic  #1164               // Method org/bouncycastle/tls/TlsUtils.receiveServerCertificate:(Lorg/bouncycastle/tls/TlsClientContext;Lorg/bouncycastle/tls/TlsClient;Ljava/io/ByteArrayInputStream;)Lorg/bouncycastle/tls/TlsAuthentication;
+       362: putfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+       365: goto          378
+       368: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       371: dup
+       372: bipush        10
+       374: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       377: athrow
+       378: aload_0
+       379: bipush        7
+       381: putfield      #923                // Field connection_state:S
+       384: goto          1512
+       387: aload_0
+       388: getfield      #923                // Field connection_state:S
+       391: lookupswitch  { // 1
+
+                       7: 408
+                 default: 451
+            }
+       408: aload_3
+       409: invokevirtual #1005               // Method org/bouncycastle/tls/SecurityParameters.getStatusRequestVersion:()I
+       412: iconst_1
+       413: if_icmpge     426
+       416: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       419: dup
+       420: bipush        10
+       422: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       425: athrow
+       426: aload_0
+       427: aload_0
+       428: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       431: aload_2
+       432: invokestatic  #971                // Method org/bouncycastle/tls/CertificateStatus.parse:(Lorg/bouncycastle/tls/TlsContext;Ljava/io/InputStream;)Lorg/bouncycastle/tls/CertificateStatus;
+       435: putfield      #933                // Field certificateStatus:Lorg/bouncycastle/tls/CertificateStatus;
+       438: aload_2
+       439: invokestatic  #1064               // Method assertEmpty:(Ljava/io/ByteArrayInputStream;)V
+       442: aload_0
+       443: bipush        8
+       445: putfield      #923                // Field connection_state:S
+       448: goto          1512
+       451: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       454: dup
+       455: bipush        10
+       457: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       460: athrow
+       461: aload_0
+       462: getfield      #923                // Field connection_state:S
+       465: lookupswitch  { // 2
+
+                      18: 492
+
+                      19: 509
+                 default: 527
+            }
+       492: aload_0
+       493: getfield      #925                // Field expectSessionTicket:Z
+       496: ifeq          509
+       499: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       502: dup
+       503: bipush        10
+       505: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       508: athrow
+       509: aload_0
+       510: aload_2
+       511: invokevirtual #1066               // Method processFinishedMessage:(Ljava/io/ByteArrayInputStream;)V
+       514: aload_0
+       515: bipush        20
+       517: putfield      #923                // Field connection_state:S
+       520: aload_0
+       521: invokevirtual #1044               // Method completeHandshake:()V
+       524: goto          1512
+       527: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       530: dup
+       531: bipush        10
+       533: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       536: athrow
+       537: aload_0
+       538: getfield      #923                // Field connection_state:S
+       541: lookupswitch  { // 1
+
+                       1: 560
+                 default: 698
+            }
+       560: aload_0
+       561: aload_2
+       562: invokevirtual #1091               // Method receiveServerHelloMessage:(Ljava/io/ByteArrayInputStream;)Lorg/bouncycastle/tls/ServerHello;
+       565: astore        4
+       567: aload         4
+       569: invokevirtual #1021               // Method org/bouncycastle/tls/ServerHello.isHelloRetryRequest:()Z
+       572: ifeq          631
+       575: aload_0
+       576: aload         4
+       578: invokevirtual #1083               // Method process13HelloRetryRequest:(Lorg/bouncycastle/tls/ServerHello;)V
+       581: aload_0
+       582: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       585: invokeinterface #1201,  1         // InterfaceMethod org/bouncycastle/tls/TlsHandshakeHash.notifyPRFDetermined:()V
+       590: aload_0
+       591: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       594: invokestatic  #1130               // Method org/bouncycastle/tls/TlsUtils.adjustTranscriptForRetry:(Lorg/bouncycastle/tls/TlsHandshakeHash;)V
+       597: aload_2
+       598: aload_0
+       599: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       602: invokevirtual #981                // Method org/bouncycastle/tls/HandshakeMessageInput.updateHash:(Lorg/bouncycastle/tls/crypto/TlsHash;)V
+       605: aload_0
+       606: iconst_2
+       607: putfield      #923                // Field connection_state:S
+       610: aload_0
+       611: invokevirtual #1047               // Method send13ClientHelloRetry:()V
+       614: aload_0
+       615: iconst_3
+       616: putfield      #923                // Field connection_state:S
+       619: aload_0
+       620: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       623: invokeinterface #1202,  1         // InterfaceMethod org/bouncycastle/tls/TlsHandshakeHash.sealHashAlgorithms:()V
+       628: goto          1512
+       631: aload_0
+       632: aload         4
+       634: invokevirtual #1084               // Method processServerHello:(Lorg/bouncycastle/tls/ServerHello;)V
+       637: aload_0
+       638: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       641: invokeinterface #1201,  1         // InterfaceMethod org/bouncycastle/tls/TlsHandshakeHash.notifyPRFDetermined:()V
+       646: aload_3
+       647: invokevirtual #1019               // Method org/bouncycastle/tls/SecurityParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       650: invokestatic  #1124               // Method org/bouncycastle/tls/TlsUtils.isTLSv13:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       653: ifeq          665
+       656: aload_0
+       657: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       660: invokeinterface #1202,  1         // InterfaceMethod org/bouncycastle/tls/TlsHandshakeHash.sealHashAlgorithms:()V
+       665: aload_2
+       666: aload_0
+       667: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       670: invokevirtual #981                // Method org/bouncycastle/tls/HandshakeMessageInput.updateHash:(Lorg/bouncycastle/tls/crypto/TlsHash;)V
+       673: aload_0
+       674: iconst_4
+       675: putfield      #923                // Field connection_state:S
+       678: aload_3
+       679: invokevirtual #1019               // Method org/bouncycastle/tls/SecurityParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       682: invokestatic  #1124               // Method org/bouncycastle/tls/TlsUtils.isTLSv13:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       685: ifeq          1512
+       688: aload_0
+       689: aload         4
+       691: iconst_0
+       692: invokevirtual #1086               // Method process13ServerHelloCoda:(Lorg/bouncycastle/tls/ServerHello;Z)V
+       695: goto          1512
+       698: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       701: dup
+       702: bipush        10
+       704: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       707: athrow
+       708: aload_0
+       709: getfield      #923                // Field connection_state:S
+       712: lookupswitch  { // 1
+
+                       4: 732
+                 default: 743
+            }
+       732: aload_0
+       733: aload_2
+       734: invokestatic  #1090               // Method readSupplementalDataMessage:(Ljava/io/ByteArrayInputStream;)Ljava/util/Vector;
+       737: invokevirtual #1077               // Method handleSupplementalData:(Ljava/util/Vector;)V
+       740: goto          1512
+       743: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       746: dup
+       747: bipush        10
+       749: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       752: athrow
+       753: aload_0
+       754: getfield      #923                // Field connection_state:S
+       757: tableswitch   { // 4 to 11
+
+                       4: 804
+
+                       5: 1202
+
+                       6: 809
+
+                       7: 814
+
+                       8: 814
+
+                       9: 1202
+
+                      10: 827
+
+                      11: 827
+                 default: 1202
+            }
+       804: aload_0
+       805: aconst_null
+       806: invokevirtual #1077               // Method handleSupplementalData:(Ljava/util/Vector;)V
+       809: aload_0
+       810: aconst_null
+       811: putfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+       814: aload_0
+       815: invokevirtual #1045               // Method handleServerCertificate:()V
+       818: aload_0
+       819: getfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+       822: invokeinterface #1205,  1         // InterfaceMethod org/bouncycastle/tls/TlsKeyExchange.skipServerKeyExchange:()V
+       827: aload_2
+       828: invokestatic  #1064               // Method assertEmpty:(Ljava/io/ByteArrayInputStream;)V
+       831: aload_0
+       832: bipush        12
+       834: putfield      #923                // Field connection_state:S
+       837: aconst_null
+       838: astore        4
+       840: aconst_null
+       841: astore        5
+       843: aconst_null
+       844: astore        6
+       846: aconst_null
+       847: astore        7
+       849: aconst_null
+       850: astore        8
+       852: aload_0
+       853: getfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+       856: ifnull        980
+       859: aload_0
+       860: getfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+       863: aload_0
+       864: getfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+       867: invokestatic  #1156               // Method org/bouncycastle/tls/TlsUtils.establishClientCredentials:(Lorg/bouncycastle/tls/TlsAuthentication;Lorg/bouncycastle/tls/CertificateRequest;)Lorg/bouncycastle/tls/TlsCredentials;
+       870: astore        4
+       872: aload         4
+       874: ifnull        980
+       877: aload         4
+       879: invokeinterface #1199,  1         // InterfaceMethod org/bouncycastle/tls/TlsCredentials.getCertificate:()Lorg/bouncycastle/tls/Certificate;
+       884: astore        6
+       886: aload         4
+       888: instanceof    #432                // class org/bouncycastle/tls/TlsCredentialedSigner
+       891: ifeq          980
+       894: aload         4
+       896: checkcast     #432                // class org/bouncycastle/tls/TlsCredentialedSigner
+       899: astore        5
+       901: aload_3
+       902: invokevirtual #1019               // Method org/bouncycastle/tls/SecurityParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       905: aload         5
+       907: invokestatic  #1154               // Method org/bouncycastle/tls/TlsUtils.getSignatureAndHashAlgorithm:(Lorg/bouncycastle/tls/ProtocolVersion;Lorg/bouncycastle/tls/TlsCredentialedSigner;)Lorg/bouncycastle/tls/SignatureAndHashAlgorithm;
+       910: astore        7
+       912: aload         5
+       914: invokeinterface #1198,  1         // InterfaceMethod org/bouncycastle/tls/TlsCredentialedSigner.getStreamSigner:()Lorg/bouncycastle/tls/crypto/TlsStreamSigner;
+       919: astore        8
+       921: aload         7
+       923: bipush        80
+       925: invokestatic  #1128               // Method org/bouncycastle/tls/TlsUtils.verify12SignatureAlgorithm:(Lorg/bouncycastle/tls/SignatureAndHashAlgorithm;S)V
+       928: getstatic     #900                // Field org/bouncycastle/tls/ProtocolVersion.TLSv12:Lorg/bouncycastle/tls/ProtocolVersion;
+       931: aload_3
+       932: invokevirtual #1019               // Method org/bouncycastle/tls/SecurityParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       935: invokevirtual #990                // Method org/bouncycastle/tls/ProtocolVersion.equals:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       938: ifeq          966
+       941: aload_3
+       942: invokevirtual #1017               // Method org/bouncycastle/tls/SecurityParameters.getServerSigAlgs:()Ljava/util/Vector;
+       945: aload         7
+       947: bipush        80
+       949: invokestatic  #1141               // Method org/bouncycastle/tls/TlsUtils.verifySupportedSignatureAlgorithm:(Ljava/util/Vector;Lorg/bouncycastle/tls/SignatureAndHashAlgorithm;S)V
+       952: aload         8
+       954: ifnonnull     966
+       957: aload_0
+       958: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       961: aload         7
+       963: invokestatic  #1142               // Method org/bouncycastle/tls/TlsUtils.trackHashAlgorithmClient:(Lorg/bouncycastle/tls/TlsHandshakeHash;Lorg/bouncycastle/tls/SignatureAndHashAlgorithm;)V
+       966: aload         8
+       968: ifnull        980
+       971: aload_0
+       972: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       975: invokeinterface #1200,  1         // InterfaceMethod org/bouncycastle/tls/TlsHandshakeHash.forceBuffering:()V
+       980: aload_0
+       981: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+       984: invokeinterface #1202,  1         // InterfaceMethod org/bouncycastle/tls/TlsHandshakeHash.sealHashAlgorithms:()V
+       989: aload         4
+       991: ifnonnull     1006
+       994: aload_0
+       995: getfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+       998: invokeinterface #1204,  1         // InterfaceMethod org/bouncycastle/tls/TlsKeyExchange.skipClientCredentials:()V
+      1003: goto          1017
+      1006: aload_0
+      1007: getfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+      1010: aload         4
+      1012: invokeinterface #1208,  2         // InterfaceMethod org/bouncycastle/tls/TlsKeyExchange.processClientCredentials:(Lorg/bouncycastle/tls/TlsCredentials;)V
+      1017: aload_0
+      1018: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+      1021: invokeinterface #1187,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.getClientSupplementalData:()Ljava/util/Vector;
+      1026: astore        9
+      1028: aload         9
+      1030: ifnull        1045
+      1033: aload_0
+      1034: aload         9
+      1036: invokevirtual #1078               // Method sendSupplementalDataMessage:(Ljava/util/Vector;)V
+      1039: aload_0
+      1040: bipush        14
+      1042: putfield      #923                // Field connection_state:S
+      1045: aload_0
+      1046: getfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+      1049: ifnull        1065
+      1052: aload_0
+      1053: aload         6
+      1055: aconst_null
+      1056: invokevirtual #1089               // Method sendCertificateMessage:(Lorg/bouncycastle/tls/Certificate;Ljava/io/OutputStream;)V
+      1059: aload_0
+      1060: bipush        15
+      1062: putfield      #923                // Field connection_state:S
+      1065: aload_0
+      1066: invokevirtual #1053               // Method sendClientKeyExchange:()V
+      1069: aload_0
+      1070: bipush        16
+      1072: putfield      #923                // Field connection_state:S
+      1075: aload_0
+      1076: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+      1079: invokestatic  #1129               // Method org/bouncycastle/tls/TlsUtils.isSSL:(Lorg/bouncycastle/tls/TlsContext;)Z
+      1082: istore        10
+      1084: iload         10
+      1086: ifeq          1100
+      1089: aload_0
+      1090: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+      1093: aload_0
+      1094: getfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+      1097: invokestatic  #1092               // Method establishMasterSecret:(Lorg/bouncycastle/tls/TlsContext;Lorg/bouncycastle/tls/TlsKeyExchange;)V
+      1100: aload_3
+      1101: aload_0
+      1102: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+      1105: invokestatic  #1131               // Method org/bouncycastle/tls/TlsUtils.getCurrentPRFHash:(Lorg/bouncycastle/tls/TlsHandshakeHash;)[B
+      1108: putfield      #915                // Field org/bouncycastle/tls/SecurityParameters.sessionHash:[B
+      1111: iload         10
+      1113: ifne          1127
+      1116: aload_0
+      1117: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+      1120: aload_0
+      1121: getfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+      1124: invokestatic  #1092               // Method establishMasterSecret:(Lorg/bouncycastle/tls/TlsContext;Lorg/bouncycastle/tls/TlsKeyExchange;)V
+      1127: aload_0
+      1128: aconst_null
+      1129: putfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+      1132: aload_0
+      1133: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+      1136: aload_0
+      1137: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+      1140: invokestatic  #1146               // Method org/bouncycastle/tls/TlsUtils.initCipher:(Lorg/bouncycastle/tls/TlsContext;)Lorg/bouncycastle/tls/crypto/TlsCipher;
+      1143: invokevirtual #1002               // Method org/bouncycastle/tls/RecordStream.setPendingCipher:(Lorg/bouncycastle/tls/crypto/TlsCipher;)V
+      1146: aload         5
+      1148: ifnull        1182
+      1151: aload_0
+      1152: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+      1155: aload         5
+      1157: aload         7
+      1159: aload         8
+      1161: aload_0
+      1162: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+      1165: invokestatic  #1166               // Method org/bouncycastle/tls/TlsUtils.generateCertificateVerifyClient:(Lorg/bouncycastle/tls/TlsClientContext;Lorg/bouncycastle/tls/TlsCredentialedSigner;Lorg/bouncycastle/tls/SignatureAndHashAlgorithm;Lorg/bouncycastle/tls/crypto/TlsStreamSigner;Lorg/bouncycastle/tls/TlsHandshakeHash;)Lorg/bouncycastle/tls/DigitallySigned;
+      1168: astore        11
+      1170: aload_0
+      1171: aload         11
+      1173: invokevirtual #1081               // Method sendCertificateVerifyMessage:(Lorg/bouncycastle/tls/DigitallySigned;)V
+      1176: aload_0
+      1177: bipush        17
+      1179: putfield      #923                // Field connection_state:S
+      1182: aload_0
+      1183: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+      1186: invokeinterface #1203,  1         // InterfaceMethod org/bouncycastle/tls/TlsHandshakeHash.stopTracking:()V
+      1191: aload_0
+      1192: invokevirtual #1049               // Method sendChangeCipherSpec:()V
+      1195: aload_0
+      1196: invokevirtual #1054               // Method sendFinishedMessage:()V
+      1199: goto          1212
+      1202: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+      1205: dup
+      1206: bipush        10
+      1208: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+      1211: athrow
+      1212: aload_0
+      1213: bipush        18
+      1215: putfield      #923                // Field connection_state:S
+      1218: goto          1512
+      1221: aload_0
+      1222: getfield      #923                // Field connection_state:S
+      1225: tableswitch   { // 4 to 8
+
+                       4: 1260
+
+                       5: 1291
+
+                       6: 1265
+
+                       7: 1270
+
+                       8: 1270
+                 default: 1291
+            }
+      1260: aload_0
+      1261: aconst_null
+      1262: invokevirtual #1077               // Method handleSupplementalData:(Ljava/util/Vector;)V
+      1265: aload_0
+      1266: aconst_null
+      1267: putfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+      1270: aload_0
+      1271: invokevirtual #1045               // Method handleServerCertificate:()V
+      1274: aload_0
+      1275: getfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+      1278: aload_2
+      1279: invokeinterface #1206,  2         // InterfaceMethod org/bouncycastle/tls/TlsKeyExchange.processServerKeyExchange:(Ljava/io/InputStream;)V
+      1284: aload_2
+      1285: invokestatic  #1064               // Method assertEmpty:(Ljava/io/ByteArrayInputStream;)V
+      1288: goto          1301
+      1291: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+      1294: dup
+      1295: bipush        10
+      1297: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+      1300: athrow
+      1301: aload_0
+      1302: bipush        10
+      1304: putfield      #923                // Field connection_state:S
+      1307: goto          1512
+      1310: aload_0
+      1311: getfield      #923                // Field connection_state:S
+      1314: tableswitch   { // 7 to 10
+
+                       7: 1344
+
+                       8: 1344
+
+                       9: 1373
+
+                      10: 1357
+                 default: 1373
+            }
+      1344: aload_0
+      1345: invokevirtual #1045               // Method handleServerCertificate:()V
+      1348: aload_0
+      1349: getfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+      1352: invokeinterface #1205,  1         // InterfaceMethod org/bouncycastle/tls/TlsKeyExchange.skipServerKeyExchange:()V
+      1357: aload_0
+      1358: aload_2
+      1359: invokevirtual #1073               // Method receiveCertificateRequest:(Ljava/io/ByteArrayInputStream;)V
+      1362: aload_3
+      1363: aload_0
+      1364: getfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+      1367: invokestatic  #1138               // Method org/bouncycastle/tls/TlsUtils.establishServerSigAlgs:(Lorg/bouncycastle/tls/SecurityParameters;Lorg/bouncycastle/tls/CertificateRequest;)V
+      1370: goto          1383
+      1373: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+      1376: dup
+      1377: bipush        10
+      1379: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+      1382: athrow
+      1383: aload_0
+      1384: bipush        11
+      1386: putfield      #923                // Field connection_state:S
+      1389: goto          1512
+      1392: aload_0
+      1393: getfield      #923                // Field connection_state:S
+      1396: lookupswitch  { // 1
+
+                      18: 1416
+                 default: 1464
+            }
+      1416: aload_0
+      1417: getfield      #925                // Field expectSessionTicket:Z
+      1420: ifne          1433
+      1423: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+      1426: dup
+      1427: bipush        10
+      1429: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+      1432: athrow
+      1433: aload_3
+      1434: getstatic     #953                // Field org/bouncycastle/tls/TlsUtils.EMPTY_BYTES:[B
+      1437: putfield      #916                // Field org/bouncycastle/tls/SecurityParameters.sessionID:[B
+      1440: aload_0
+      1441: invokevirtual #1046               // Method invalidateSession:()V
+      1444: aload_0
+      1445: aload_3
+      1446: invokevirtual #1015               // Method org/bouncycastle/tls/SecurityParameters.getSessionID:()[B
+      1449: aconst_null
+      1450: invokestatic  #1145               // Method org/bouncycastle/tls/TlsUtils.importSession:([BLorg/bouncycastle/tls/SessionParameters;)Lorg/bouncycastle/tls/TlsSession;
+      1453: putfield      #943                // Field tlsSession:Lorg/bouncycastle/tls/TlsSession;
+      1456: aload_0
+      1457: aload_2
+      1458: invokevirtual #1074               // Method receiveNewSessionTicket:(Ljava/io/ByteArrayInputStream;)V
+      1461: goto          1474
+      1464: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+      1467: dup
+      1468: bipush        10
+      1470: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+      1473: athrow
+      1474: aload_0
+      1475: bipush        19
+      1477: putfield      #923                // Field connection_state:S
+      1480: goto          1512
+      1483: aload_2
+      1484: invokestatic  #1064               // Method assertEmpty:(Ljava/io/ByteArrayInputStream;)V
+      1487: aload_0
+      1488: invokevirtual #1058               // Method isApplicationDataReady:()Z
+      1491: ifeq          1512
+      1494: aload_0
+      1495: invokevirtual #1057               // Method handleRenegotiation:()Z
+      1498: pop
+      1499: goto          1512
+      1502: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+      1505: dup
+      1506: bipush        10
+      1508: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+      1511: athrow
+      1512: return
+
+  protected void handleServerCertificate() throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+         4: aload_0
+         5: getfield      #933                // Field certificateStatus:Lorg/bouncycastle/tls/CertificateStatus;
+         8: aload_0
+         9: getfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+        12: aload_0
+        13: getfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+        16: aload_0
+        17: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+        20: aload_0
+        21: getfield      #931                // Field serverExtensions:Ljava/util/Hashtable;
+        24: invokestatic  #1165               // Method org/bouncycastle/tls/TlsUtils.processServerCertificate:(Lorg/bouncycastle/tls/TlsClientContext;Lorg/bouncycastle/tls/CertificateStatus;Lorg/bouncycastle/tls/TlsKeyExchange;Lorg/bouncycastle/tls/TlsAuthentication;Ljava/util/Hashtable;Ljava/util/Hashtable;)V
+        27: return
+
+  protected void handleSupplementalData(java.util.Vector) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+         4: aload_1
+         5: invokeinterface #1188,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.processServerSupplementalData:(Ljava/util/Vector;)V
+        10: aload_0
+        11: bipush        6
+        13: putfield      #923                // Field connection_state:S
+        16: aload_0
+        17: aload_0
+        18: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        21: aload_0
+        22: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+        25: invokestatic  #1157               // Method org/bouncycastle/tls/TlsUtils.initKeyExchangeClient:(Lorg/bouncycastle/tls/TlsClientContext;Lorg/bouncycastle/tls/TlsClient;)Lorg/bouncycastle/tls/TlsKeyExchange;
+        28: putfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+        31: return
+
+  protected void process13HelloRetryRequest(org.bouncycastle.tls.ServerHello) throws java.io.IOException;
+    Code:
+         0: getstatic     #900                // Field org/bouncycastle/tls/ProtocolVersion.TLSv12:Lorg/bouncycastle/tls/ProtocolVersion;
+         3: astore_2
+         4: aload_0
+         5: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+         8: aload_2
+         9: invokevirtual #1001               // Method org/bouncycastle/tls/RecordStream.setWriteVersion:(Lorg/bouncycastle/tls/ProtocolVersion;)V
+        12: aload_0
+        13: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        16: invokevirtual #1038               // Method org/bouncycastle/tls/TlsClientContextImpl.getSecurityParametersHandshake:()Lorg/bouncycastle/tls/SecurityParameters;
+        19: astore_3
+        20: aload_3
+        21: invokevirtual #1008               // Method org/bouncycastle/tls/SecurityParameters.isRenegotiating:()Z
+        24: ifeq          37
+        27: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        30: dup
+        31: bipush        80
+        33: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        36: athrow
+        37: aload_1
+        38: invokevirtual #1025               // Method org/bouncycastle/tls/ServerHello.getVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+        41: astore        4
+        43: aload_1
+        44: invokevirtual #1023               // Method org/bouncycastle/tls/ServerHello.getSessionID:()[B
+        47: astore        5
+        49: aload_1
+        50: invokevirtual #1020               // Method org/bouncycastle/tls/ServerHello.getCipherSuite:()I
+        53: istore        6
+        55: getstatic     #900                // Field org/bouncycastle/tls/ProtocolVersion.TLSv12:Lorg/bouncycastle/tls/ProtocolVersion;
+        58: aload         4
+        60: invokevirtual #990                // Method org/bouncycastle/tls/ProtocolVersion.equals:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        63: ifeq          96
+        66: aload_0
+        67: getfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+        70: invokevirtual #974                // Method org/bouncycastle/tls/ClientHello.getSessionID:()[B
+        73: aload         5
+        75: invokestatic  #1167               // Method org/bouncycastle/util/Arrays.areEqual:([B[B)Z
+        78: ifeq          96
+        81: aload_0
+        82: getfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+        85: invokevirtual #975                // Method org/bouncycastle/tls/ClientHello.getCipherSuites:()[I
+        88: iload         6
+        90: invokestatic  #1116               // Method org/bouncycastle/tls/TlsUtils.isValidCipherSuiteSelection:([II)Z
+        93: ifne          106
+        96: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        99: dup
+       100: bipush        47
+       102: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       105: athrow
+       106: aload_1
+       107: invokevirtual #1024               // Method org/bouncycastle/tls/ServerHello.getExtensions:()Ljava/util/Hashtable;
+       110: astore        7
+       112: aconst_null
+       113: aload         7
+       115: if_acmpne     131
+       118: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       121: dup
+       122: bipush        47
+       124: ldc_w         #397                // String no extensions found
+       127: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       130: athrow
+       131: aload         7
+       133: bipush        6
+       135: bipush        47
+       137: invokestatic  #1120               // Method org/bouncycastle/tls/TlsUtils.checkExtensionData13:(Ljava/util/Hashtable;IS)V
+       140: aload         7
+       142: invokevirtual #964                // Method java/util/Hashtable.keys:()Ljava/util/Enumeration;
+       145: astore        8
+       147: aload         8
+       149: invokeinterface #1173,  1         // InterfaceMethod java/util/Enumeration.hasMoreElements:()Z
+       154: ifeq          236
+       157: aload         8
+       159: invokeinterface #1174,  1         // InterfaceMethod java/util/Enumeration.nextElement:()Ljava/lang/Object;
+       164: checkcast     #405                // class java/lang/Integer
+       167: astore        9
+       169: aload         9
+       171: invokevirtual #956                // Method java/lang/Integer.intValue:()I
+       174: istore        10
+       176: bipush        44
+       178: iload         10
+       180: if_icmpne     186
+       183: goto          147
+       186: aconst_null
+       187: aload_0
+       188: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       191: aload         9
+       193: invokestatic  #1133               // Method org/bouncycastle/tls/TlsUtils.getExtensionData:(Ljava/util/Hashtable;Ljava/lang/Integer;)[B
+       196: if_acmpne     233
+       199: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       202: dup
+       203: bipush        110
+       205: new           #406                // class java/lang/StringBuilder
+       208: dup
+       209: invokespecial #958                // Method java/lang/StringBuilder."<init>":()V
+       212: ldc_w         #391                // String Unrequested extension in HelloRetryRequest:
+       215: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       218: iload         10
+       220: invokestatic  #980                // Method org/bouncycastle/tls/ExtensionType.getText:(I)Ljava/lang/String;
+       223: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       226: invokevirtual #959                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+       229: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       232: athrow
+       233: goto          147
+       236: aload         7
+       238: invokestatic  #1106               // Method org/bouncycastle/tls/TlsExtensionsUtils.getSupportedVersionsExtensionServer:(Ljava/util/Hashtable;)Lorg/bouncycastle/tls/ProtocolVersion;
+       241: astore        8
+       243: aconst_null
+       244: aload         8
+       246: if_acmpne     283
+       249: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       252: dup
+       253: bipush        109
+       255: new           #406                // class java/lang/StringBuilder
+       258: dup
+       259: invokespecial #958                // Method java/lang/StringBuilder."<init>":()V
+       262: ldc_w         #396                // String missing extension response:
+       265: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       268: bipush        43
+       270: invokestatic  #980                // Method org/bouncycastle/tls/ExtensionType.getText:(I)Ljava/lang/String;
+       273: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       276: invokevirtual #959                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+       279: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       282: athrow
+       283: getstatic     #901                // Field org/bouncycastle/tls/ProtocolVersion.TLSv13:Lorg/bouncycastle/tls/ProtocolVersion;
+       286: aload         8
+       288: invokevirtual #991                // Method org/bouncycastle/tls/ProtocolVersion.isEqualOrEarlierVersionOf:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       291: ifeq          309
+       294: aload_0
+       295: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       298: invokevirtual #1032               // Method org/bouncycastle/tls/TlsClientContextImpl.getClientSupportedVersions:()[Lorg/bouncycastle/tls/ProtocolVersion;
+       301: aload         8
+       303: invokestatic  #997                // Method org/bouncycastle/tls/ProtocolVersion.contains:([Lorg/bouncycastle/tls/ProtocolVersion;Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       306: ifne          340
+       309: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       312: dup
+       313: bipush        47
+       315: new           #406                // class java/lang/StringBuilder
+       318: dup
+       319: invokespecial #958                // Method java/lang/StringBuilder."<init>":()V
+       322: ldc_w         #395                // String invalid version selected:
+       325: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       328: aload         8
+       330: invokevirtual #960                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+       333: invokevirtual #959                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+       336: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       339: athrow
+       340: iload         6
+       342: aload         8
+       344: invokestatic  #1121               // Method org/bouncycastle/tls/TlsUtils.isValidVersionForCipherSuite:(ILorg/bouncycastle/tls/ProtocolVersion;)Z
+       347: ifne          363
+       350: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       353: dup
+       354: bipush        47
+       356: ldc_w         #393                // String invalid cipher suite for selected version
+       359: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       362: athrow
+       363: aconst_null
+       364: aload_0
+       365: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       368: if_acmpeq     400
+       371: aload_0
+       372: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       375: getfield      #895                // Field org/bouncycastle/tls/OfferedPsks$BindersConfig.pskKeyExchangeModes:[S
+       378: iconst_1
+       379: invokestatic  #1171               // Method org/bouncycastle/util/Arrays.contains:([SS)Z
+       382: ifne          400
+       385: aload_0
+       386: aconst_null
+       387: putfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       390: aload_0
+       391: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       394: aconst_null
+       395: invokeinterface #1193,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifySelectedPSK:(Lorg/bouncycastle/tls/TlsPSK;)V
+       400: aload         7
+       402: invokestatic  #1093               // Method org/bouncycastle/tls/TlsExtensionsUtils.getKeyShareHelloRetryRequest:(Ljava/util/Hashtable;)I
+       405: istore        9
+       407: iload         9
+       409: ifge          446
+       412: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       415: dup
+       416: bipush        109
+       418: new           #406                // class java/lang/StringBuilder
+       421: dup
+       422: invokespecial #958                // Method java/lang/StringBuilder."<init>":()V
+       425: ldc_w         #396                // String missing extension response:
+       428: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       431: bipush        51
+       433: invokestatic  #980                // Method org/bouncycastle/tls/ExtensionType.getText:(I)Ljava/lang/String;
+       436: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       439: invokevirtual #959                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+       442: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       445: athrow
+       446: aload         8
+       448: aload_3
+       449: invokevirtual #1016               // Method org/bouncycastle/tls/SecurityParameters.getClientSupportedGroups:()[I
+       452: aload_0
+       453: getfield      #929                // Field clientAgreements:Ljava/util/Hashtable;
+       456: iload         9
+       458: invokestatic  #1136               // Method org/bouncycastle/tls/TlsUtils.isValidKeyShareSelection:(Lorg/bouncycastle/tls/ProtocolVersion;[ILjava/util/Hashtable;I)Z
+       461: ifne          477
+       464: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       467: dup
+       468: bipush        47
+       470: ldc_w         #394                // String invalid key_share selected
+       473: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       476: athrow
+       477: aload         7
+       479: invokestatic  #1099               // Method org/bouncycastle/tls/TlsExtensionsUtils.getCookieExtension:(Ljava/util/Hashtable;)[B
+       482: astore        10
+       484: aload_3
+       485: aload         8
+       487: putfield      #920                // Field org/bouncycastle/tls/SecurityParameters.negotiatedVersion:Lorg/bouncycastle/tls/ProtocolVersion;
+       490: aload_0
+       491: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       494: aload_0
+       495: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       498: invokestatic  #1144               // Method org/bouncycastle/tls/TlsUtils.negotiatedVersionTLSClient:(Lorg/bouncycastle/tls/TlsClientContext;Lorg/bouncycastle/tls/TlsClient;)V
+       501: aload_3
+       502: iconst_0
+       503: putfield      #910                // Field org/bouncycastle/tls/SecurityParameters.resumedSession:Z
+       506: aload_3
+       507: getstatic     #953                // Field org/bouncycastle/tls/TlsUtils.EMPTY_BYTES:[B
+       510: putfield      #916                // Field org/bouncycastle/tls/SecurityParameters.sessionID:[B
+       513: aload_0
+       514: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       517: getstatic     #953                // Field org/bouncycastle/tls/TlsUtils.EMPTY_BYTES:[B
+       520: invokeinterface #1184,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifySessionID:([B)V
+       525: aload_3
+       526: iload         6
+       528: invokestatic  #1127               // Method org/bouncycastle/tls/TlsUtils.negotiatedCipherSuite:(Lorg/bouncycastle/tls/SecurityParameters;I)V
+       531: aload_0
+       532: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       535: iload         6
+       537: invokeinterface #1182,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifySelectedCipherSuite:(I)V
+       542: aload_3
+       543: iload         9
+       545: putfield      #902                // Field org/bouncycastle/tls/SecurityParameters.negotiatedGroup:I
+       548: aload_0
+       549: aconst_null
+       550: putfield      #929                // Field clientAgreements:Ljava/util/Hashtable;
+       553: aload_0
+       554: aload         10
+       556: putfield      #927                // Field retryCookie:[B
+       559: aload_0
+       560: iload         9
+       562: putfield      #922                // Field retryGroup:I
+       565: return
+
+  protected void process13ServerHello(org.bouncycastle.tls.ServerHello, boolean) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+         4: invokevirtual #1038               // Method org/bouncycastle/tls/TlsClientContextImpl.getSecurityParametersHandshake:()Lorg/bouncycastle/tls/SecurityParameters;
+         7: astore_3
+         8: aload_1
+         9: invokevirtual #1025               // Method org/bouncycastle/tls/ServerHello.getVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+        12: astore        4
+        14: aload_1
+        15: invokevirtual #1023               // Method org/bouncycastle/tls/ServerHello.getSessionID:()[B
+        18: astore        5
+        20: aload_1
+        21: invokevirtual #1020               // Method org/bouncycastle/tls/ServerHello.getCipherSuite:()I
+        24: istore        6
+        26: getstatic     #900                // Field org/bouncycastle/tls/ProtocolVersion.TLSv12:Lorg/bouncycastle/tls/ProtocolVersion;
+        29: aload         4
+        31: invokevirtual #990                // Method org/bouncycastle/tls/ProtocolVersion.equals:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        34: ifeq          52
+        37: aload_0
+        38: getfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+        41: invokevirtual #974                // Method org/bouncycastle/tls/ClientHello.getSessionID:()[B
+        44: aload         5
+        46: invokestatic  #1167               // Method org/bouncycastle/util/Arrays.areEqual:([B[B)Z
+        49: ifne          62
+        52: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        55: dup
+        56: bipush        47
+        58: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        61: athrow
+        62: aload_1
+        63: invokevirtual #1024               // Method org/bouncycastle/tls/ServerHello.getExtensions:()Ljava/util/Hashtable;
+        66: astore        7
+        68: aconst_null
+        69: aload         7
+        71: if_acmpne     84
+        74: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        77: dup
+        78: bipush        47
+        80: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        83: athrow
+        84: aload         7
+        86: iconst_2
+        87: bipush        47
+        89: invokestatic  #1120               // Method org/bouncycastle/tls/TlsUtils.checkExtensionData13:(Ljava/util/Hashtable;IS)V
+        92: iload_2
+        93: ifeq          153
+        96: aload         7
+        98: invokestatic  #1106               // Method org/bouncycastle/tls/TlsExtensionsUtils.getSupportedVersionsExtensionServer:(Ljava/util/Hashtable;)Lorg/bouncycastle/tls/ProtocolVersion;
+       101: astore        8
+       103: aconst_null
+       104: aload         8
+       106: if_acmpne     119
+       109: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       112: dup
+       113: bipush        109
+       115: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       118: athrow
+       119: aload_3
+       120: invokevirtual #1019               // Method org/bouncycastle/tls/SecurityParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       123: aload         8
+       125: invokevirtual #990                // Method org/bouncycastle/tls/ProtocolVersion.equals:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       128: ifeq          140
+       131: aload_3
+       132: invokevirtual #1003               // Method org/bouncycastle/tls/SecurityParameters.getCipherSuite:()I
+       135: iload         6
+       137: if_icmpeq     150
+       140: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       143: dup
+       144: bipush        47
+       146: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       149: athrow
+       150: goto          231
+       153: aload_0
+       154: getfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+       157: invokevirtual #975                // Method org/bouncycastle/tls/ClientHello.getCipherSuites:()[I
+       160: iload         6
+       162: invokestatic  #1116               // Method org/bouncycastle/tls/TlsUtils.isValidCipherSuiteSelection:([II)Z
+       165: ifeq          180
+       168: iload         6
+       170: aload_3
+       171: invokevirtual #1019               // Method org/bouncycastle/tls/SecurityParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       174: invokestatic  #1121               // Method org/bouncycastle/tls/TlsUtils.isValidVersionForCipherSuite:(ILorg/bouncycastle/tls/ProtocolVersion;)Z
+       177: ifne          190
+       180: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       183: dup
+       184: bipush        47
+       186: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       189: athrow
+       190: aload_3
+       191: iconst_0
+       192: putfield      #910                // Field org/bouncycastle/tls/SecurityParameters.resumedSession:Z
+       195: aload_3
+       196: getstatic     #953                // Field org/bouncycastle/tls/TlsUtils.EMPTY_BYTES:[B
+       199: putfield      #916                // Field org/bouncycastle/tls/SecurityParameters.sessionID:[B
+       202: aload_0
+       203: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       206: getstatic     #953                // Field org/bouncycastle/tls/TlsUtils.EMPTY_BYTES:[B
+       209: invokeinterface #1184,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifySessionID:([B)V
+       214: aload_3
+       215: iload         6
+       217: invokestatic  #1127               // Method org/bouncycastle/tls/TlsUtils.negotiatedCipherSuite:(Lorg/bouncycastle/tls/SecurityParameters;I)V
+       220: aload_0
+       221: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       224: iload         6
+       226: invokeinterface #1182,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifySelectedCipherSuite:(I)V
+       231: aload_0
+       232: aconst_null
+       233: putfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+       236: aload_3
+       237: aload_1
+       238: invokevirtual #1022               // Method org/bouncycastle/tls/ServerHello.getRandom:()[B
+       241: putfield      #914                // Field org/bouncycastle/tls/SecurityParameters.serverRandom:[B
+       244: aload_3
+       245: iconst_0
+       246: putfield      #911                // Field org/bouncycastle/tls/SecurityParameters.secureRenegotiation:Z
+       249: aload_3
+       250: iconst_1
+       251: putfield      #909                // Field org/bouncycastle/tls/SecurityParameters.extendedMasterSecret:Z
+       254: aload_3
+       255: aload_0
+       256: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       259: getstatic     #950                // Field org/bouncycastle/tls/TlsExtensionsUtils.EXT_status_request:Ljava/lang/Integer;
+       262: invokevirtual #963                // Method java/util/Hashtable.containsKey:(Ljava/lang/Object;)Z
+       265: ifeq          272
+       268: iconst_1
+       269: goto          273
+       272: iconst_0
+       273: putfield      #903                // Field org/bouncycastle/tls/SecurityParameters.statusRequestVersion:I
+       276: aconst_null
+       277: astore        8
+       279: aload         7
+       281: invokestatic  #1094               // Method org/bouncycastle/tls/TlsExtensionsUtils.getPreSharedKeyServerHello:(Ljava/util/Hashtable;)I
+       284: istore        9
+       286: aconst_null
+       287: astore        10
+       289: iload         9
+       291: iflt          378
+       294: aconst_null
+       295: aload_0
+       296: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       299: if_acmpeq     315
+       302: iload         9
+       304: aload_0
+       305: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       308: getfield      #896                // Field org/bouncycastle/tls/OfferedPsks$BindersConfig.psks:[Lorg/bouncycastle/tls/TlsPSK;
+       311: arraylength
+       312: if_icmplt     325
+       315: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       318: dup
+       319: bipush        47
+       321: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       324: athrow
+       325: aload_0
+       326: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       329: getfield      #896                // Field org/bouncycastle/tls/OfferedPsks$BindersConfig.psks:[Lorg/bouncycastle/tls/TlsPSK;
+       332: iload         9
+       334: aaload
+       335: astore        10
+       337: aload         10
+       339: invokeinterface #1209,  1         // InterfaceMethod org/bouncycastle/tls/TlsPSK.getPRFAlgorithm:()I
+       344: aload_3
+       345: invokevirtual #1004               // Method org/bouncycastle/tls/SecurityParameters.getPRFAlgorithm:()I
+       348: if_icmpeq     361
+       351: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       354: dup
+       355: bipush        47
+       357: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       360: athrow
+       361: aload_0
+       362: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       365: getfield      #897                // Field org/bouncycastle/tls/OfferedPsks$BindersConfig.earlySecrets:[Lorg/bouncycastle/tls/crypto/TlsSecret;
+       368: iload         9
+       370: aaload
+       371: astore        8
+       373: aload_0
+       374: iconst_1
+       375: putfield      #926                // Field selectedPSK13:Z
+       378: aload_0
+       379: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       382: aload         10
+       384: invokeinterface #1193,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifySelectedPSK:(Lorg/bouncycastle/tls/TlsPSK;)V
+       389: aconst_null
+       390: astore        9
+       392: aload         7
+       394: invokestatic  #1104               // Method org/bouncycastle/tls/TlsExtensionsUtils.getKeyShareServerHello:(Ljava/util/Hashtable;)Lorg/bouncycastle/tls/KeyShareEntry;
+       397: astore        10
+       399: aconst_null
+       400: aload         10
+       402: if_acmpne     438
+       405: iload_2
+       406: ifne          428
+       409: aload         8
+       411: ifnull        428
+       414: aload_0
+       415: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       418: getfield      #895                // Field org/bouncycastle/tls/OfferedPsks$BindersConfig.pskKeyExchangeModes:[S
+       421: iconst_0
+       422: invokestatic  #1171               // Method org/bouncycastle/util/Arrays.contains:([SS)Z
+       425: ifne          538
+       428: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       431: dup
+       432: bipush        47
+       434: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       437: athrow
+       438: aload         8
+       440: ifnull        467
+       443: aload_0
+       444: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       447: getfield      #895                // Field org/bouncycastle/tls/OfferedPsks$BindersConfig.pskKeyExchangeModes:[S
+       450: iconst_1
+       451: invokestatic  #1171               // Method org/bouncycastle/util/Arrays.contains:([SS)Z
+       454: ifne          467
+       457: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       460: dup
+       461: bipush        47
+       463: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       466: athrow
+       467: aload         10
+       469: invokevirtual #986                // Method org/bouncycastle/tls/KeyShareEntry.getNamedGroup:()I
+       472: istore        11
+       474: aload_0
+       475: getfield      #929                // Field clientAgreements:Ljava/util/Hashtable;
+       478: iload         11
+       480: invokestatic  #1172               // Method org/bouncycastle/util/Integers.valueOf:(I)Ljava/lang/Integer;
+       483: invokevirtual #965                // Method java/util/Hashtable.get:(Ljava/lang/Object;)Ljava/lang/Object;
+       486: checkcast     #442                // class org/bouncycastle/tls/crypto/TlsAgreement
+       489: astore        12
+       491: aconst_null
+       492: aload         12
+       494: if_acmpne     507
+       497: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       500: dup
+       501: bipush        47
+       503: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       506: athrow
+       507: aload         12
+       509: aload         10
+       511: invokevirtual #987                // Method org/bouncycastle/tls/KeyShareEntry.getKeyExchange:()[B
+       514: invokeinterface #1211,  2         // InterfaceMethod org/bouncycastle/tls/crypto/TlsAgreement.receivePeerValue:([B)V
+       519: aload         12
+       521: invokeinterface #1212,  1         // InterfaceMethod org/bouncycastle/tls/crypto/TlsAgreement.calculateSecret:()Lorg/bouncycastle/tls/crypto/TlsSecret;
+       526: astore        9
+       528: iload_2
+       529: ifne          538
+       532: aload_3
+       533: iload         11
+       535: putfield      #902                // Field org/bouncycastle/tls/SecurityParameters.negotiatedGroup:I
+       538: aload_0
+       539: aconst_null
+       540: putfield      #929                // Field clientAgreements:Ljava/util/Hashtable;
+       543: aload_0
+       544: aconst_null
+       545: putfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       548: aload_0
+       549: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       552: aload         8
+       554: aload         9
+       556: invokestatic  #1158               // Method org/bouncycastle/tls/TlsUtils.establish13PhaseSecrets:(Lorg/bouncycastle/tls/TlsContext;Lorg/bouncycastle/tls/crypto/TlsSecret;Lorg/bouncycastle/tls/crypto/TlsSecret;)V
+       559: aload_0
+       560: invokevirtual #1046               // Method invalidateSession:()V
+       563: aload_0
+       564: aload_3
+       565: invokevirtual #1015               // Method org/bouncycastle/tls/SecurityParameters.getSessionID:()[B
+       568: aconst_null
+       569: invokestatic  #1145               // Method org/bouncycastle/tls/TlsUtils.importSession:([BLorg/bouncycastle/tls/SessionParameters;)Lorg/bouncycastle/tls/TlsSession;
+       572: putfield      #943                // Field tlsSession:Lorg/bouncycastle/tls/TlsSession;
+       575: return
+
+  protected void process13ServerHelloCoda(org.bouncycastle.tls.ServerHello, boolean) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+         4: invokestatic  #1131               // Method org/bouncycastle/tls/TlsUtils.getCurrentPRFHash:(Lorg/bouncycastle/tls/TlsHandshakeHash;)[B
+         7: astore_3
+         8: aload_0
+         9: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        12: aload_3
+        13: aload_0
+        14: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+        17: invokestatic  #1140               // Method org/bouncycastle/tls/TlsUtils.establish13PhaseHandshake:(Lorg/bouncycastle/tls/TlsContext;[BLorg/bouncycastle/tls/RecordStream;)V
+        20: iload_2
+        21: ifne          36
+        24: aload_0
+        25: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+        28: iconst_1
+        29: invokevirtual #1000               // Method org/bouncycastle/tls/RecordStream.setIgnoreChangeCipherSpec:(Z)V
+        32: aload_0
+        33: invokevirtual #1050               // Method sendChangeCipherSpecMessage:()V
+        36: aload_0
+        37: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+        40: invokevirtual #998                // Method org/bouncycastle/tls/RecordStream.enablePendingCipherWrite:()V
+        43: aload_0
+        44: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+        47: iconst_0
+        48: invokevirtual #999                // Method org/bouncycastle/tls/RecordStream.enablePendingCipherRead:(Z)V
+        51: return
+
+  protected void processServerHello(org.bouncycastle.tls.ServerHello) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+         4: invokevirtual #976                // Method org/bouncycastle/tls/ClientHello.getExtensions:()Ljava/util/Hashtable;
+         7: astore_2
+         8: aload_1
+         9: invokevirtual #1024               // Method org/bouncycastle/tls/ServerHello.getExtensions:()Ljava/util/Hashtable;
+        12: astore_3
+        13: aload_1
+        14: invokevirtual #1025               // Method org/bouncycastle/tls/ServerHello.getVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+        17: astore        4
+        19: aload_3
+        20: invokestatic  #1106               // Method org/bouncycastle/tls/TlsExtensionsUtils.getSupportedVersionsExtensionServer:(Ljava/util/Hashtable;)Lorg/bouncycastle/tls/ProtocolVersion;
+        23: astore        5
+        25: aconst_null
+        26: aload         5
+        28: if_acmpne     38
+        31: aload         4
+        33: astore        6
+        35: goto          74
+        38: getstatic     #900                // Field org/bouncycastle/tls/ProtocolVersion.TLSv12:Lorg/bouncycastle/tls/ProtocolVersion;
+        41: aload         4
+        43: invokevirtual #990                // Method org/bouncycastle/tls/ProtocolVersion.equals:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        46: ifeq          60
+        49: getstatic     #901                // Field org/bouncycastle/tls/ProtocolVersion.TLSv13:Lorg/bouncycastle/tls/ProtocolVersion;
+        52: aload         5
+        54: invokevirtual #991                // Method org/bouncycastle/tls/ProtocolVersion.isEqualOrEarlierVersionOf:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        57: ifne          70
+        60: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        63: dup
+        64: bipush        47
+        66: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        69: athrow
+        70: aload         5
+        72: astore        6
+        74: aload_0
+        75: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        78: invokevirtual #1032               // Method org/bouncycastle/tls/TlsClientContextImpl.getClientSupportedVersions:()[Lorg/bouncycastle/tls/ProtocolVersion;
+        81: aload         6
+        83: invokestatic  #997                // Method org/bouncycastle/tls/ProtocolVersion.contains:([Lorg/bouncycastle/tls/ProtocolVersion;Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        86: ifne          99
+        89: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        92: dup
+        93: bipush        70
+        95: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        98: athrow
+        99: aload_0
+       100: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       103: invokevirtual #1038               // Method org/bouncycastle/tls/TlsClientContextImpl.getSecurityParametersHandshake:()Lorg/bouncycastle/tls/SecurityParameters;
+       106: astore        7
+       108: aload         7
+       110: invokevirtual #1008               // Method org/bouncycastle/tls/SecurityParameters.isRenegotiating:()Z
+       113: ifeq          139
+       116: aload         6
+       118: aload         7
+       120: invokevirtual #1019               // Method org/bouncycastle/tls/SecurityParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       123: invokevirtual #990                // Method org/bouncycastle/tls/ProtocolVersion.equals:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       126: ifne          176
+       129: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       132: dup
+       133: bipush        47
+       135: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       138: athrow
+       139: aload         6
+       141: getstatic     #900                // Field org/bouncycastle/tls/ProtocolVersion.TLSv12:Lorg/bouncycastle/tls/ProtocolVersion;
+       144: invokevirtual #993                // Method org/bouncycastle/tls/ProtocolVersion.isLaterVersionOf:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       147: ifeq          156
+       150: getstatic     #900                // Field org/bouncycastle/tls/ProtocolVersion.TLSv12:Lorg/bouncycastle/tls/ProtocolVersion;
+       153: goto          158
+       156: aload         6
+       158: astore        8
+       160: aload_0
+       161: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+       164: aload         8
+       166: invokevirtual #1001               // Method org/bouncycastle/tls/RecordStream.setWriteVersion:(Lorg/bouncycastle/tls/ProtocolVersion;)V
+       169: aload         7
+       171: aload         6
+       173: putfield      #920                // Field org/bouncycastle/tls/SecurityParameters.negotiatedVersion:Lorg/bouncycastle/tls/ProtocolVersion;
+       176: aload_0
+       177: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       180: aload_0
+       181: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       184: invokestatic  #1144               // Method org/bouncycastle/tls/TlsUtils.negotiatedVersionTLSClient:(Lorg/bouncycastle/tls/TlsClientContext;Lorg/bouncycastle/tls/TlsClient;)V
+       187: getstatic     #901                // Field org/bouncycastle/tls/ProtocolVersion.TLSv13:Lorg/bouncycastle/tls/ProtocolVersion;
+       190: aload         6
+       192: invokevirtual #991                // Method org/bouncycastle/tls/ProtocolVersion.isEqualOrEarlierVersionOf:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       195: ifeq          205
+       198: aload_0
+       199: aload_1
+       200: iconst_0
+       201: invokevirtual #1085               // Method process13ServerHello:(Lorg/bouncycastle/tls/ServerHello;Z)V
+       204: return
+       205: aload_0
+       206: getfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+       209: invokevirtual #975                // Method org/bouncycastle/tls/ClientHello.getCipherSuites:()[I
+       212: astore        8
+       214: aload_0
+       215: aconst_null
+       216: putfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+       219: aload_0
+       220: aconst_null
+       221: putfield      #927                // Field retryCookie:[B
+       224: aload_0
+       225: iconst_m1
+       226: putfield      #922                // Field retryGroup:I
+       229: aload         7
+       231: aload_1
+       232: invokevirtual #1022               // Method org/bouncycastle/tls/ServerHello.getRandom:()[B
+       235: putfield      #914                // Field org/bouncycastle/tls/SecurityParameters.serverRandom:[B
+       238: aload_0
+       239: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       242: invokevirtual #1031               // Method org/bouncycastle/tls/TlsClientContextImpl.getClientVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       245: aload         6
+       247: invokevirtual #990                // Method org/bouncycastle/tls/ProtocolVersion.equals:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       250: ifne          263
+       253: aload         6
+       255: aload         7
+       257: invokevirtual #1014               // Method org/bouncycastle/tls/SecurityParameters.getServerRandom:()[B
+       260: invokestatic  #1125               // Method org/bouncycastle/tls/TlsUtils.checkDowngradeMarker:(Lorg/bouncycastle/tls/ProtocolVersion;[B)V
+       263: aload_1
+       264: invokevirtual #1023               // Method org/bouncycastle/tls/ServerHello.getSessionID:()[B
+       267: astore        9
+       269: aload         7
+       271: aload         9
+       273: putfield      #916                // Field org/bouncycastle/tls/SecurityParameters.sessionID:[B
+       276: aload_0
+       277: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       280: aload         9
+       282: invokeinterface #1184,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifySessionID:([B)V
+       287: aload         7
+       289: aload         9
+       291: arraylength
+       292: ifle          323
+       295: aload_0
+       296: getfield      #943                // Field tlsSession:Lorg/bouncycastle/tls/TlsSession;
+       299: ifnull        323
+       302: aload         9
+       304: aload_0
+       305: getfield      #943                // Field tlsSession:Lorg/bouncycastle/tls/TlsSession;
+       308: invokeinterface #1210,  1         // InterfaceMethod org/bouncycastle/tls/TlsSession.getSessionID:()[B
+       313: invokestatic  #1167               // Method org/bouncycastle/util/Arrays.areEqual:([B[B)Z
+       316: ifeq          323
+       319: iconst_1
+       320: goto          324
+       323: iconst_0
+       324: putfield      #910                // Field org/bouncycastle/tls/SecurityParameters.resumedSession:Z
+       327: aload         7
+       329: invokevirtual #1009               // Method org/bouncycastle/tls/SecurityParameters.isResumedSession:()Z
+       332: ifeq          380
+       335: aload_1
+       336: invokevirtual #1020               // Method org/bouncycastle/tls/ServerHello.getCipherSuite:()I
+       339: aload_0
+       340: getfield      #937                // Field sessionParameters:Lorg/bouncycastle/tls/SessionParameters;
+       343: invokevirtual #1027               // Method org/bouncycastle/tls/SessionParameters.getCipherSuite:()I
+       346: if_icmpne     367
+       349: aload         7
+       351: invokevirtual #1019               // Method org/bouncycastle/tls/SecurityParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       354: aload_0
+       355: getfield      #937                // Field sessionParameters:Lorg/bouncycastle/tls/SessionParameters;
+       358: invokevirtual #1030               // Method org/bouncycastle/tls/SessionParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       361: invokevirtual #990                // Method org/bouncycastle/tls/ProtocolVersion.equals:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       364: ifne          380
+       367: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       370: dup
+       371: bipush        47
+       373: ldc_w         #388                // String ServerHello parameters do not match resumed session
+       376: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       379: athrow
+       380: aload_1
+       381: invokevirtual #1020               // Method org/bouncycastle/tls/ServerHello.getCipherSuite:()I
+       384: istore        9
+       386: aload         8
+       388: iload         9
+       390: invokestatic  #1116               // Method org/bouncycastle/tls/TlsUtils.isValidCipherSuiteSelection:([II)Z
+       393: ifeq          409
+       396: iload         9
+       398: aload         7
+       400: invokevirtual #1019               // Method org/bouncycastle/tls/SecurityParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       403: invokestatic  #1121               // Method org/bouncycastle/tls/TlsUtils.isValidVersionForCipherSuite:(ILorg/bouncycastle/tls/ProtocolVersion;)Z
+       406: ifne          422
+       409: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       412: dup
+       413: bipush        47
+       415: ldc_w         #389                // String ServerHello selected invalid cipher suite
+       418: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       421: athrow
+       422: aload         7
+       424: iload         9
+       426: invokestatic  #1127               // Method org/bouncycastle/tls/TlsUtils.negotiatedCipherSuite:(Lorg/bouncycastle/tls/SecurityParameters;I)V
+       429: aload_0
+       430: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       433: iload         9
+       435: invokeinterface #1182,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifySelectedCipherSuite:(I)V
+       440: aload_0
+       441: aload_3
+       442: putfield      #931                // Field serverExtensions:Ljava/util/Hashtable;
+       445: aload_3
+       446: ifnull        549
+       449: aload_3
+       450: invokevirtual #964                // Method java/util/Hashtable.keys:()Ljava/util/Enumeration;
+       453: astore        9
+       455: aload         9
+       457: invokeinterface #1173,  1         // InterfaceMethod java/util/Enumeration.hasMoreElements:()Z
+       462: ifeq          549
+       465: aload         9
+       467: invokeinterface #1174,  1         // InterfaceMethod java/util/Enumeration.nextElement:()Ljava/lang/Object;
+       472: checkcast     #405                // class java/lang/Integer
+       475: astore        10
+       477: aload         10
+       479: getstatic     #928                // Field EXT_RenegotiationInfo:Ljava/lang/Integer;
+       482: invokevirtual #957                // Method java/lang/Integer.equals:(Ljava/lang/Object;)Z
+       485: ifeq          491
+       488: goto          455
+       491: aconst_null
+       492: aload_2
+       493: aload         10
+       495: invokestatic  #1133               // Method org/bouncycastle/tls/TlsUtils.getExtensionData:(Ljava/util/Hashtable;Ljava/lang/Integer;)[B
+       498: if_acmpne     538
+       501: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       504: dup
+       505: bipush        110
+       507: new           #406                // class java/lang/StringBuilder
+       510: dup
+       511: invokespecial #958                // Method java/lang/StringBuilder."<init>":()V
+       514: ldc_w         #392                // String Unrequested extension in ServerHello:
+       517: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       520: aload         10
+       522: invokevirtual #956                // Method java/lang/Integer.intValue:()I
+       525: invokestatic  #980                // Method org/bouncycastle/tls/ExtensionType.getText:(I)Ljava/lang/String;
+       528: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       531: invokevirtual #959                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+       534: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       537: athrow
+       538: aload         7
+       540: invokevirtual #1009               // Method org/bouncycastle/tls/SecurityParameters.isResumedSession:()Z
+       543: ifeq          546
+       546: goto          455
+       549: aload_3
+       550: getstatic     #928                // Field EXT_RenegotiationInfo:Ljava/lang/Integer;
+       553: invokestatic  #1133               // Method org/bouncycastle/tls/TlsUtils.getExtensionData:(Ljava/util/Hashtable;Ljava/lang/Integer;)[B
+       556: astore        9
+       558: aload         7
+       560: invokevirtual #1008               // Method org/bouncycastle/tls/SecurityParameters.isRenegotiating:()Z
+       563: ifeq          649
+       566: aload         7
+       568: invokevirtual #1010               // Method org/bouncycastle/tls/SecurityParameters.isSecureRenegotiation:()Z
+       571: ifne          584
+       574: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       577: dup
+       578: bipush        80
+       580: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       583: athrow
+       584: aload         9
+       586: ifnonnull     599
+       589: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       592: dup
+       593: bipush        40
+       595: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       598: athrow
+       599: aload_0
+       600: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       603: invokevirtual #1037               // Method org/bouncycastle/tls/TlsClientContextImpl.getSecurityParametersConnection:()Lorg/bouncycastle/tls/SecurityParameters;
+       606: astore        10
+       608: aload         10
+       610: invokevirtual #1012               // Method org/bouncycastle/tls/SecurityParameters.getLocalVerifyData:()[B
+       613: aload         10
+       615: invokevirtual #1013               // Method org/bouncycastle/tls/SecurityParameters.getPeerVerifyData:()[B
+       618: invokestatic  #1115               // Method org/bouncycastle/tls/TlsUtils.concat:([B[B)[B
+       621: astore        11
+       623: aload         9
+       625: aload         11
+       627: invokestatic  #1063               // Method createRenegotiationInfo:([B)[B
+       630: invokestatic  #1168               // Method org/bouncycastle/util/Arrays.constantTimeAreEqual:([B[B)Z
+       633: ifne          646
+       636: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       639: dup
+       640: bipush        40
+       642: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       645: athrow
+       646: goto          693
+       649: aload         9
+       651: ifnonnull     663
+       654: aload         7
+       656: iconst_0
+       657: putfield      #911                // Field org/bouncycastle/tls/SecurityParameters.secureRenegotiation:Z
+       660: goto          693
+       663: aload         7
+       665: iconst_1
+       666: putfield      #911                // Field org/bouncycastle/tls/SecurityParameters.secureRenegotiation:Z
+       669: aload         9
+       671: getstatic     #953                // Field org/bouncycastle/tls/TlsUtils.EMPTY_BYTES:[B
+       674: invokestatic  #1063               // Method createRenegotiationInfo:([B)[B
+       677: invokestatic  #1168               // Method org/bouncycastle/util/Arrays.constantTimeAreEqual:([B[B)Z
+       680: ifne          693
+       683: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       686: dup
+       687: bipush        40
+       689: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       692: athrow
+       693: aload_0
+       694: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       697: aload         7
+       699: invokevirtual #1010               // Method org/bouncycastle/tls/SecurityParameters.isSecureRenegotiation:()Z
+       702: invokeinterface #1183,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifySecureRenegotiation:(Z)V
+       707: iconst_0
+       708: istore        10
+       710: aload_2
+       711: invokestatic  #1097               // Method org/bouncycastle/tls/TlsExtensionsUtils.hasExtendedMasterSecretExtension:(Ljava/util/Hashtable;)Z
+       714: ifeq          797
+       717: aload_3
+       718: invokestatic  #1097               // Method org/bouncycastle/tls/TlsExtensionsUtils.hasExtendedMasterSecretExtension:(Ljava/util/Hashtable;)Z
+       721: istore        10
+       723: aload         6
+       725: invokestatic  #1122               // Method org/bouncycastle/tls/TlsUtils.isExtendedMasterSecretOptional:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       728: ifeq          761
+       731: iload         10
+       733: ifne          797
+       736: aload_0
+       737: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       740: invokeinterface #1177,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.requiresExtendedMasterSecret:()Z
+       745: ifeq          797
+       748: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       751: dup
+       752: bipush        40
+       754: ldc_w         #383                // String Extended Master Secret extension is required
+       757: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       760: athrow
+       761: iload         10
+       763: ifeq          797
+       766: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       769: dup
+       770: bipush        47
+       772: new           #406                // class java/lang/StringBuilder
+       775: dup
+       776: invokespecial #958                // Method java/lang/StringBuilder."<init>":()V
+       779: ldc_w         #387                // String Server sent an unexpected extended_master_secret extension negotiating
+       782: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+       785: aload         6
+       787: invokevirtual #960                // Method java/lang/StringBuilder.append:(Ljava/lang/Object;)Ljava/lang/StringBuilder;
+       790: invokevirtual #959                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+       793: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       796: athrow
+       797: aload         7
+       799: iload         10
+       801: putfield      #909                // Field org/bouncycastle/tls/SecurityParameters.extendedMasterSecret:Z
+       804: aload         7
+       806: invokevirtual #1009               // Method org/bouncycastle/tls/SecurityParameters.isResumedSession:()Z
+       809: ifeq          840
+       812: aload         7
+       814: invokevirtual #1007               // Method org/bouncycastle/tls/SecurityParameters.isExtendedMasterSecret:()Z
+       817: aload_0
+       818: getfield      #937                // Field sessionParameters:Lorg/bouncycastle/tls/SessionParameters;
+       821: invokevirtual #1028               // Method org/bouncycastle/tls/SessionParameters.isExtendedMasterSecret:()Z
+       824: if_icmpeq     840
+       827: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       830: dup
+       831: bipush        40
+       833: ldc_w         #386                // String Server resumed session with mismatched extended_master_secret negotiation
+       836: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       839: athrow
+       840: aload         7
+       842: aload_3
+       843: invokestatic  #1105               // Method org/bouncycastle/tls/TlsExtensionsUtils.getALPNExtensionServer:(Ljava/util/Hashtable;)Lorg/bouncycastle/tls/ProtocolName;
+       846: putfield      #919                // Field org/bouncycastle/tls/SecurityParameters.applicationProtocol:Lorg/bouncycastle/tls/ProtocolName;
+       849: aload         7
+       851: iconst_1
+       852: putfield      #907                // Field org/bouncycastle/tls/SecurityParameters.applicationProtocolSet:Z
+       855: aload_2
+       856: astore        10
+       858: aload_3
+       859: astore        11
+       861: aload         7
+       863: invokevirtual #1009               // Method org/bouncycastle/tls/SecurityParameters.isResumedSession:()Z
+       866: ifeq          881
+       869: aconst_null
+       870: astore        10
+       872: aload_0
+       873: getfield      #937                // Field sessionParameters:Lorg/bouncycastle/tls/SessionParameters;
+       876: invokevirtual #1029               // Method org/bouncycastle/tls/SessionParameters.readServerExtensions:()Ljava/util/Hashtable;
+       879: astore        11
+       881: aload         11
+       883: ifnull        1062
+       886: aload         11
+       888: invokevirtual #962                // Method java/util/Hashtable.isEmpty:()Z
+       891: ifne          1062
+       894: aload         11
+       896: invokestatic  #1096               // Method org/bouncycastle/tls/TlsExtensionsUtils.hasEncryptThenMACExtension:(Ljava/util/Hashtable;)Z
+       899: istore        12
+       901: iload         12
+       903: ifeq          927
+       906: aload         7
+       908: invokevirtual #1003               // Method org/bouncycastle/tls/SecurityParameters.getCipherSuite:()I
+       911: invokestatic  #1114               // Method org/bouncycastle/tls/TlsUtils.isBlockCipherSuite:(I)Z
+       914: ifne          927
+       917: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       920: dup
+       921: bipush        47
+       923: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       926: athrow
+       927: aload         7
+       929: iload         12
+       931: putfield      #908                // Field org/bouncycastle/tls/SecurityParameters.encryptThenMAC:Z
+       934: aload         7
+       936: aload         10
+       938: aload         11
+       940: bipush        47
+       942: invokestatic  #1135               // Method org/bouncycastle/tls/TlsUtils.processMaxFragmentLengthExtension:(Ljava/util/Hashtable;Ljava/util/Hashtable;S)S
+       945: putfield      #905                // Field org/bouncycastle/tls/SecurityParameters.maxFragmentLength:S
+       948: aload         7
+       950: aload         11
+       952: invokestatic  #1098               // Method org/bouncycastle/tls/TlsExtensionsUtils.hasTruncatedHMacExtension:(Ljava/util/Hashtable;)Z
+       955: putfield      #912                // Field org/bouncycastle/tls/SecurityParameters.truncatedHMac:Z
+       958: aload         7
+       960: invokevirtual #1009               // Method org/bouncycastle/tls/SecurityParameters.isResumedSession:()Z
+       963: ifne          1062
+       966: aload         11
+       968: getstatic     #951                // Field org/bouncycastle/tls/TlsExtensionsUtils.EXT_status_request_v2:Ljava/lang/Integer;
+       971: bipush        47
+       973: invokestatic  #1134               // Method org/bouncycastle/tls/TlsUtils.hasExpectedEmptyExtensionData:(Ljava/util/Hashtable;Ljava/lang/Integer;S)Z
+       976: ifeq          988
+       979: aload         7
+       981: iconst_2
+       982: putfield      #903                // Field org/bouncycastle/tls/SecurityParameters.statusRequestVersion:I
+       985: goto          1007
+       988: aload         11
+       990: getstatic     #950                // Field org/bouncycastle/tls/TlsExtensionsUtils.EXT_status_request:Ljava/lang/Integer;
+       993: bipush        47
+       995: invokestatic  #1134               // Method org/bouncycastle/tls/TlsUtils.hasExpectedEmptyExtensionData:(Ljava/util/Hashtable;Ljava/lang/Integer;S)Z
+       998: ifeq          1007
+      1001: aload         7
+      1003: iconst_1
+      1004: putfield      #903                // Field org/bouncycastle/tls/SecurityParameters.statusRequestVersion:I
+      1007: aload_0
+      1008: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+      1011: invokevirtual #1039               // Method org/bouncycastle/tls/TlsClientContextImpl.getCrypto:()Lorg/bouncycastle/tls/crypto/TlsCrypto;
+      1014: astore        12
+      1016: aload         7
+      1018: aload         12
+      1020: aload         10
+      1022: aload         11
+      1024: bipush        47
+      1026: invokestatic  #1148               // Method org/bouncycastle/tls/TlsUtils.processClientCertificateTypeExtension:(Lorg/bouncycastle/tls/crypto/TlsCrypto;Ljava/util/Hashtable;Ljava/util/Hashtable;S)S
+      1029: putfield      #904                // Field org/bouncycastle/tls/SecurityParameters.clientCertificateType:S
+      1032: aload         7
+      1034: aload         12
+      1036: aload         10
+      1038: aload         11
+      1040: bipush        47
+      1042: invokestatic  #1150               // Method org/bouncycastle/tls/TlsUtils.processServerCertificateTypeExtension:(Lorg/bouncycastle/tls/crypto/TlsCrypto;Ljava/util/Hashtable;Ljava/util/Hashtable;S)S
+      1045: putfield      #906                // Field org/bouncycastle/tls/SecurityParameters.serverCertificateType:S
+      1048: aload_0
+      1049: aload         11
+      1051: getstatic     #952                // Field org/bouncycastle/tls/TlsProtocol.EXT_SessionTicket:Ljava/lang/Integer;
+      1054: bipush        47
+      1056: invokestatic  #1134               // Method org/bouncycastle/tls/TlsUtils.hasExpectedEmptyExtensionData:(Ljava/util/Hashtable;Ljava/lang/Integer;S)Z
+      1059: putfield      #925                // Field expectSessionTicket:Z
+      1062: aload         10
+      1064: ifnull        1078
+      1067: aload_0
+      1068: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+      1071: aload         11
+      1073: invokeinterface #1186,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.processServerExtensions:(Ljava/util/Hashtable;)V
+      1078: aload_0
+      1079: aload         7
+      1081: invokevirtual #1006               // Method org/bouncycastle/tls/SecurityParameters.getMaxFragmentLength:()S
+      1084: invokevirtual #1061               // Method applyMaxFragmentLengthExtension:(S)V
+      1087: aload         7
+      1089: invokevirtual #1009               // Method org/bouncycastle/tls/SecurityParameters.isResumedSession:()Z
+      1092: ifeq          1121
+      1095: aload         7
+      1097: aload_0
+      1098: getfield      #944                // Field sessionMasterSecret:Lorg/bouncycastle/tls/crypto/TlsSecret;
+      1101: putfield      #921                // Field org/bouncycastle/tls/SecurityParameters.masterSecret:Lorg/bouncycastle/tls/crypto/TlsSecret;
+      1104: aload_0
+      1105: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+      1108: aload_0
+      1109: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+      1112: invokestatic  #1146               // Method org/bouncycastle/tls/TlsUtils.initCipher:(Lorg/bouncycastle/tls/TlsContext;)Lorg/bouncycastle/tls/crypto/TlsCipher;
+      1115: invokevirtual #1002               // Method org/bouncycastle/tls/RecordStream.setPendingCipher:(Lorg/bouncycastle/tls/crypto/TlsCipher;)V
+      1118: goto          1138
+      1121: aload_0
+      1122: invokevirtual #1046               // Method invalidateSession:()V
+      1125: aload_0
+      1126: aload         7
+      1128: invokevirtual #1015               // Method org/bouncycastle/tls/SecurityParameters.getSessionID:()[B
+      1131: aconst_null
+      1132: invokestatic  #1145               // Method org/bouncycastle/tls/TlsUtils.importSession:([BLorg/bouncycastle/tls/SessionParameters;)Lorg/bouncycastle/tls/TlsSession;
+      1135: putfield      #943                // Field tlsSession:Lorg/bouncycastle/tls/TlsSession;
+      1138: return
+
+  protected void receive13CertificateRequest(java.io.ByteArrayInputStream, boolean) throws java.io.IOException;
+    Code:
+         0: iload_2
+         1: ifeq          14
+         4: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+         7: dup
+         8: bipush        80
+        10: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        13: athrow
+        14: aload_0
+        15: getfield      #926                // Field selectedPSK13:Z
+        18: ifeq          31
+        21: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        24: dup
+        25: bipush        10
+        27: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        30: athrow
+        31: aload_0
+        32: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        35: aload_1
+        36: invokestatic  #970                // Method org/bouncycastle/tls/CertificateRequest.parse:(Lorg/bouncycastle/tls/TlsContext;Ljava/io/InputStream;)Lorg/bouncycastle/tls/CertificateRequest;
+        39: astore_3
+        40: aload_1
+        41: invokestatic  #1064               // Method assertEmpty:(Ljava/io/ByteArrayInputStream;)V
+        44: aload_3
+        45: getstatic     #953                // Field org/bouncycastle/tls/TlsUtils.EMPTY_BYTES:[B
+        48: invokevirtual #969                // Method org/bouncycastle/tls/CertificateRequest.hasCertificateRequestContext:([B)Z
+        51: ifne          64
+        54: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        57: dup
+        58: bipush        47
+        60: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        63: athrow
+        64: aload_0
+        65: aload_3
+        66: putfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+        69: aload_0
+        70: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        73: invokevirtual #1038               // Method org/bouncycastle/tls/TlsClientContextImpl.getSecurityParametersHandshake:()Lorg/bouncycastle/tls/SecurityParameters;
+        76: aload_3
+        77: invokestatic  #1138               // Method org/bouncycastle/tls/TlsUtils.establishServerSigAlgs:(Lorg/bouncycastle/tls/SecurityParameters;Lorg/bouncycastle/tls/CertificateRequest;)V
+        80: return
+
+  protected void receive13EncryptedExtensions(java.io.ByteArrayInputStream) throws java.io.IOException;
+    Code:
+         0: aload_1
+         1: invokestatic  #1118               // Method org/bouncycastle/tls/TlsUtils.readOpaque16:(Ljava/io/InputStream;)[B
+         4: astore_2
+         5: aload_1
+         6: invokestatic  #1064               // Method assertEmpty:(Ljava/io/ByteArrayInputStream;)V
+         9: aload_0
+        10: bipush        8
+        12: aload_2
+        13: invokestatic  #1076               // Method readExtensionsData13:(I[B)Ljava/util/Hashtable;
+        16: putfield      #931                // Field serverExtensions:Ljava/util/Hashtable;
+        19: aload_0
+        20: getfield      #931                // Field serverExtensions:Ljava/util/Hashtable;
+        23: invokevirtual #964                // Method java/util/Hashtable.keys:()Ljava/util/Enumeration;
+        26: astore_3
+        27: aload_3
+        28: invokeinterface #1173,  1         // InterfaceMethod java/util/Enumeration.hasMoreElements:()Z
+        33: ifeq          100
+        36: aload_3
+        37: invokeinterface #1174,  1         // InterfaceMethod java/util/Enumeration.nextElement:()Ljava/lang/Object;
+        42: checkcast     #405                // class java/lang/Integer
+        45: astore        4
+        47: aconst_null
+        48: aload_0
+        49: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+        52: aload         4
+        54: invokestatic  #1133               // Method org/bouncycastle/tls/TlsUtils.getExtensionData:(Ljava/util/Hashtable;Ljava/lang/Integer;)[B
+        57: if_acmpne     97
+        60: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        63: dup
+        64: bipush        110
+        66: new           #406                // class java/lang/StringBuilder
+        69: dup
+        70: invokespecial #958                // Method java/lang/StringBuilder."<init>":()V
+        73: ldc_w         #390                // String Unrequested extension in EncryptedExtensions:
+        76: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+        79: aload         4
+        81: invokevirtual #956                // Method java/lang/Integer.intValue:()I
+        84: invokestatic  #980                // Method org/bouncycastle/tls/ExtensionType.getText:(I)Ljava/lang/String;
+        87: invokevirtual #961                // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;
+        90: invokevirtual #959                // Method java/lang/StringBuilder.toString:()Ljava/lang/String;
+        93: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+        96: athrow
+        97: goto          27
+       100: aload_0
+       101: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       104: invokevirtual #1038               // Method org/bouncycastle/tls/TlsClientContextImpl.getSecurityParametersHandshake:()Lorg/bouncycastle/tls/SecurityParameters;
+       107: astore_3
+       108: aload_3
+       109: aload_0
+       110: getfield      #931                // Field serverExtensions:Ljava/util/Hashtable;
+       113: invokestatic  #1105               // Method org/bouncycastle/tls/TlsExtensionsUtils.getALPNExtensionServer:(Ljava/util/Hashtable;)Lorg/bouncycastle/tls/ProtocolName;
+       116: putfield      #919                // Field org/bouncycastle/tls/SecurityParameters.applicationProtocol:Lorg/bouncycastle/tls/ProtocolName;
+       119: aload_3
+       120: iconst_1
+       121: putfield      #907                // Field org/bouncycastle/tls/SecurityParameters.applicationProtocolSet:Z
+       124: aload_0
+       125: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       128: astore        4
+       130: aload_0
+       131: getfield      #931                // Field serverExtensions:Ljava/util/Hashtable;
+       134: astore        5
+       136: aload_3
+       137: invokevirtual #1009               // Method org/bouncycastle/tls/SecurityParameters.isResumedSession:()Z
+       140: ifeq          155
+       143: aconst_null
+       144: astore        4
+       146: aload_0
+       147: getfield      #937                // Field sessionParameters:Lorg/bouncycastle/tls/SessionParameters;
+       150: invokevirtual #1029               // Method org/bouncycastle/tls/SessionParameters.readServerExtensions:()Ljava/util/Hashtable;
+       153: astore        5
+       155: aload_3
+       156: aload         4
+       158: aload         5
+       160: bipush        47
+       162: invokestatic  #1135               // Method org/bouncycastle/tls/TlsUtils.processMaxFragmentLengthExtension:(Ljava/util/Hashtable;Ljava/util/Hashtable;S)S
+       165: putfield      #905                // Field org/bouncycastle/tls/SecurityParameters.maxFragmentLength:S
+       168: aload_3
+       169: iconst_0
+       170: putfield      #908                // Field org/bouncycastle/tls/SecurityParameters.encryptThenMAC:Z
+       173: aload_3
+       174: iconst_0
+       175: putfield      #912                // Field org/bouncycastle/tls/SecurityParameters.truncatedHMac:Z
+       178: aload_3
+       179: invokevirtual #1009               // Method org/bouncycastle/tls/SecurityParameters.isResumedSession:()Z
+       182: ifne          246
+       185: aload_3
+       186: aload_0
+       187: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       190: getstatic     #950                // Field org/bouncycastle/tls/TlsExtensionsUtils.EXT_status_request:Ljava/lang/Integer;
+       193: invokevirtual #963                // Method java/util/Hashtable.containsKey:(Ljava/lang/Object;)Z
+       196: ifeq          203
+       199: iconst_1
+       200: goto          204
+       203: iconst_0
+       204: putfield      #903                // Field org/bouncycastle/tls/SecurityParameters.statusRequestVersion:I
+       207: aload_0
+       208: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       211: invokevirtual #1039               // Method org/bouncycastle/tls/TlsClientContextImpl.getCrypto:()Lorg/bouncycastle/tls/crypto/TlsCrypto;
+       214: astore        6
+       216: aload_3
+       217: aload         6
+       219: aload         4
+       221: aload         5
+       223: bipush        47
+       225: invokestatic  #1149               // Method org/bouncycastle/tls/TlsUtils.processClientCertificateTypeExtension13:(Lorg/bouncycastle/tls/crypto/TlsCrypto;Ljava/util/Hashtable;Ljava/util/Hashtable;S)S
+       228: putfield      #904                // Field org/bouncycastle/tls/SecurityParameters.clientCertificateType:S
+       231: aload_3
+       232: aload         6
+       234: aload         4
+       236: aload         5
+       238: bipush        47
+       240: invokestatic  #1151               // Method org/bouncycastle/tls/TlsUtils.processServerCertificateTypeExtension13:(Lorg/bouncycastle/tls/crypto/TlsCrypto;Ljava/util/Hashtable;Ljava/util/Hashtable;S)S
+       243: putfield      #906                // Field org/bouncycastle/tls/SecurityParameters.serverCertificateType:S
+       246: aload_0
+       247: iconst_0
+       248: putfield      #925                // Field expectSessionTicket:Z
+       251: aconst_null
+       252: aload         4
+       254: if_acmpeq     270
+       257: aload_0
+       258: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       261: aload_0
+       262: getfield      #931                // Field serverExtensions:Ljava/util/Hashtable;
+       265: invokeinterface #1186,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.processServerExtensions:(Ljava/util/Hashtable;)V
+       270: aload_0
+       271: aload_3
+       272: invokevirtual #1006               // Method org/bouncycastle/tls/SecurityParameters.getMaxFragmentLength:()S
+       275: invokevirtual #1061               // Method applyMaxFragmentLengthExtension:(S)V
+       278: return
+
+  protected void receive13NewSessionTicket(java.io.ByteArrayInputStream) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: invokevirtual #1058               // Method isApplicationDataReady:()Z
+         4: ifne          17
+         7: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        10: dup
+        11: bipush        10
+        13: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        16: athrow
+        17: aload_1
+        18: invokestatic  #1117               // Method org/bouncycastle/tls/TlsUtils.readUint32:(Ljava/io/InputStream;)J
+        21: pop2
+        22: aload_1
+        23: invokestatic  #1117               // Method org/bouncycastle/tls/TlsUtils.readUint32:(Ljava/io/InputStream;)J
+        26: pop2
+        27: aload_1
+        28: invokestatic  #1119               // Method org/bouncycastle/tls/TlsUtils.readOpaque8:(Ljava/io/InputStream;)[B
+        31: pop
+        32: aload_1
+        33: invokestatic  #1118               // Method org/bouncycastle/tls/TlsUtils.readOpaque16:(Ljava/io/InputStream;)[B
+        36: pop
+        37: aload_1
+        38: invokestatic  #1118               // Method org/bouncycastle/tls/TlsUtils.readOpaque16:(Ljava/io/InputStream;)[B
+        41: pop
+        42: aload_1
+        43: invokestatic  #1064               // Method assertEmpty:(Ljava/io/ByteArrayInputStream;)V
+        46: return
+
+  protected void receive13ServerCertificate(java.io.ByteArrayInputStream) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #926                // Field selectedPSK13:Z
+         4: ifeq          17
+         7: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        10: dup
+        11: bipush        10
+        13: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        16: athrow
+        17: aload_0
+        18: aload_0
+        19: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        22: aload_0
+        23: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+        26: aload_1
+        27: invokestatic  #1163               // Method org/bouncycastle/tls/TlsUtils.receive13ServerCertificate:(Lorg/bouncycastle/tls/TlsClientContext;Lorg/bouncycastle/tls/TlsClient;Ljava/io/ByteArrayInputStream;)Lorg/bouncycastle/tls/TlsAuthentication;
+        30: putfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+        33: aload_0
+        34: invokevirtual #1045               // Method handleServerCertificate:()V
+        37: return
+
+  protected void receive13ServerCertificateVerify(java.io.ByteArrayInputStream) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+         4: invokevirtual #1038               // Method org/bouncycastle/tls/TlsClientContextImpl.getSecurityParametersHandshake:()Lorg/bouncycastle/tls/SecurityParameters;
+         7: invokevirtual #1018               // Method org/bouncycastle/tls/SecurityParameters.getPeerCertificate:()Lorg/bouncycastle/tls/Certificate;
+        10: astore_2
+        11: aconst_null
+        12: aload_2
+        13: if_acmpeq     23
+        16: aload_2
+        17: invokevirtual #968                // Method org/bouncycastle/tls/Certificate.isEmpty:()Z
+        20: ifeq          33
+        23: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        26: dup
+        27: bipush        80
+        29: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        32: athrow
+        33: aload_0
+        34: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        37: aload_1
+        38: invokestatic  #972                // Method org/bouncycastle/tls/CertificateVerify.parse:(Lorg/bouncycastle/tls/TlsContext;Ljava/io/InputStream;)Lorg/bouncycastle/tls/CertificateVerify;
+        41: astore_3
+        42: aload_1
+        43: invokestatic  #1064               // Method assertEmpty:(Ljava/io/ByteArrayInputStream;)V
+        46: aload_0
+        47: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        50: aload_0
+        51: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+        54: aload_3
+        55: invokestatic  #1153               // Method org/bouncycastle/tls/TlsUtils.verify13CertificateVerifyServer:(Lorg/bouncycastle/tls/TlsClientContext;Lorg/bouncycastle/tls/TlsHandshakeHash;Lorg/bouncycastle/tls/CertificateVerify;)V
+        58: return
+
+  protected void receive13ServerFinished(java.io.ByteArrayInputStream) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: aload_1
+         2: invokevirtual #1065               // Method process13FinishedMessage:(Ljava/io/ByteArrayInputStream;)V
+         5: return
+
+  protected void receiveCertificateRequest(java.io.ByteArrayInputStream) throws java.io.IOException;
+    Code:
+         0: aconst_null
+         1: aload_0
+         2: getfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+         5: if_acmpne     18
+         8: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        11: dup
+        12: bipush        40
+        14: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        17: athrow
+        18: aload_0
+        19: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        22: aload_1
+        23: invokestatic  #970                // Method org/bouncycastle/tls/CertificateRequest.parse:(Lorg/bouncycastle/tls/TlsContext;Ljava/io/InputStream;)Lorg/bouncycastle/tls/CertificateRequest;
+        26: astore_2
+        27: aload_1
+        28: invokestatic  #1064               // Method assertEmpty:(Ljava/io/ByteArrayInputStream;)V
+        31: aload_0
+        32: aload_2
+        33: aload_0
+        34: getfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+        37: invokestatic  #1152               // Method org/bouncycastle/tls/TlsUtils.validateCertificateRequest:(Lorg/bouncycastle/tls/CertificateRequest;Lorg/bouncycastle/tls/TlsKeyExchange;)Lorg/bouncycastle/tls/CertificateRequest;
+        40: putfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+        43: return
+
+  protected void receiveNewSessionTicket(java.io.ByteArrayInputStream) throws java.io.IOException;
+    Code:
+         0: aload_1
+         1: invokestatic  #988                // Method org/bouncycastle/tls/NewSessionTicket.parse:(Ljava/io/InputStream;)Lorg/bouncycastle/tls/NewSessionTicket;
+         4: astore_2
+         5: aload_1
+         6: invokestatic  #1064               // Method assertEmpty:(Ljava/io/ByteArrayInputStream;)V
+         9: aload_0
+        10: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+        13: aload_2
+        14: invokeinterface #1189,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifyNewSessionTicket:(Lorg/bouncycastle/tls/NewSessionTicket;)V
+        19: return
+
+  protected org.bouncycastle.tls.ServerHello receiveServerHelloMessage(java.io.ByteArrayInputStream) throws java.io.IOException;
+    Code:
+         0: aload_1
+         1: invokestatic  #1026               // Method org/bouncycastle/tls/ServerHello.parse:(Ljava/io/ByteArrayInputStream;)Lorg/bouncycastle/tls/ServerHello;
+         4: areturn
+
+  protected void send13ClientHelloRetry() throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+         4: invokevirtual #976                // Method org/bouncycastle/tls/ClientHello.getExtensions:()Ljava/util/Hashtable;
+         7: astore_1
+         8: aload_1
+         9: getstatic     #945                // Field org/bouncycastle/tls/TlsExtensionsUtils.EXT_cookie:Ljava/lang/Integer;
+        12: invokevirtual #966                // Method java/util/Hashtable.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+        15: pop
+        16: aload_1
+        17: getstatic     #946                // Field org/bouncycastle/tls/TlsExtensionsUtils.EXT_early_data:Ljava/lang/Integer;
+        20: invokevirtual #966                // Method java/util/Hashtable.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+        23: pop
+        24: aload_1
+        25: getstatic     #948                // Field org/bouncycastle/tls/TlsExtensionsUtils.EXT_key_share:Ljava/lang/Integer;
+        28: invokevirtual #966                // Method java/util/Hashtable.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+        31: pop
+        32: aload_1
+        33: getstatic     #949                // Field org/bouncycastle/tls/TlsExtensionsUtils.EXT_pre_shared_key:Ljava/lang/Integer;
+        36: invokevirtual #966                // Method java/util/Hashtable.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+        39: pop
+        40: aconst_null
+        41: aload_0
+        42: getfield      #927                // Field retryCookie:[B
+        45: if_acmpeq     61
+        48: aload_1
+        49: aload_0
+        50: getfield      #927                // Field retryCookie:[B
+        53: invokestatic  #1101               // Method org/bouncycastle/tls/TlsExtensionsUtils.addCookieExtension:(Ljava/util/Hashtable;[B)V
+        56: aload_0
+        57: aconst_null
+        58: putfield      #927                // Field retryCookie:[B
+        61: aconst_null
+        62: aload_0
+        63: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+        66: if_acmpeq     103
+        69: aload_0
+        70: aload_0
+        71: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        74: aload_0
+        75: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+        78: aload_1
+        79: invokestatic  #1161               // Method org/bouncycastle/tls/TlsUtils.addPreSharedKeyToClientHelloRetry:(Lorg/bouncycastle/tls/TlsClientContext;Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;Ljava/util/Hashtable;)Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+        82: putfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+        85: aconst_null
+        86: aload_0
+        87: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+        90: if_acmpne     103
+        93: aload_0
+        94: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+        97: aconst_null
+        98: invokeinterface #1193,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifySelectedPSK:(Lorg/bouncycastle/tls/TlsPSK;)V
+       103: aload_0
+       104: getfield      #922                // Field retryGroup:I
+       107: ifge          120
+       110: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       113: dup
+       114: bipush        80
+       116: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+       119: athrow
+       120: aload_0
+       121: aload_0
+       122: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       125: aload_1
+       126: aload_0
+       127: getfield      #922                // Field retryGroup:I
+       130: invokestatic  #1147               // Method org/bouncycastle/tls/TlsUtils.addKeyShareToClientHelloRetry:(Lorg/bouncycastle/tls/TlsClientContext;Ljava/util/Hashtable;I)Ljava/util/Hashtable;
+       133: putfield      #929                // Field clientAgreements:Ljava/util/Hashtable;
+       136: aload_0
+       137: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+       140: iconst_1
+       141: invokevirtual #1000               // Method org/bouncycastle/tls/RecordStream.setIgnoreChangeCipherSpec:(Z)V
+       144: aload_0
+       145: invokevirtual #1050               // Method sendChangeCipherSpecMessage:()V
+       148: aload_0
+       149: invokevirtual #1052               // Method sendClientHelloMessage:()V
+       152: return
+
+  protected void sendCertificateVerifyMessage(org.bouncycastle.tls.DigitallySigned) throws java.io.IOException;
+    Code:
+         0: new           #418                // class org/bouncycastle/tls/HandshakeMessageOutput
+         3: dup
+         4: bipush        15
+         6: invokespecial #982                // Method org/bouncycastle/tls/HandshakeMessageOutput."<init>":(S)V
+         9: astore_2
+        10: aload_1
+        11: aload_2
+        12: invokevirtual #979                // Method org/bouncycastle/tls/DigitallySigned.encode:(Ljava/io/OutputStream;)V
+        15: aload_2
+        16: aload_0
+        17: invokevirtual #984                // Method org/bouncycastle/tls/HandshakeMessageOutput.send:(Lorg/bouncycastle/tls/TlsProtocol;)V
+        20: return
+
+  protected void sendClientHello() throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+         4: invokevirtual #1038               // Method org/bouncycastle/tls/TlsClientContextImpl.getSecurityParametersHandshake:()Lorg/bouncycastle/tls/SecurityParameters;
+         7: astore_1
+         8: aload_0
+         9: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+        12: invokeinterface #1190,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.getProtocolVersions:()[Lorg/bouncycastle/tls/ProtocolVersion;
+        17: astore_2
+        18: aload_1
+        19: invokevirtual #1008               // Method org/bouncycastle/tls/SecurityParameters.isRenegotiating:()Z
+        22: ifne          58
+        25: aload_2
+        26: getstatic     #898                // Field org/bouncycastle/tls/ProtocolVersion.SSLv3:Lorg/bouncycastle/tls/ProtocolVersion;
+        29: invokestatic  #997                // Method org/bouncycastle/tls/ProtocolVersion.contains:([Lorg/bouncycastle/tls/ProtocolVersion;Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        32: ifeq          48
+        35: aload_0
+        36: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+        39: getstatic     #898                // Field org/bouncycastle/tls/ProtocolVersion.SSLv3:Lorg/bouncycastle/tls/ProtocolVersion;
+        42: invokevirtual #1001               // Method org/bouncycastle/tls/RecordStream.setWriteVersion:(Lorg/bouncycastle/tls/ProtocolVersion;)V
+        45: goto          58
+        48: aload_0
+        49: getfield      #936                // Field recordStream:Lorg/bouncycastle/tls/RecordStream;
+        52: getstatic     #899                // Field org/bouncycastle/tls/ProtocolVersion.TLSv10:Lorg/bouncycastle/tls/ProtocolVersion;
+        55: invokevirtual #1001               // Method org/bouncycastle/tls/RecordStream.setWriteVersion:(Lorg/bouncycastle/tls/ProtocolVersion;)V
+        58: aload_2
+        59: invokestatic  #995                // Method org/bouncycastle/tls/ProtocolVersion.getEarliestTLS:([Lorg/bouncycastle/tls/ProtocolVersion;)Lorg/bouncycastle/tls/ProtocolVersion;
+        62: astore_3
+        63: aload_2
+        64: invokestatic  #996                // Method org/bouncycastle/tls/ProtocolVersion.getLatestTLS:([Lorg/bouncycastle/tls/ProtocolVersion;)Lorg/bouncycastle/tls/ProtocolVersion;
+        67: astore        4
+        69: aload         4
+        71: invokestatic  #994                // Method org/bouncycastle/tls/ProtocolVersion.isSupportedTLSVersionClient:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        74: ifne          87
+        77: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        80: dup
+        81: bipush        80
+        83: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        86: athrow
+        87: aload_0
+        88: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        91: aload         4
+        93: invokevirtual #1033               // Method org/bouncycastle/tls/TlsClientContextImpl.setClientVersion:(Lorg/bouncycastle/tls/ProtocolVersion;)V
+        96: aload_0
+        97: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       100: aload_2
+       101: invokevirtual #1035               // Method org/bouncycastle/tls/TlsClientContextImpl.setClientSupportedVersions:([Lorg/bouncycastle/tls/ProtocolVersion;)V
+       104: getstatic     #900                // Field org/bouncycastle/tls/ProtocolVersion.TLSv12:Lorg/bouncycastle/tls/ProtocolVersion;
+       107: aload_3
+       108: invokevirtual #992                // Method org/bouncycastle/tls/ProtocolVersion.isEqualOrLaterVersionOf:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       111: istore        5
+       113: getstatic     #901                // Field org/bouncycastle/tls/ProtocolVersion.TLSv13:Lorg/bouncycastle/tls/ProtocolVersion;
+       116: aload         4
+       118: invokevirtual #991                // Method org/bouncycastle/tls/ProtocolVersion.isEqualOrEarlierVersionOf:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       121: istore        6
+       123: iload         6
+       125: ifne          144
+       128: aload_0
+       129: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       132: invokeinterface #1180,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.shouldUseGMTUnixTime:()Z
+       137: ifeq          144
+       140: iconst_1
+       141: goto          145
+       144: iconst_0
+       145: istore        7
+       147: aload_1
+       148: iload         7
+       150: aload_0
+       151: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       154: invokestatic  #1087               // Method createRandomBlock:(ZLorg/bouncycastle/tls/TlsContext;)[B
+       157: putfield      #913                // Field org/bouncycastle/tls/SecurityParameters.clientRandom:[B
+       160: iload         5
+       162: ifeq          177
+       165: aload_0
+       166: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       169: invokeinterface #1194,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.getSessionToResume:()Lorg/bouncycastle/tls/TlsSession;
+       174: goto          178
+       177: aconst_null
+       178: astore        7
+       180: aload_0
+       181: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       184: invokeinterface #1181,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.getCipherSuites:()[I
+       189: astore        8
+       191: aload_0
+       192: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       195: invokeinterface #1176,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.isFallback:()Z
+       200: istore        9
+       202: aload_0
+       203: aload_0
+       204: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       207: invokeinterface #1185,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.getClientExtensions:()Ljava/util/Hashtable;
+       212: invokestatic  #1102               // Method org/bouncycastle/tls/TlsExtensionsUtils.ensureExtensionsInitialised:(Ljava/util/Hashtable;)Ljava/util/Hashtable;
+       215: putfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       218: aload_0
+       219: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       222: invokeinterface #1179,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.shouldUseExtendedMasterSecret:()Z
+       227: istore        10
+       229: aload_0
+       230: aload         7
+       232: invokevirtual #1088               // Method establishSession:(Lorg/bouncycastle/tls/TlsSession;)Z
+       235: pop
+       236: aload_0
+       237: getfield      #943                // Field tlsSession:Lorg/bouncycastle/tls/TlsSession;
+       240: invokestatic  #1132               // Method org/bouncycastle/tls/TlsUtils.getSessionID:(Lorg/bouncycastle/tls/TlsSession;)[B
+       243: astore        11
+       245: aload         11
+       247: arraylength
+       248: ifle          271
+       251: aload         8
+       253: aload_0
+       254: getfield      #937                // Field sessionParameters:Lorg/bouncycastle/tls/SessionParameters;
+       257: invokevirtual #1027               // Method org/bouncycastle/tls/SessionParameters.getCipherSuite:()I
+       260: invokestatic  #1169               // Method org/bouncycastle/util/Arrays.contains:([II)Z
+       263: ifne          271
+       266: getstatic     #953                // Field org/bouncycastle/tls/TlsUtils.EMPTY_BYTES:[B
+       269: astore        11
+       271: aconst_null
+       272: astore        12
+       274: aload         11
+       276: arraylength
+       277: ifle          303
+       280: aload_0
+       281: getfield      #937                // Field sessionParameters:Lorg/bouncycastle/tls/SessionParameters;
+       284: invokevirtual #1030               // Method org/bouncycastle/tls/SessionParameters.getNegotiatedVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+       287: astore        12
+       289: aload_2
+       290: aload         12
+       292: invokestatic  #997                // Method org/bouncycastle/tls/ProtocolVersion.contains:([Lorg/bouncycastle/tls/ProtocolVersion;Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       295: ifne          303
+       298: getstatic     #953                // Field org/bouncycastle/tls/TlsUtils.EMPTY_BYTES:[B
+       301: astore        11
+       303: aload         11
+       305: arraylength
+       306: ifle          367
+       309: aload         12
+       311: invokestatic  #1122               // Method org/bouncycastle/tls/TlsUtils.isExtendedMasterSecretOptional:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       314: ifeq          367
+       317: iload         10
+       319: ifeq          352
+       322: aload_0
+       323: getfield      #937                // Field sessionParameters:Lorg/bouncycastle/tls/SessionParameters;
+       326: invokevirtual #1028               // Method org/bouncycastle/tls/SessionParameters.isExtendedMasterSecret:()Z
+       329: ifne          367
+       332: aload_0
+       333: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       336: invokeinterface #1175,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.allowLegacyResumption:()Z
+       341: ifne          367
+       344: getstatic     #953                // Field org/bouncycastle/tls/TlsUtils.EMPTY_BYTES:[B
+       347: astore        11
+       349: goto          367
+       352: aload_0
+       353: getfield      #937                // Field sessionParameters:Lorg/bouncycastle/tls/SessionParameters;
+       356: invokevirtual #1028               // Method org/bouncycastle/tls/SessionParameters.isExtendedMasterSecret:()Z
+       359: ifeq          367
+       362: getstatic     #953                // Field org/bouncycastle/tls/TlsUtils.EMPTY_BYTES:[B
+       365: astore        11
+       367: aload         11
+       369: arraylength
+       370: iconst_1
+       371: if_icmpge     378
+       374: aload_0
+       375: invokevirtual #1043               // Method cancelSession:()V
+       378: aload_0
+       379: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       382: aload_0
+       383: getfield      #943                // Field tlsSession:Lorg/bouncycastle/tls/TlsSession;
+       386: invokeinterface #1195,  2         // InterfaceMethod org/bouncycastle/tls/TlsClient.notifySessionToResume:(Lorg/bouncycastle/tls/TlsSession;)V
+       391: aload         4
+       393: astore        13
+       395: iload         6
+       397: ifeq          448
+       400: getstatic     #900                // Field org/bouncycastle/tls/ProtocolVersion.TLSv12:Lorg/bouncycastle/tls/ProtocolVersion;
+       403: astore        13
+       405: aload_0
+       406: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       409: aload_2
+       410: invokestatic  #1107               // Method org/bouncycastle/tls/TlsExtensionsUtils.addSupportedVersionsExtensionClient:(Ljava/util/Hashtable;[Lorg/bouncycastle/tls/ProtocolVersion;)V
+       413: aload         11
+       415: arraylength
+       416: iconst_1
+       417: if_icmpge     448
+       420: aload_0
+       421: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       424: invokeinterface #1178,  1         // InterfaceMethod org/bouncycastle/tls/TlsClient.shouldUseCompatibilityMode:()Z
+       429: ifeq          448
+       432: aload_0
+       433: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       436: invokevirtual #1041               // Method org/bouncycastle/tls/TlsClientContextImpl.getNonceGenerator:()Lorg/bouncycastle/tls/crypto/TlsNonceGenerator;
+       439: bipush        32
+       441: invokeinterface #1213,  2         // InterfaceMethod org/bouncycastle/tls/crypto/TlsNonceGenerator.generateNonce:(I)[B
+       446: astore        11
+       448: aload_0
+       449: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       452: aload         13
+       454: invokevirtual #1034               // Method org/bouncycastle/tls/TlsClientContextImpl.setRSAPreMasterSecretVersion:(Lorg/bouncycastle/tls/ProtocolVersion;)V
+       457: aload_1
+       458: aload_0
+       459: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       462: invokestatic  #1103               // Method org/bouncycastle/tls/TlsExtensionsUtils.getServerNameExtensionClient:(Ljava/util/Hashtable;)Ljava/util/Vector;
+       465: putfield      #918                // Field org/bouncycastle/tls/SecurityParameters.clientServerNames:Ljava/util/Vector;
+       468: aload         4
+       470: invokestatic  #1123               // Method org/bouncycastle/tls/TlsUtils.isSignatureAlgorithmsExtensionAllowed:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       473: ifeq          484
+       476: aload_1
+       477: aload_0
+       478: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       481: invokestatic  #1137               // Method org/bouncycastle/tls/TlsUtils.establishClientSigAlgs:(Lorg/bouncycastle/tls/SecurityParameters;Ljava/util/Hashtable;)V
+       484: aload_1
+       485: aload_0
+       486: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       489: invokestatic  #1100               // Method org/bouncycastle/tls/TlsExtensionsUtils.getSupportedGroupsExtension:(Ljava/util/Hashtable;)[I
+       492: putfield      #917                // Field org/bouncycastle/tls/SecurityParameters.clientSupportedGroups:[I
+       495: aload_0
+       496: aload_0
+       497: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       500: aload_0
+       501: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       504: aload_0
+       505: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       508: aload         8
+       510: invokestatic  #1162               // Method org/bouncycastle/tls/TlsUtils.addPreSharedKeyToClientHello:(Lorg/bouncycastle/tls/TlsClientContext;Lorg/bouncycastle/tls/TlsClient;Ljava/util/Hashtable;[I)Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       513: putfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       516: aload_0
+       517: aload_0
+       518: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       521: aload_0
+       522: getfield      #939                // Field tlsClient:Lorg/bouncycastle/tls/TlsClient;
+       525: aload_0
+       526: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       529: invokestatic  #1159               // Method org/bouncycastle/tls/TlsUtils.addKeyShareToClientHello:(Lorg/bouncycastle/tls/TlsClientContext;Lorg/bouncycastle/tls/TlsClient;Ljava/util/Hashtable;)Ljava/util/Hashtable;
+       532: putfield      #929                // Field clientAgreements:Ljava/util/Hashtable;
+       535: iload         10
+       537: ifeq          557
+       540: aload_2
+       541: invokestatic  #1126               // Method org/bouncycastle/tls/TlsUtils.isExtendedMasterSecretOptional:([Lorg/bouncycastle/tls/ProtocolVersion;)Z
+       544: ifeq          557
+       547: aload_0
+       548: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       551: invokestatic  #1095               // Method org/bouncycastle/tls/TlsExtensionsUtils.addExtendedMasterSecretExtension:(Ljava/util/Hashtable;)V
+       554: goto          568
+       557: aload_0
+       558: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       561: getstatic     #947                // Field org/bouncycastle/tls/TlsExtensionsUtils.EXT_extended_master_secret:Ljava/lang/Integer;
+       564: invokevirtual #966                // Method java/util/Hashtable.remove:(Ljava/lang/Object;)Ljava/lang/Object;
+       567: pop
+       568: aload_1
+       569: invokevirtual #1008               // Method org/bouncycastle/tls/SecurityParameters.isRenegotiating:()Z
+       572: ifeq          650
+       575: aload_1
+       576: invokevirtual #1010               // Method org/bouncycastle/tls/SecurityParameters.isSecureRenegotiation:()Z
+       579: ifne          595
+       582: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       585: dup
+       586: bipush        80
+       588: ldc_w         #385                // String Renegotiation requires secure_renegotiation
+       591: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       594: athrow
+       595: aload         8
+       597: sipush        255
+       600: invokestatic  #1169               // Method org/bouncycastle/util/Arrays.contains:([II)Z
+       603: ifeq          619
+       606: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+       609: dup
+       610: bipush        80
+       612: ldc_w         #384                // String Renegotiation cannot use TLS_EMPTY_RENEGOTIATION_INFO_SCSV
+       615: invokespecial #1109               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+       618: athrow
+       619: aload_0
+       620: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+       623: invokevirtual #1037               // Method org/bouncycastle/tls/TlsClientContextImpl.getSecurityParametersConnection:()Lorg/bouncycastle/tls/SecurityParameters;
+       626: astore        14
+       628: aload_0
+       629: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       632: getstatic     #928                // Field EXT_RenegotiationInfo:Ljava/lang/Integer;
+       635: aload         14
+       637: invokevirtual #1012               // Method org/bouncycastle/tls/SecurityParameters.getLocalVerifyData:()[B
+       640: invokestatic  #1063               // Method createRenegotiationInfo:([B)[B
+       643: invokevirtual #967                // Method java/util/Hashtable.put:(Ljava/lang/Object;Ljava/lang/Object;)Ljava/lang/Object;
+       646: pop
+       647: goto          714
+       650: iload         5
+       652: ifeq          714
+       655: aconst_null
+       656: aload_0
+       657: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       660: getstatic     #928                // Field EXT_RenegotiationInfo:Ljava/lang/Integer;
+       663: invokestatic  #1133               // Method org/bouncycastle/tls/TlsUtils.getExtensionData:(Ljava/util/Hashtable;Ljava/lang/Integer;)[B
+       666: if_acmpne     673
+       669: iconst_1
+       670: goto          674
+       673: iconst_0
+       674: istore        14
+       676: aload         8
+       678: sipush        255
+       681: invokestatic  #1169               // Method org/bouncycastle/util/Arrays.contains:([II)Z
+       684: ifne          691
+       687: iconst_1
+       688: goto          692
+       691: iconst_0
+       692: istore        15
+       694: iload         14
+       696: ifeq          714
+       699: iload         15
+       701: ifeq          714
+       704: aload         8
+       706: sipush        255
+       709: invokestatic  #1170               // Method org/bouncycastle/util/Arrays.append:([II)[I
+       712: astore        8
+       714: iload         9
+       716: ifeq          740
+       719: aload         8
+       721: sipush        22016
+       724: invokestatic  #1169               // Method org/bouncycastle/util/Arrays.contains:([II)Z
+       727: ifne          740
+       730: aload         8
+       732: sipush        22016
+       735: invokestatic  #1170               // Method org/bouncycastle/util/Arrays.append:([II)[I
+       738: astore        8
+       740: aconst_null
+       741: aload_0
+       742: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       745: if_acmpne     752
+       748: iconst_0
+       749: goto          759
+       752: aload_0
+       753: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+       756: getfield      #894                // Field org/bouncycastle/tls/OfferedPsks$BindersConfig.bindersSize:I
+       759: istore        14
+       761: aload_0
+       762: new           #414                // class org/bouncycastle/tls/ClientHello
+       765: dup
+       766: aload         13
+       768: aload_1
+       769: invokevirtual #1011               // Method org/bouncycastle/tls/SecurityParameters.getClientRandom:()[B
+       772: aload         11
+       774: aconst_null
+       775: aload         8
+       777: aload_0
+       778: getfield      #930                // Field clientExtensions:Ljava/util/Hashtable;
+       781: iload         14
+       783: invokespecial #978                // Method org/bouncycastle/tls/ClientHello."<init>":(Lorg/bouncycastle/tls/ProtocolVersion;[B[B[B[ILjava/util/Hashtable;I)V
+       786: putfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+       789: aload_0
+       790: invokevirtual #1052               // Method sendClientHelloMessage:()V
+       793: return
+
+  protected void sendClientHelloMessage() throws java.io.IOException;
+    Code:
+         0: new           #418                // class org/bouncycastle/tls/HandshakeMessageOutput
+         3: dup
+         4: iconst_1
+         5: invokespecial #982                // Method org/bouncycastle/tls/HandshakeMessageOutput."<init>":(S)V
+         8: astore_1
+         9: aload_0
+        10: getfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+        13: aload_0
+        14: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        17: aload_1
+        18: invokevirtual #977                // Method org/bouncycastle/tls/ClientHello.encode:(Lorg/bouncycastle/tls/TlsContext;Ljava/io/OutputStream;)V
+        21: aload_1
+        22: aload_0
+        23: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+        26: aload_0
+        27: getfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+        30: invokevirtual #973                // Method org/bouncycastle/tls/ClientHello.getBindersSize:()I
+        33: invokevirtual #983                // Method org/bouncycastle/tls/HandshakeMessageOutput.prepareClientHello:(Lorg/bouncycastle/tls/TlsHandshakeHash;I)V
+        36: aconst_null
+        37: aload_0
+        38: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+        41: if_acmpeq     63
+        44: aload_1
+        45: aload_0
+        46: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        49: invokevirtual #1039               // Method org/bouncycastle/tls/TlsClientContextImpl.getCrypto:()Lorg/bouncycastle/tls/crypto/TlsCrypto;
+        52: aload_0
+        53: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+        56: aload_0
+        57: getfield      #935                // Field clientBinders:Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;
+        60: invokestatic  #989                // Method org/bouncycastle/tls/OfferedPsks.encodeBinders:(Ljava/io/OutputStream;Lorg/bouncycastle/tls/crypto/TlsCrypto;Lorg/bouncycastle/tls/TlsHandshakeHash;Lorg/bouncycastle/tls/OfferedPsks$BindersConfig;)V
+        63: aload_1
+        64: aload_0
+        65: aload_0
+        66: getfield      #941                // Field handshakeHash:Lorg/bouncycastle/tls/TlsHandshakeHash;
+        69: aload_0
+        70: getfield      #934                // Field clientHello:Lorg/bouncycastle/tls/ClientHello;
+        73: invokevirtual #973                // Method org/bouncycastle/tls/ClientHello.getBindersSize:()I
+        76: invokevirtual #985                // Method org/bouncycastle/tls/HandshakeMessageOutput.sendClientHello:(Lorg/bouncycastle/tls/TlsClientProtocol;Lorg/bouncycastle/tls/TlsHandshakeHash;I)V
+        79: return
+
+  protected void sendClientKeyExchange() throws java.io.IOException;
+    Code:
+         0: new           #418                // class org/bouncycastle/tls/HandshakeMessageOutput
+         3: dup
+         4: bipush        16
+         6: invokespecial #982                // Method org/bouncycastle/tls/HandshakeMessageOutput."<init>":(S)V
+         9: astore_1
+        10: aload_0
+        11: getfield      #942                // Field keyExchange:Lorg/bouncycastle/tls/TlsKeyExchange;
+        14: aload_1
+        15: invokeinterface #1207,  2         // InterfaceMethod org/bouncycastle/tls/TlsKeyExchange.generateClientKeyExchange:(Ljava/io/OutputStream;)V
+        20: aload_1
+        21: aload_0
+        22: invokevirtual #984                // Method org/bouncycastle/tls/HandshakeMessageOutput.send:(Lorg/bouncycastle/tls/TlsProtocol;)V
+        25: return
+
+  protected void skip13CertificateRequest() throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: aconst_null
+         2: putfield      #932                // Field certificateRequest:Lorg/bouncycastle/tls/CertificateRequest;
+         5: return
+
+  protected void skip13ServerCertificate() throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: getfield      #926                // Field selectedPSK13:Z
+         4: ifne          17
+         7: new           #435                // class org/bouncycastle/tls/TlsFatalAlert
+        10: dup
+        11: bipush        10
+        13: invokespecial #1108               // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(S)V
+        16: athrow
+        17: aload_0
+        18: aload_0
+        19: getfield      #940                // Field tlsClientContext:Lorg/bouncycastle/tls/TlsClientContextImpl;
+        22: invokestatic  #1143               // Method org/bouncycastle/tls/TlsUtils.skip13ServerCertificate:(Lorg/bouncycastle/tls/TlsClientContext;)Lorg/bouncycastle/tls/TlsAuthentication;
+        25: putfield      #938                // Field authentication:Lorg/bouncycastle/tls/TlsAuthentication;
+        28: return
+}

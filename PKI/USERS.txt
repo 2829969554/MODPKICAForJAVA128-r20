@@ -3,3 +3,4 @@
 # 删除 = 行首加 # 注释（不真正删除）
 admin666 admin666 E admin admin
 admin888 admin888 E admin admin
+localhost localhost E admin 
