@@ -1,0 +1,174 @@
+CRL 已生成: 7712d9352e6038ce78e57e3f572cec74 (算法 RSA/sha256, 吊销 0 条)
+CRL 生成完成，共处理颁发者 1 个
+[WebAdmin] 提示：管理界面绑定 0.0.0.0:8080（非仅本机），所有 /api/* 写操作（含私钥下载）无需认证即可访问；如需仅本机访问请加 -Dmodpkica.admin.bind=127.0.0.1
+MOD PKI CA 可视化管理界面启动: http://localhost:8080
+MOD PKI CA RADIUS服务已自动启动: 认证UDP/1812 计费UDP/1813（RFC 2138/2139/2865-2869 + EAP，账号 PKI/USERS.txt，可在面板关闭）
+MOD PKI CA PPPoE服务已自动启动: Discovery UDP/512 Session UDP/513（RFC 2516 + PPP LCP/PAP/CHAP，账号 PKI/USERS.txt，可在面板关闭）
+MOD PKI CA Server is running on http://localhost:80
+MOD PKI CA 服务端启动: http://localhost:80
+MOD PKI CA OCSP服务启动: http://localhost:80/OCSP（RSA/ECC/SM2，摘要自适应 SHA1/SHA256/SHA384/SHA512/SM3）
+MOD PKI CA 微软Authenticode时间戳SHA1 服务启动: http://localhost:80/timestamp/sha1
+MOD PKI CA 微软Authenticode时间戳SHA256 服务启动: http://localhost:80/timestamp（SM2/SM3 自适应）
+MOD PKI CA RFC3161文档签名专用时间戳(SHA1&SHA256&SM3自适应) 服务启动: http://localhost:80/rfc3161
+MOD PKI CA CT日志服务启动: http://localhost:80/ct/add（RFC 6962 / Certificate Transparency，接收 PEM 预证书+颁发者证书）
+MOD PKI CA CT标准API启动(RFC 6962 §4): http://localhost:80/ct/v1/add-chain | add-pre-chain | get-sth | get-roots | get-entries | get-proof-by-hash | get-sth-consistency | get-entry-and-proof
+MOD PKI CA 监听端口  :80
+如需修改配置请编辑./PKI/CONFIG.txt文件
+本程序作者：@魔帝本尊  QQ：2829969554
+MOD PKI CA SERVER支持x.509 证书管理、CRL吊销列表、时间戳服务器、OCSP在线状态协议、自动化签发。
+本系统仅供学习 x.509 ASN.1编码使用。作者不承担任何由此产生的一切问题。
+[TlsSrv] getSupportedVersions tls13=false
+[BlockingInput] 取到数据 len=155 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.2
+[TlsSrv] getCredentials tls13=false ver=TLS 1.2
+[TlsSrv] getCertificateRequest tls13=false ver=TLS 1.2
+[handleEapTls] feed后 pollOutput=3075B done=false ok=false err= hex=16030300370200003303036ace2d5da5ab7ac16e3e309991633acfee8cac602111e37ebfc444888ebb057e00c02f00000bff01000100000b00020100
+[BlockingInput] 取到数据 len=1900 eof=false
+[TlsSrv] notifyHandshakeComplete
+[EAP-TLS] MSK 导出成功，MPPE-Recv(前16B)=d90fc3eff6eb5c2bc79c206cb8af16b5
+[handleEapTls] feed后 pollOutput=51B done=true ok=true err= hex=14030300010116030300280000000000000000145c6a7d3b25fc47dfd70ee53f106aba6a9200b06aafeed0cac62ffff8b29010
+[TlsSrv] getSupportedVersions tls13=false
+[BlockingInput] 取到数据 len=151 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.2
+[TlsSrv] getCredentials tls13=false ver=TLS 1.2
+[TlsSrv] getCertificateRequest tls13=false ver=TLS 1.2
+[handleEapTls] feed后 pollOutput=3112B done=false ok=false err= hex=160303003b0200003703036ace2d621842b83224d52cb069f9cce4230c23daeec97d2247a1c0982ff158c000c02f00000f00170000ff01000100000b
+[TlsSrv] getSupportedVersions tls13=false
+[BlockingInput] 取到数据 len=151 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.2
+[TlsSrv] getCredentials tls13=false ver=TLS 1.2
+[TlsSrv] getCertificateRequest tls13=false ver=TLS 1.2
+[handleEapTls] feed后 pollOutput=3112B done=false ok=false err= hex=160303003b0200003703036ace2d6379d47c1089034b9f4a21fc831fac90a7ef6f0c636fe696fc7530942b00c02f00000f00170000ff01000100000b
+[TlsSrv] getSupportedVersions tls13=false
+[BlockingInput] 取到数据 len=149 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.2
+[TlsSrv] getCredentials tls13=false ver=TLS 1.2
+[TlsSrv] getCertificateRequest tls13=false ver=TLS 1.2
+[handleEapTls] feed后 pollOutput=3112B done=false ok=false err= hex=160303003b0200003703036ace2d647def00ea41d33aedee7595c152fad2938d4a2a73fa825fbdd8d7cc3b00c02f00000f00170000ff01000100000b
+[TlsSrv] getSupportedVersions tls13=false
+[BlockingInput] 取到数据 len=149 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.2
+[TlsSrv] getCredentials tls13=false ver=TLS 1.2
+[TlsSrv] getCertificateRequest tls13=false ver=TLS 1.2
+[handleEapTls] feed后 pollOutput=3112B done=false ok=false err= hex=160303003b0200003703036ace2d64d9aebf86020a7ad7dffb9591efa724617d519e9ad8fe3a00bbc911ba00c02f00000f00170000ff01000100000b
+[TlsSrv] getSupportedVersions tls13=false
+[TlsSrv] getSupportedVersions tls13=false
+[BlockingInput] 取到数据 len=149 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.2
+[TlsSrv] getCredentials tls13=false ver=TLS 1.2
+[TlsSrv] getCertificateRequest tls13=false ver=TLS 1.2
+[handleEapTls] feed后 pollOutput=3112B done=false ok=false err= hex=160303003b0200003703036ace2d651c0158d259eb0662b588ffcbf97ea1192f4e37de5ad8dc5b53b94d2e00c02f00000f00170000ff01000100000b
+[BlockingInput] 取到数据 len=151 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.2
+[TlsSrv] getCredentials tls13=false ver=TLS 1.2
+[TlsSrv] getCertificateRequest tls13=false ver=TLS 1.2
+[handleEapTls] feed后 pollOutput=3112B done=false ok=false err= hex=160303003b0200003703036ace2d65ca93eadaf9326165b8c5e3cbeffa651d9238823ea5cd796de77ae7db00c02f00000f00170000ff01000100000b
+[BlockingInput] 取到数据 len=3620 eof=false
+[TlsSrv] notifyHandshakeComplete
+[EAP-TLS] MSK 导出成功，MPPE-Recv(前16B)=144085f3e35d98db3c28c8cf55e66e70
+[handleEapTls] feed后 pollOutput=51B done=true ok=true err= hex=14030300010116030300280000000000000000b24af3c85f0b674b6d1d61df5928187f6f555af83e0ce9a7d7d0f0b917d791ac
+[BlockingInput] 客户端数据超时 q.size=0 cur=151 curOff=151 eof=false
+java.lang.Exception: BlockingInput timeout stack
+	at modpkica.RadiusServer$BlockingInput.read(RadiusServer.java:364)
+	at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+	at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+	at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+	at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+	at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+	at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+	at modpkica.RadiusServer.lambda$beginTlsHandshake$0(RadiusServer.java:2101)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+[EAP-TLS][t=60883] 握手异常: java.io.IOException: EAP-TLS 客户端数据超时 inQ残留=0 out总=3119 sent=3112
+    at modpkica.RadiusServer$BlockingInput.read(RadiusServer.java:365)
+    at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+    at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+    at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$beginTlsHandshake$0(RadiusServer.java:2101)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+[BlockingInput] 客户端数据超时 q.size=0 cur=151 curOff=151 eof=false
+java.lang.Exception: BlockingInput timeout stack
+	at modpkica.RadiusServer$BlockingInput.read(RadiusServer.java:364)
+	at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+	at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+	at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+	at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+	at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+	at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+	at modpkica.RadiusServer.lambda$beginTlsHandshake$0(RadiusServer.java:2101)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+[EAP-TLS][t=61448] 握手异常: java.io.IOException: EAP-TLS 客户端数据超时 inQ残留=0 out总=3119 sent=3112
+    at modpkica.RadiusServer$BlockingInput.read(RadiusServer.java:365)
+    at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+    at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+    at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$beginTlsHandshake$0(RadiusServer.java:2101)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+[BlockingInput] 客户端数据超时 q.size=0 cur=149 curOff=149 eof=false
+java.lang.Exception: BlockingInput timeout stack
+	at modpkica.RadiusServer$BlockingInput.read(RadiusServer.java:364)
+	at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+	at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+	at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+	at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+	at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+	at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+	at modpkica.RadiusServer.lambda$beginTlsHandshake$0(RadiusServer.java:2101)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+[EAP-TLS][t=62217] 握手异常: java.io.IOException: EAP-TLS 客户端数据超时 inQ残留=0 out总=3119 sent=3112
+    at modpkica.RadiusServer$BlockingInput.read(RadiusServer.java:365)
+    at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+    at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+    at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$beginTlsHandshake$0(RadiusServer.java:2101)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+[BlockingInput] 客户端数据超时 q.size=0 cur=149 curOff=149 eof=false
+java.lang.Exception: BlockingInput timeout stack
+	at modpkica.RadiusServer$BlockingInput.read(RadiusServer.java:364)
+	at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+	at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+	at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+	at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+	at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+	at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+	at modpkica.RadiusServer.lambda$beginTlsHandshake$0(RadiusServer.java:2101)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+[EAP-TLS][t=62747] 握手异常: java.io.IOException: EAP-TLS 客户端数据超时 inQ残留=0 out总=3119 sent=3112
+    at modpkica.RadiusServer$BlockingInput.read(RadiusServer.java:365)
+    at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+    at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+    at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$beginTlsHandshake$0(RadiusServer.java:2101)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+[BlockingInput] 客户端数据超时 q.size=0 cur=149 curOff=149 eof=false
+java.lang.Exception: BlockingInput timeout stack
+	at modpkica.RadiusServer$BlockingInput.read(RadiusServer.java:364)
+	at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+	at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+	at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+	at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+	at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+	at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+	at modpkica.RadiusServer.lambda$beginTlsHandshake$0(RadiusServer.java:2101)
+	at java.base/java.lang.Thread.run(Thread.java:1516)
+[EAP-TLS][t=63248] 握手异常: java.io.IOException: EAP-TLS 客户端数据超时 inQ残留=0 out总=3119 sent=3112
+    at modpkica.RadiusServer$BlockingInput.read(RadiusServer.java:365)
+    at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+    at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+    at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$beginTlsHandshake$0(RadiusServer.java:2101)
+    at java.base/java.lang.Thread.run(Thread.java:1516)

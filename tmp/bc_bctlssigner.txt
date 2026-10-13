@@ -1,0 +1,7 @@
+public abstract class org.bouncycastle.tls.crypto.impl.bc.BcTlsSigner implements org.bouncycastle.tls.crypto.TlsSigner {
+  protected final org.bouncycastle.tls.crypto.impl.bc.BcTlsCrypto crypto;
+  protected final org.bouncycastle.crypto.params.AsymmetricKeyParameter privateKey;
+  protected org.bouncycastle.tls.crypto.impl.bc.BcTlsSigner(org.bouncycastle.tls.crypto.impl.bc.BcTlsCrypto, org.bouncycastle.crypto.params.AsymmetricKeyParameter);
+  public byte[] generateRawSignature(org.bouncycastle.tls.SignatureAndHashAlgorithm, byte[]) throws java.io.IOException;
+  public org.bouncycastle.tls.crypto.TlsStreamSigner getStreamSigner(org.bouncycastle.tls.SignatureAndHashAlgorithm);
+}

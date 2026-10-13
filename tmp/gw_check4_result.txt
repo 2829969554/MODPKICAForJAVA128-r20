@@ -1,0 +1,25 @@
+=== /tmp/certs 目录 ===
+总计 20
+drwxr-xr-x  2 root root  140 10月11日 14:38 .
+drwxrwxrwt 10 root root  280 10月11日 14:25 ..
+-rw-r--r--  1 root root 1814 10月11日 14:36 client.crt
+-rw-r--r--  1 root root 1706 10月11日 14:36 client.key
+-rw-r--r--  1 root root 1588 10月11日 14:19 root.crt
+-rw-r--r--  1 root root 1588 10月11日 14:38 root_local.crt
+-rw-r--r--  1 root root 2194 10月11日 14:38 server_f7679b.crt
+
+=== 网关 root.crt 指纹 ===
+serial=7712D9352E6038CE78E57E3F572CEC74
+sha256 Fingerprint=E7:3C:48:65:94:41:55:F5:31:C3:47:6B:A7:E3:C4:63:70:C6:A3:C2:E9:C8:A1:A3:1E:21:5B:7E:48:BA:6A:3E
+
+=== eap-tls.conf ===
+network={
+	key_mgmt=WPA-EAP
+	eap=TLS
+	identity="admin666"
+	ca_cert="/tmp/certs/root.crt"
+	client_cert="/tmp/certs/client.crt"
+	private_key="/tmp/certs/client.key"
+	private_key_passwd=""
+	eapol_flags=0
+}

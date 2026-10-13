@@ -1,0 +1,11 @@
+[1] Identity -> code=11
+[2] NAK -> code=11 EAP-Message(6B)=010200060d20
+[3] TLS1.3 ClientHello -> code=11 EAP属性数=2 EAP-len=195
+TLS 数据总长=190
+记录0: type=128 ver=0x0000 len=185
+TLS 记录总数=1
+hex前120B:
+      80000000b9160303007a0200007603039876e25966b0a447a676af85f0f16a4b
+      ff4ea25eafbf69dac60011bcae57c3eb201b490247b2b851eaa7f8b71560ed3d
+      6a91afb967adf2024c7e6b65fa1333fd07130200002e002b0002030400330024
+      001d0020f074a9efb79148f3e45c90635cbe0df52eaa304f

@@ -82,9 +82,6 @@ import java.util.Locale;
  */
 public final class MakeCert {
 
-    private static final DateTimeFormatter MOD_TIME =
-            DateTimeFormatter.ofPattern("yyyy/MM/dd-HH:mm:ss");
-
     /** ExtKeyUsage 12~46 自定义 OID（对齐 Go 版 makecert switch） */
     private static final String[][] EXT_OIDS = {
             {"12", "1.3.6.1.4.1.311.2.1.22"},
@@ -208,6 +205,8 @@ public final class MakeCert {
         java.security.PrivateKey issuerKey = CertUtil.readJcaPrivateKey(issuerPath + ".key");
         // PKI-009: revoke/expired/non-CA issuer must not be able to sign new certificates
         checkIssuerUsable(issuerCert, issuerId);
+        // 配对校验：.key 与 .crt 必须是同一密钥对，否则会静默签出无法链式验证的证书
+        CertUtil.assertKeyMatchesCert(issuerKey, issuerCert, "颁发者");
 
         // ---- 使用者算法与密钥 ----
         String certAlgo;
@@ -217,7 +216,16 @@ public final class MakeCert {
             certAlgo = a[1].toUpperCase(Locale.ROOT);
             certBit = defaultBit(certAlgo);
         } else if (isTsa) {
+            if (a.length < 3) {
+                throw new IllegalArgumentException("initTIMSTAMP 参数不足：需要 哈希类型 与 算法");
+            }
             tsaHash = a[1].toUpperCase(Locale.ROOT);
+            // 安全校验：tsaHash 参与文件名拼接（PKI/TIMSTAMP/<algo>_<hash>.crt|.key），
+            // 且会进入证书 CN/OU。限制为字母数字（不可含 / \ . 等），杜绝 "../../" 路径穿越。
+            if (!tsaHash.matches("[A-Za-z0-9]+")) {
+                throw new IllegalArgumentException("非法的 TSA 哈希类型: " + a[1]
+                        + "（仅支持 SHA1/SHA256/SHA384/SHA512/SM3 等字母数字名称）");
+            }
             certAlgo = a[2].toUpperCase(Locale.ROOT);
             certBit = defaultBit(certAlgo);
         } else {
@@ -684,17 +692,6 @@ public final class MakeCert {
         }
     }
 
-    /** 标准 DN 短名（Go 版 pkix.Name 支持的固定字段）。 */
-    private static boolean isStandardDnKey(String key) {
-        switch (key) {
-            case "C": case "O": case "OU": case "L": case "S":
-            case "STREET": case "PostalCode": case "SERIALNUMBER": case "CN":
-                return true;
-            default:
-                return false;
-        }
-    }
-
     private void copySubject(X500NameBuilder b, X509Certificate issuerCert, String cn, String ou) {
         javax.security.auth.x500.X500Principal p = issuerCert.getSubjectX500Principal();
         String name = p.getName(javax.security.auth.x500.X500Principal.RFC2253);
@@ -1133,10 +1130,21 @@ public final class MakeCert {
     }
 
     /** 从 CERTS.txt 删除指定序列号行（重跑替换旧登记）。
-     *  保留 # 注释/空行（与 CertsDB 语义一致）；PemIO.atomicWrite 原子替换，
-     *  避免 TSA/OCSP 重跑时并发或中断导致 CERTS.txt 半截。 */
-    private synchronized void removeCertsLine(String serial) throws Exception {
+     *  保留 # 注释/空行（与 CertsDB 语义一致）；在 CertsDB 同一把跨进程文件锁
+     *  （CERTS.txt.lock）内读-改-写（PemIO.atomicWrite 原子替换），避免与并发签发
+     *  互相用旧快照覆盖对方的新登记行。 */
+    private void removeCertsLine(String serial) throws Exception {
         java.nio.file.Path p = java.nio.file.Paths.get(baseDir + "/PKI/CERTS.txt");
+        CertsDB.withCertsLock(baseDir, () -> {
+            try {
+                removeCertsLineLocked(p, serial);
+            } catch (Exception e) {
+                throw new IllegalStateException("删除 CERTS.txt 登记行失败: " + serial, e);
+            }
+        });
+    }
+
+    private static void removeCertsLineLocked(java.nio.file.Path p, String serial) throws Exception {
         if (!java.nio.file.Files.exists(p)) {
             return;
         }
@@ -1162,44 +1170,4 @@ public final class MakeCert {
         PemIO.atomicWrite(p, text.getBytes(java.nio.charset.StandardCharsets.UTF_8));
     }
 
-    // ===================== 工具 =====================
-
-    private static byte[] concat(byte[] a, byte[] b) {
-        byte[] r = new byte[a.length + b.length];
-        System.arraycopy(a, 0, r, 0, a.length);
-        System.arraycopy(b, 0, r, a.length, b.length);
-        return r;
-    }
-
-    private static byte[] slice(byte[] a, int from, int len) {
-        byte[] r = new byte[len];
-        System.arraycopy(a, from, r, 0, len);
-        return r;
-    }
-
-    private static byte[] longTo8Bytes(long v) {
-        byte[] b = new byte[8];
-        for (int i = 7; i >= 0; i--) {
-            b[i] = (byte) (v & 0xFF);
-            v >>= 8;
-        }
-        return b;
-    }
-
-    private static boolean contains(byte[] a, byte target) {
-        for (byte x : a) {
-            if (x == target) {
-                return true;
-            }
-        }
-        return false;
-    }
-
-    private static byte[] hexToBytes(String hex) {
-        byte[] out = new byte[hex.length() / 2];
-        for (int i = 0; i < out.length; i++) {
-            out[i] = (byte) Integer.parseInt(hex.substring(i * 2, i * 2 + 2), 16);
-        }
-        return out;
-    }
 }

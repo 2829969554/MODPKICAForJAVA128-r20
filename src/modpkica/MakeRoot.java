@@ -374,17 +374,6 @@ public final class MakeRoot {
         }
     }
 
-    /** 标准 DN 短名（Go 版 pkix.Name 支持的固定字段）。 */
-    private static boolean isStandardDnKey(String key) {
-        switch (key) {
-            case "C": case "O": case "OU": case "L": case "S":
-            case "STREET": case "PostalCode": case "SERIALNUMBER": case "CN":
-                return true;
-            default:
-                return false;
-        }
-    }
-
     private static void addIfPresent(X500NameBuilder builder, ASN1ObjectIdentifier oid, String value) {
         if (value != null && !value.isEmpty()) {
             builder.addRDN(oid, value);

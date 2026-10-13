@@ -167,7 +167,7 @@ public final class MAIN {
             return;
         }
 
-        byte[] req = readAllUnlimited(ex.getRequestBody());
+        byte[] req = readAll(ex.getRequestBody());
         String remote = ex.getRemoteAddress() != null
                 ? ex.getRemoteAddress().getAddress().getHostAddress() : "?";
         MLog.append(baseDir, "收到OCSP请求",
@@ -179,7 +179,18 @@ public final class MAIN {
             writeFile("PKI/OCSP/ocsp.req", req);
 
             // 解析 OCSP 请求
-            OcspUtil.OcspRequest parsed = OcspUtil.parseRequest(req);
+            OcspUtil.OcspRequest parsed;
+            try {
+                parsed = OcspUtil.parseRequest(req);
+            } catch (OcspUtil.UnsupportedRequestException unsupported) {
+                // 批量 CertID 等不支持形态：按 RFC 6960 §4.2.1 回 malformedRequest（HTTP 200）
+                log("OCSP:" + unsupported.getMessage());
+                byte[] malformed = OcspUtil.malformedRequestResponse();
+                sendBytes(ex, malformed, "application/ocsp-response");
+                MLog.append(baseDir, "OCSP响应", "状态=malformedRequest("
+                        + unsupported.getMessage() + ") 长度=" + malformed.length + "字节");
+                return;
+            }
             String serialHex = parsed.serialNumber.toString(16);
             String hashOid = parsed.hashAlgOid;
             byte[] nonce = parsed.nonce;
@@ -435,7 +446,7 @@ public final class MAIN {
             return;
         }
 
-        byte[] body = readAllUnlimited(ex.getRequestBody());
+        byte[] body = readAll(ex.getRequestBody());
         try {
             // 请求体是 base64 文本（实测含 \r\n 与末尾 \0 空字节）。
             // 只保留 base64 字母表字符，其余（换行/回车/NUL/空格）全部丢弃，最健壮
@@ -467,6 +478,7 @@ public final class MAIN {
             // 写入请求/响应日志文件（对齐 Go 版 TIMSTAMP/log/摘要.req|.res）
             writeFile("PKI/TIMSTAMP/log/" + digestHex + ".req", body);
             writeFile("PKI/TIMSTAMP/log/" + digestHex + ".res", signature);
+            pruneOldTimestampLogs();
 
             sendBytes(ex, signature, "application/timestamp-reply");
             MLog.append(baseDir, "时间戳响应", "长度=" + signature.length + "字节");
@@ -554,7 +566,7 @@ public final class MAIN {
                         ? ex.getRemoteAddress().getAddress().getHostAddress() : "?")
                         + " 路径=" + ex.getRequestURI().getPath());
 
-        byte[] body = readAllUnlimited(ex.getRequestBody());
+        byte[] body = readAll(ex.getRequestBody());
         try {
             TimestampUtil.Rfc3161Request parsed = TimestampUtil.parseRfc3161Request(body);
             MLog.append(baseDir, "时间戳请求解析(RFC3161)",
@@ -653,6 +665,7 @@ public final class MAIN {
                     + " TSA证书=" + tsaCert.getSubjectX500Principal() + " 摘要=" + digestHex);
             writeFile("PKI/TIMSTAMP/log/rfc3161" + digestHex + ".req", body);
             writeFile("PKI/TIMSTAMP/log/rfc3161" + digestHex + ".res", response);
+            pruneOldTimestampLogs();
 
             sendBytes(ex, response, "application/timestamp-reply");
             MLog.append(baseDir, "时间戳响应(RFC3161)", "长度=" + response.length + "字节");
@@ -1255,10 +1268,12 @@ public final class MAIN {
         return relPaths[relPaths.length - 1];
     }
 
-    /** 最大请求体：8MB（仅 CT 日志接口保留防内存 DoS，OCSP/时间戳已取消上限）。 */
+    /** 最大请求体：8MB（OCSP / 时间戳 / CT 全部接口统一上限，防无认证大请求耗尽内存）。 */
     private static final long MAX_BODY_BYTES = 8L * 1024 * 1024;
 
-    /** 读取请求体全部字节（带上限，超限抛 IOException 拒绝）。 */
+    /** 读取请求体全部字节（带上限，超限抛 IOException 拒绝）。
+     *  OCSP / 时间戳 / CT 全部接口统一走本方法：请求体在内存中解析，
+     *  不设上限时单个 POST 即可耗尽线程池堆内存。 */
     private static byte[] readAll(InputStream in) throws IOException {
         ByteArrayOutputStream out = new ByteArrayOutputStream();
         byte[] buf = new byte[8192];
@@ -1269,17 +1284,6 @@ public final class MAIN {
             if (total > MAX_BODY_BYTES) {
                 throw new IOException("request body too large (limit " + MAX_BODY_BYTES + " bytes)");
             }
-            out.write(buf, 0, n);
-        }
-        return out.toByteArray();
-    }
-
-    /** 读取请求体全部字节（无大小/长度上限，用于 OCSP 与时间戳接口的大请求场景）。 */
-    private static byte[] readAllUnlimited(InputStream in) throws IOException {
-        ByteArrayOutputStream out = new ByteArrayOutputStream();
-        byte[] buf = new byte[8192];
-        int n;
-        while ((n = in.read(buf)) != -1) {
             out.write(buf, 0, n);
         }
         return out.toByteArray();
@@ -1314,6 +1318,33 @@ public final class MAIN {
             Files.createDirectories(parent);
         }
         Files.write(p, data);
+    }
+
+    /** TIMSTAMP 请求/响应日志保留的最大文件数（无认证请求每次都会落盘，必须有上限）。 */
+    private static final int MAX_TIMESTAMP_LOG_FILES = 400;
+
+    /** 清理 PKI/TIMSTAMP/log 中最旧的日志文件，只保留最近 MAX_TIMESTAMP_LOG_FILES 个。 */
+    private static synchronized void pruneOldTimestampLogs() {
+        Path dir = Paths.get(baseDir, "PKI/TIMSTAMP/log");
+        if (!Files.isDirectory(dir)) {
+            return;
+        }
+        try (java.util.stream.Stream<Path> st = Files.list(dir)) {
+            java.util.List<Path> files = st.filter(Files::isRegularFile)
+                    .sorted(java.util.Comparator.comparingLong(p -> {
+                        try {
+                            return Files.getLastModifiedTime(p).toMillis();
+                        } catch (IOException e) {
+                            return 0L;
+                        }
+                    }))
+                    .collect(java.util.stream.Collectors.toList());
+            for (int i = 0; i < files.size() - MAX_TIMESTAMP_LOG_FILES; i++) {
+                Files.deleteIfExists(files.get(i));
+            }
+        } catch (IOException ignore) {
+            // 清理失败不影响时间戳主流程
+        }
     }
 
     /** SHA-1 十六进制。 */

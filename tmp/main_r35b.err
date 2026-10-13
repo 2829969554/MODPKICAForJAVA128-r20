@@ -1,0 +1,8 @@
+﻿java : ����: �Ҳ������޷��������� .encoding=UTF-8
+所在位置 行:1 字符: 52
++ ... pkica4JAVA; java -Dfile.encoding=UTF-8 -cp "out;BC185\*;lib\*" modpki ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (����: �Ҳ������޷��������� .encoding=UTF-8:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+ԭ��: java.lang.ClassNotFoundException: /encoding=UTF-8

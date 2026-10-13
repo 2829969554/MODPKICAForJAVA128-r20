@@ -320,10 +320,15 @@ public final class WebAdmin {
         int port = (prop != null && prop.matches("\\d+"))
                 ? Integer.parseInt(prop) : readConfigAdminPort();
         String bind = System.getProperty("modpkica.admin.bind", DEFAULT_BIND);
-        // P2-03：默认仅绑定 127.0.0.1；显式绑定到非回环地址时给出警告（管理接口含签发/吊销/签名等写操作）
-        if (!DEFAULT_BIND.equals(bind) && !"localhost".equalsIgnoreCase(bind)) {
-            System.out.println("[WebAdmin] 警告：管理界面绑定地址 " + bind
-                    + " 不是回环地址；若暴露到公网，所有 /api/* 写操作将无认证可访问！");
+        // 管理接口含签发/吊销/签名/私钥下载等写操作且无认证（本项目设计如此）。
+        // 默认绑定 0.0.0.0（局域网可访问）；绑定地址非回环时明确提示暴露范围，
+        // 需收紧时用 -Dmodpkica.admin.bind=127.0.0.1。
+        boolean loopback = "127.0.0.1".equals(bind) || "::1".equals(bind)
+                || "localhost".equalsIgnoreCase(bind);
+        if (!loopback) {
+            System.out.println("[WebAdmin] 提示：管理界面绑定 " + bind + ":" + port
+                    + "（非仅本机），所有 /api/* 写操作（含私钥下载）无需认证即可访问；"
+                    + "如需仅本机访问请加 -Dmodpkica.admin.bind=127.0.0.1");
         }
         try {
             server = HttpServer.create(new InetSocketAddress(InetAddress.getByName(bind), port), 0);
@@ -760,7 +765,7 @@ public final class WebAdmin {
                 throw new IllegalArgumentException("JSON 请求体过大（上限 4MB）");
             }
             String bodyStr = new String(bodyBytes, StandardCharsets.UTF_8);
-            Map<String, Object> m = parseJsonObject(bodyStr);
+            Map<String, Object> m = parseJsonBodyStrict(bodyStr);
             String path = ex.getRequestURI().getPath();
             try {
                 // 服务模式安静：管理动作（签发/吊销/CRL/TSA 等）执行期间
@@ -2321,7 +2326,7 @@ public final class WebAdmin {
     /** 系统配置接口（POST）：参数化保存 CONFIG.txt（保留注释与未知键，缺失键自动补齐）。 */
     private static void saveConfig(HttpExchange ex) throws Exception {
         String bodyStr = new String(readAll(ex.getRequestBody()), StandardCharsets.UTF_8);
-        Map<String, Object> m = parseJsonObject(bodyStr);
+        Map<String, Object> m = parseJsonBodyStrict(bodyStr);
         Map<String, String> updates = new LinkedHashMap<>();
         updates.put("WEBPORT", str(m, "webport"));
         String su = str(m, "suport");
@@ -3532,8 +3537,13 @@ public final class WebAdmin {
             PrivateKey key;
             List<java.security.cert.X509Certificate> chain;
             if (serial != null && !serial.isEmpty() && e == null) {
-                // 回退：我的证书库 PKI/MY（含私钥，无需 EKU 判断）
-                String mySerial = serial.toLowerCase();
+                // 回退：我的证书库 PKI/MY（含私钥，无需 EKU 判断）。
+                // 序列号必须经 normSerial 白名单校验（与下载/导出接口一致）：
+                // 否则 "../../ROOT/xxx" 会穿越到 PKI/ROOT，用根 CA 私钥为上传文件签名
+                String mySerial = normSerial(serial);
+                if (mySerial == null) {
+                    throw new IllegalArgumentException("序列号格式非法（仅允许十六进制字符）: " + serial);
+                }
                 java.io.File myCert = new java.io.File(base, "PKI/MY/" + mySerial + ".crt");
                 java.io.File myKey = new java.io.File(base, "PKI/MY/" + mySerial + ".key");
                 if (!myCert.exists() || !myKey.exists()) {
@@ -3558,7 +3568,11 @@ public final class WebAdmin {
                     throw new IllegalArgumentException("签名证书已过期或尚未生效: "
                             + cert.getNotBefore() + " ~ " + cert.getNotAfter());
                 }
-                if (e != null && e.status == 'R') {
+                // 未在 CERTS.txt 直接命中时，按证书自身序列号再查一次台账：
+                // 保证 PKI/MY 回退路径同样受吊销状态约束（否则可用已吊销的叶证书签名）
+                CertsDB.CertEntry status = e != null
+                        ? e : db.findBySerial(cert.getSerialNumber().toString(16));
+                if (status != null && status.status == 'R') {
                     throw new IllegalArgumentException("签名证书已吊销（状态=R），禁止签名");
                 }
             }
@@ -4861,6 +4875,52 @@ public final class WebAdmin {
     // ============================================================
     // 极简 JSON 解析（仅需扁平对象，无需通用 JSON 库，保持离线）
     // ============================================================
+
+    /** 解析"整个请求体"为一个 JSON 对象：顶层对象之后若还有非空白内容则拒绝。
+     *  parseJsonObject 只读到第一个 '}' 就停止，跨站表单以 text/plain 投递
+     *  {@code {"a":1}<其它字节>} 也能被当作合法请求执行；请求体解析必须严格。 */
+    private static Map<String, Object> parseJsonBodyStrict(String json) {
+        String s = json == null ? "" : json.trim();
+        if (s.isEmpty() || !s.startsWith("{")) {
+            return new LinkedHashMap<>();
+        }
+        int end = matchingBracket(s, 0);
+        if (end < 0) {
+            throw new IllegalArgumentException("JSON 请求体格式错误（括号不匹配）");
+        }
+        if (!s.substring(end + 1).trim().isEmpty()) {
+            throw new IllegalArgumentException("JSON 请求体含多余内容，已拒绝");
+        }
+        return parseJsonObject(s);
+    }
+
+    /** 返回与 s[open]（'{' 或 '['）配对的闭括号下标；不含字符串内容；不配对返回 -1。 */
+    private static int matchingBracket(String s, int open) {
+        int depth = 0;
+        boolean inStr = false;
+        for (int i = open; i < s.length(); i++) {
+            char c = s.charAt(i);
+            if (inStr) {
+                if (c == '\\') {
+                    i++;
+                } else if (c == '"') {
+                    inStr = false;
+                }
+                continue;
+            }
+            if (c == '"') {
+                inStr = true;
+            } else if (c == '{' || c == '[') {
+                depth++;
+            } else if (c == '}' || c == ']') {
+                depth--;
+                if (depth == 0) {
+                    return i;
+                }
+            }
+        }
+        return -1;
+    }
 
     /** 解析 JSON 对象为 Map（只处理扁平字符串值）。 */
     private static Map<String, Object> parseJsonObject(String json) {
@@ -7206,7 +7266,7 @@ public final class WebAdmin {
         function closeVerifyModal() { $('verifyModal').style.display = 'none'; }
 
         // ===== 证书链树 =====
-        function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+        function esc(s) { return String(s == null ? '' : s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
         function typeName(t) { return {R:'根证书', C:'CA证书', E:'终端证书'}[t] || t; }
         function tipHtml(n) {
           const stTxt = {V:'正常', R:'已吊销', N:'未知'}[n.status] || n.status;
@@ -8907,7 +8967,9 @@ public final class WebAdmin {
   function esc(t) {
     var d = document.createElement("div");
     d.textContent = t == null ? "" : String(t);
-    return d.innerHTML;
+    // innerHTML 只转义 & < >，不转义引号：用于单/双引号包裹的 HTML 属性或 JS 字符串时
+    // 需要补转义，否则用户名等可控值可闭合引号注入脚本
+    return d.innerHTML.replace(/"/g, "&quot;").replace(/'/g, "&#39;");
   }
   function pad(n) { return String(n).padStart(2, "0"); }
 

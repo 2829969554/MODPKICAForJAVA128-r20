@@ -1,0 +1,106 @@
+=== EAP-TLS 证书登录全链路冒烟测试（模拟 Windows 原生 IKEv2 证书模式）===
+RADIUS 1812 secret=mytestkey 客户端证书=a66de5fea3df44c8f8687f31d75384d
+[0] 客户端证书 CN=CN=localhost 算法=RSA
+[1] 发送 Access-Request：User-Name=localhost + EAP-Identity(localhost)
+[2] 收到 EAP-Request type=26（期望 26=MSCHAPV2，实际=26）
+[3] 发送 EAP-NAK（声明支持 EAP-TLS Type=13）
+[4] 收到 EAP-Request/TLS Start（flags=0x20）——服务器已切换到 EAP-TLS
+[pollOutput] cur=0 start=0 done=false err=null
+[pollOutput] cur=0 start=0 done=false err=null
+[pollOutput] cur=155 start=0 done=false err=null
+[5] 客户端 ClientHello 155B hex=1603010096010000920303e75c23cf4c4d3b6fd486c7738549711323fb6d27f0f300f5495896d76e321c7e00000ec02fc02bc013c009002f009c00ff0100005b00160000000a000a0008001d001e0017
+[CLI→] TLS片 160B flags=0x80 total=155 sent=155/155
+[发完] 客户端线程=TIMED_WAITING done=false err=null out.size=155 inQ=0
+      at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      at java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:271)
+      at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1803)
+      at java.base/java.util.concurrent.LinkedBlockingQueue.poll(LinkedBlockingQueue.java:460)
+      at EapTlsCertSmoke$BlockingInput.read(EapTlsCertSmoke.java:171)
+      at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+      at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+      at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+      at org.bouncycastle.tls.TlsClientProtocol.connect(Unknown Source)
+      at EapTlsCertSmoke.lambda$main$0(EapTlsCertSmoke.java:449)
+      at java.base/java.lang.Thread.run(Thread.java:1516)
+[sendRecv] 返回 1158B code=11 hex=0b03048615f31287878966fbbb105410
+[SVR←] TLS片 1105B flags=0xc0
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 1154B code=11 hex=0b040482bc29679c59f4280168655d66
+[SVR←] TLS片 1101B flags=0x40
+[CLI→] 拉取续片（空包 flags=0）
+[sendRecv] 返回 927B code=11 hex=0b05039f7512214c5bb7dacbd89df289
+[SVR←] TLS片 876B flags=0x0
+[SVR flight] 3075B rec type=22 len=55(hs msg=2 len=51) rec type=22 len=2676(hs msg=11 len=2672) rec type=22 len=300(hs msg=12 len=296) rec type=22 len=15(hs msg=13 len=11) rec type=22 len=4(hs msg=14 len=0)
+[pollOutput] cur=155 start=155 done=false err=null
+[pollOutput] cur=155 start=155 done=false err=null
+[pollOutput] cur=1821 start=155 done=false err=null
+[增量] 1666B records: type=22 len=1661
+[handshake] msg=11 len=1657 已解析=1666/1666
+[CLI→] TLS片 245B flags=0xc0 total=1666 sent=240/1666
+[sendRecv] 返回 46B code=11 hex=0b06002e05fa514474e20935a721be06
+[SVR←] TLS片 1B flags=0x0
+[CLI→] TLS片 241B flags=0x40 total=-263440488 sent=480/1666
+[sendRecv] 返回 46B code=11 hex=0b07002e263e5c86885c245855338c53
+[SVR←] TLS片 1B flags=0x0
+[CLI→] TLS片 241B flags=0x40 total=721813765 sent=720/1666
+[sendRecv] 返回 46B code=11 hex=0b08002e389ebde6825c6e2427ad1be0
+[SVR←] TLS片 1B flags=0x0
+[CLI→] TLS片 241B flags=0x40 total=1936996920 sent=960/1666
+[sendRecv] 返回 46B code=11 hex=0b09002e1fdc4414ee77deaaf44bff52
+[SVR←] TLS片 1B flags=0x0
+[CLI→] TLS片 241B flags=0x40 total=2030175234 sent=1200/1666
+[sendRecv] 返回 46B code=11 hex=0b0a002e26e61e9d7f03b61a1d123482
+[SVR←] TLS片 1B flags=0x0
+[CLI→] TLS片 241B flags=0x40 total=-1810094098 sent=1440/1666
+[sendRecv] 返回 46B code=11 hex=0b0b002e7f3acd103899d2d04cc2740a
+[SVR←] TLS片 1B flags=0x0
+[CLI→] TLS片 227B flags=0x0 total=314371831 sent=1666/1666
+[发完] 客户端线程=TIMED_WAITING done=false err=null out.size=2055 inQ=0
+[out剩余hex] 880f000084040100805257d5f9b96f9ab545baac3aeb9f4a2c8883b9c7fe3a34a244b6bb61ce0ae53f8a0d9ad3496faaec34571e7bed9d087c4665e47c15080932725994c49d1b47b27628a6df8c5c0c494eeee36587d4a64229a2f06b33825457af99eae1575f016fc733a42fb1a1220f73360dcf0fa9d6675acbdacb13182a031dbf85c03c062a0614030300010116030300280000000000000000d9cff6cc5d685c1b8e8dd6316e2b51a5f178cb0a6dcca5b662cdb72e91f3ff0f
+      at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      at java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:271)
+      at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1803)
+      at java.base/java.util.concurrent.LinkedBlockingQueue.poll(LinkedBlockingQueue.java:460)
+      at EapTlsCertSmoke$BlockingInput.read(EapTlsCertSmoke.java:171)
+      at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+      at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+      at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+      at org.bouncycastle.tls.TlsClientProtocol.connect(Unknown Source)
+      at EapTlsCertSmoke.lambda$main$0(EapTlsCertSmoke.java:449)
+      at java.base/java.lang.Thread.run(Thread.java:1516)
+[sendRecv] 返回 46B code=11 hex=0b0c002eec41ba5fe68176cdb921c9f9
+[SVR←] TLS片 1B flags=0x0
+[pollOutput] cur=2055 start=1821 done=false err=null
+[增量] 234B records: type=22 len=37 type=22 len=136 type=20 len=1 type=22 len=40
+[handshake] msg=16 len=33 msg=22 len=197376 已解析=197422/234
+[CLI→] TLS片 239B flags=0x80 total=234 sent=234/234
+[发完] 客户端线程=TIMED_WAITING done=false err=null out.size=2055 inQ=0
+[out剩余hex] 880f000084040100805257d5f9b96f9ab545baac3aeb9f4a2c8883b9c7fe3a34a244b6bb61ce0ae53f8a0d9ad3496faaec34571e7bed9d087c4665e47c15080932725994c49d1b47b27628a6df8c5c0c494eeee36587d4a64229a2f06b33825457af99eae1575f016fc733a42fb1a1220f73360dcf0fa9d6675acbdacb13182a031dbf85c03c062a0614030300010116030300280000000000000000d9cff6cc5d685c1b8e8dd6316e2b51a5f178cb0a6dcca5b662cdb72e91f3ff0f
+      at java.base/jdk.internal.misc.Unsafe.park(Native Method)
+      at java.base/java.util.concurrent.locks.LockSupport.parkNanos(LockSupport.java:271)
+      at java.base/java.util.concurrent.locks.AbstractQueuedSynchronizer$ConditionObject.awaitNanos(AbstractQueuedSynchronizer.java:1803)
+      at java.base/java.util.concurrent.LinkedBlockingQueue.poll(LinkedBlockingQueue.java:460)
+      at EapTlsCertSmoke$BlockingInput.read(EapTlsCertSmoke.java:171)
+      at org.bouncycastle.tls.RecordStream$Record.fillTo(Unknown Source)
+      at org.bouncycastle.tls.RecordStream$Record.readHeader(Unknown Source)
+      at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+      at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+      at org.bouncycastle.tls.TlsClientProtocol.connect(Unknown Source)
+      at EapTlsCertSmoke.lambda$main$0(EapTlsCertSmoke.java:449)
+      at java.base/java.lang.Thread.run(Thread.java:1516)
+[sendRecv] 返回 101B code=11 hex=0b0d00650c5b5ec5487a096214d3d812
+[SVR←] TLS片 56B flags=0x80
+[SVR flight] 51B rec type=20 len=1 rec type=22 len=40(hs msg=0 len=0)
+[pollOutput] cur=2055 start=2055 done=false err=null
+[handshake] 客户端导出 MSK(64B)=aadb2273abe2f4b5fd70d0648c1e460d3f37eeb41473604aed56fd76bcb3f3a75d652cae3a8aca216149a95d876e1ea415cd3490754904d75f44ff99763366fd
+[pollOutput] cur=2055 start=2055 done=true err=null
+[CLI→] 维持包（flags=0） done=true err=null 线程=TERMINATED
+[sendRecv] 返回 178B code=2 hex=020e00b23a61edbf3dc2297f2900822a
+[6] 收到 Access-Accept + EAP-Success —— EAP-TLS 证书认证通过
+
+RESULT=PASS

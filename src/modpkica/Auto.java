@@ -112,109 +112,143 @@ public final class Auto {
             }
         }
         System.out.println("已清理 " + deleted + " 个证书/密钥/吊销列表文件");
-        // 2) 备份 CERTS.txt 并重建模板
+        // 2) 备份 CERTS.txt 并重建模板——整体放入跨进程文件锁（与 CertsDB 同一把锁）：
+        //    备份用 copy 而非 move + 模板用原子替换，避免出现"文件不存在"窗口
+        //    （MAIN 每请求 reload，看到空台账会把有效证书答成"未知"），
+        //    也避免并发签发/吊销的记录被模板覆盖。
         Path certs = Paths.get(baseDir, "PKI", "CERTS.txt");
-        if (Files.exists(certs)) {
-            String backup = certs + ".old." + (System.currentTimeMillis() / 1000L);
-            Files.move(certs, Paths.get(backup));
-        }
-        // 清理历史 .old 备份：仅保留最近一份，避免 init 多次后堆积
-        try {
-            Path pkiDir = certs.getParent();
-            java.util.List<java.nio.file.Path> olds = new java.util.ArrayList<>();
-            if (pkiDir != null && java.nio.file.Files.isDirectory(pkiDir)) {
-                try (java.util.stream.Stream<java.nio.file.Path> st = java.nio.file.Files.list(pkiDir)) {
-                    st.filter(p2 -> p2.getFileName().toString().startsWith("CERTS.txt.old."))
-                      .forEach(olds::add);
+        Path sm = Paths.get(baseDir, "PKI", "CERTS.txt.sm");
+        Files.createDirectories(certs.getParent());   // 全新工作目录：锁文件/模板都需要 PKI 目录存在
+        CertsDB.withCertsLock(baseDir, () -> {
+            try {
+                if (Files.exists(certs)) {
+                    String backup = certs + ".old." + (System.currentTimeMillis() / 1000L);
+                    Files.copy(certs, Paths.get(backup));
                 }
-                olds.sort(java.util.Comparator.comparing(p2 -> p2.getFileName().toString()));
-                for (int i = 0; i < olds.size() - 1; i++) {
-                    java.nio.file.Files.deleteIfExists(olds.get(i));
+                // 清理历史 .old 备份：仅保留最近一份，避免 init 多次后堆积
+                try {
+                    Path pkiDir = certs.getParent();
+                    java.util.List<java.nio.file.Path> olds = new java.util.ArrayList<>();
+                    if (pkiDir != null && java.nio.file.Files.isDirectory(pkiDir)) {
+                        try (java.util.stream.Stream<java.nio.file.Path> st =
+                                     java.nio.file.Files.list(pkiDir)) {
+                            st.filter(p2 -> p2.getFileName().toString().startsWith("CERTS.txt.old."))
+                              .forEach(olds::add);
+                        }
+                        olds.sort(java.util.Comparator.comparing(p2 -> p2.getFileName().toString()));
+                        for (int i = 0; i < olds.size() - 1; i++) {
+                            java.nio.file.Files.deleteIfExists(olds.get(i));
+                        }
+                    }
+                } catch (Exception ignore) {
+                    // 清理失败不影响初始化主流程
                 }
+                PemIO.atomicWrite(certs, CERTS_TEMPLATE.getBytes(StandardCharsets.UTF_8));
+                PemIO.atomicWrite(sm, CERTS_TEMPLATE.getBytes(StandardCharsets.UTF_8));
+            } catch (Exception e) {
+                throw new IllegalStateException("重建 CERTS.txt 模板失败", e);
             }
-        } catch (Exception ignore) {
-            // 清理失败不影响初始化主流程
-        }
-        Files.write(certs, CERTS_TEMPLATE.getBytes(StandardCharsets.UTF_8));
-        Files.write(Paths.get(baseDir, "PKI", "CERTS.txt.sm"),
-                CERTS_TEMPLATE.getBytes(StandardCharsets.UTF_8));
+        });
         System.out.println("CERTS.txt 已备份并重建模板");
     }
 
-    /** auto revoke：把 CERTS.txt 中指定序列号记录改为 R 状态。 */
+    /** auto revoke：把 CERTS.txt 中指定序列号记录改为 R 状态。
+     *  读-改-写整体在 CertsDB 同一把跨进程锁内，避免与并发签发/吊销互相覆盖。 */
     private static void revokeCert(String baseDir, String serial, String reason) throws Exception {
         Path certs = Paths.get(baseDir, "PKI", "CERTS.txt");
-        List<String> lines = Files.readAllLines(certs, StandardCharsets.UTF_8);
         String newTime = now();
-        boolean found = false;
-        StringBuilder sb = new StringBuilder();
-        for (String line : lines) {
-            String t = line.trim();
-            if (t.isEmpty() || t.startsWith("#")) {
-                sb.append(line).append(System.lineSeparator());
-                continue;
+        boolean[] found = {false};
+        CertsDB.withCertsLock(baseDir, () -> {
+            try {
+                List<String> lines = Files.readAllLines(certs, StandardCharsets.UTF_8);
+                StringBuilder sb = new StringBuilder();
+                for (String line : lines) {
+                    String t = line.trim();
+                    if (t.isEmpty() || t.startsWith("#")) {
+                        sb.append(line).append(System.lineSeparator());
+                        continue;
+                    }
+                    String[] f = t.split("\\s+");
+                    if (f[0].equals(serial) && f.length >= 7) {
+                        // 新行：序列号 类型 R 原因 时间 颁发者ID 算法
+                        sb.append(f[0]).append(' ').append(f[1]).append(" R ").append(reason)
+                                .append(' ').append(newTime).append(' ')
+                                .append(f[5]).append(' ').append(f[6])
+                                .append(System.lineSeparator());
+                        found[0] = true;
+                    } else {
+                        sb.append(line).append(System.lineSeparator());
+                    }
+                }
+                if (found[0]) {
+                    atomicWrite(certs, sb.toString());
+                }
+            } catch (Exception e) {
+                throw new IllegalStateException("吊销证书失败: " + serial, e);
             }
-            String[] f = t.split("\\s+");
-            if (f[0].equals(serial) && f.length >= 7) {
-                // 新行：序列号 类型 R 原因 时间 颁发者ID 算法
-                sb.append(f[0]).append(' ').append(f[1]).append(" R ").append(reason)
-                        .append(' ').append(newTime).append(' ')
-                        .append(f[5]).append(' ').append(f[6])
-                        .append(System.lineSeparator());
-                found = true;
-            } else {
-                sb.append(line).append(System.lineSeparator());
-            }
-        }
-        if (!found) {
+        });
+        if (!found[0]) {
             System.out.println("吊销失败:CERTS.txt证书库不存在此编号");
             return;
         }
-        atomicWrite(certs, sb.toString());
         System.out.println("吊销成功");
     }
 
     /** auto restore：把 CERTS.txt 中指定序列号记录改为 V 状态、原因 0（撤销吊销）。 */
     private static void restoreCert(String baseDir, String serial) throws Exception {
         Path certs = Paths.get(baseDir, "PKI", "CERTS.txt");
-        List<String> lines = Files.readAllLines(certs, StandardCharsets.UTF_8);
         String newTime = LocalDateTime.now().format(MOD_TIME);
-        boolean found = false;
-        StringBuilder sb = new StringBuilder();
-        for (String line : lines) {
-            String t = line.trim();
-            if (t.isEmpty() || t.startsWith("#")) {
-                sb.append(line).append(System.lineSeparator());
-                continue;
+        boolean[] found = {false};
+        CertsDB.withCertsLock(baseDir, () -> {
+            try {
+                List<String> lines = Files.readAllLines(certs, StandardCharsets.UTF_8);
+                StringBuilder sb = new StringBuilder();
+                for (String line : lines) {
+                    String t = line.trim();
+                    if (t.isEmpty() || t.startsWith("#")) {
+                        sb.append(line).append(System.lineSeparator());
+                        continue;
+                    }
+                    String[] f = t.split("\\s+");
+                    if (f[0].equals(serial) && f.length >= 7) {
+                        // 新行：序列号 类型 V 0 时间 颁发者ID 算法
+                        sb.append(f[0]).append(' ').append(f[1]).append(" V 0 ")
+                                .append(newTime).append(' ')
+                                .append(f[5]).append(' ').append(f[6])
+                                .append(System.lineSeparator());
+                        found[0] = true;
+                    } else {
+                        sb.append(line).append(System.lineSeparator());
+                    }
+                }
+                if (found[0]) {
+                    atomicWrite(certs, sb.toString());
+                }
+            } catch (Exception e) {
+                throw new IllegalStateException("恢复证书失败: " + serial, e);
             }
-            String[] f = t.split("\\s+");
-            if (f[0].equals(serial) && f.length >= 7) {
-                // 新行：序列号 类型 V 0 时间 颁发者ID 算法
-                sb.append(f[0]).append(' ').append(f[1]).append(" V 0 ")
-                        .append(newTime).append(' ')
-                        .append(f[5]).append(' ').append(f[6])
-                        .append(System.lineSeparator());
-                found = true;
-            } else {
-                sb.append(line).append(System.lineSeparator());
-            }
-        }
-        if (!found) {
+        });
+        if (!found[0]) {
             System.out.println("恢复失败:CERTS.txt证书库不存在此编号");
             return;
         }
-        atomicWrite(certs, sb.toString());
         System.out.println("恢复成功");
     }
 
-    /** auto newcert：追加一条证书记录。 */
+    /** auto newcert：追加一条证书记录（在 CertsDB 同一把跨进程锁内追加）。 */
     private static void addCert(String baseDir, String serial, String type, String status,
                                 String time, String issuerId, String algo) throws Exception {
         String newline = serial + " " + type + " " + status + " " + "0" + " "
                 + time + " " + issuerId + " " + algo + "\r\n";
         Path certs = Paths.get(baseDir, "PKI", "CERTS.txt");
-        Files.write(certs, newline.getBytes(StandardCharsets.UTF_8),
-                StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        CertsDB.withCertsLock(baseDir, () -> {
+            try {
+                Files.write(certs, newline.getBytes(StandardCharsets.UTF_8),
+                        StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+            } catch (Exception e) {
+                throw new IllegalStateException("增加证书失败: " + serial, e);
+            }
+        });
         System.out.println("增加证书成功: " + serial);
     }
 

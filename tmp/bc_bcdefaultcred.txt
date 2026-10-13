@@ -1,0 +1,4 @@
+public class org.bouncycastle.tls.crypto.impl.bc.BcDefaultTlsCredentialedSigner extends org.bouncycastle.tls.DefaultTlsCredentialedSigner {
+  private static org.bouncycastle.tls.crypto.TlsSigner makeSigner(org.bouncycastle.tls.crypto.impl.bc.BcTlsCrypto, org.bouncycastle.crypto.params.AsymmetricKeyParameter, org.bouncycastle.tls.Certificate, org.bouncycastle.tls.SignatureAndHashAlgorithm);
+  public org.bouncycastle.tls.crypto.impl.bc.BcDefaultTlsCredentialedSigner(org.bouncycastle.tls.crypto.TlsCryptoParameters, org.bouncycastle.tls.crypto.impl.bc.BcTlsCrypto, org.bouncycastle.crypto.params.AsymmetricKeyParameter, org.bouncycastle.tls.Certificate, org.bouncycastle.tls.SignatureAndHashAlgorithm);
+}

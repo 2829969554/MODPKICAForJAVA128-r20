@@ -33,8 +33,8 @@ import java.util.Scanner;
  */
 public final class Admin {
 
-    /** 版本信息。 */
-    public static final String VERSION = "MODPKICA Java 复刻版 v1.28 (BC 1.85 离线)";
+    /** 版本信息（r 编号与 README「更新记录」/ CHANGELOG.md 对齐）。 */
+    public static final String VERSION = "MODPKICA Java 复刻版 v1.28-r20 (BC 1.85 离线)";
 
     private Admin() {
     }

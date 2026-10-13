@@ -9,7 +9,6 @@ import java.math.BigInteger;
 import java.security.PrivateKey;
 import java.security.cert.X509Certificate;
 import java.time.LocalDateTime;
-import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.Date;
@@ -33,9 +32,6 @@ import java.util.List;
  * CRL 的 thisUpdate=当前时间-24h，nextUpdate=当前时间+24h（对齐 Go 版）。
  */
 public final class RootGetCrl {
-
-    private static final DateTimeFormatter MOD_TIME =
-            DateTimeFormatter.ofPattern("yyyy/MM/dd-HH:mm:ss");
 
     private RootGetCrl() {
     }
@@ -79,6 +75,8 @@ public final class RootGetCrl {
         // BC 私钥参数 → JCA PrivateKey（CrlUtil 使用 JCA 接口）
         PrivateKey caKey = new JcaPEMKeyConverter().setProvider("BC").getPrivateKey(
                 PrivateKeyInfoFactory.createPrivateKeyInfo(akp));
+        // 配对校验：.key 与 .crt 必须是同一密钥对，否则会静默签出无法验证的 CRL
+        CertUtil.assertKeyMatchesCert(caKey, caCert, "颁发者");
 
         // 签名算法族：必须按 CA 私钥实际类型决定（不能用证书签名算法判断——例如 RSA 根
         // 签发的 SM2 中间证书，其证书 SignatureAlgorithm 是 RSA，但 CA 自身密钥是 SM2，
@@ -116,8 +114,10 @@ public final class RootGetCrl {
         byte[] der = CrlUtil.generateCrl(caCert, caKey, revoked, thisUpdate, nextUpdate,
                 keyType, hash, crlNumber);
         String pem = CrlUtil.derToPem(der);
-        java.nio.file.Files.write(java.nio.file.Paths.get(webCrlDir + issuer.serial + ".der.crl"), der);
-        java.nio.file.Files.write(java.nio.file.Paths.get(webCrlDir + issuer.serial + ".crl"),
+        // 原子写（tmp → fsync → .bak → move）：CRL 被依赖方直接消费，
+        // 崩溃/并发下绝不能出现截断文件（旧实现两条裸 Files.write 存在该风险）
+        PemIO.atomicWrite(java.nio.file.Paths.get(webCrlDir + issuer.serial + ".der.crl"), der);
+        PemIO.atomicWrite(java.nio.file.Paths.get(webCrlDir + issuer.serial + ".crl"),
                 pem.getBytes(java.nio.charset.StandardCharsets.UTF_8));
         System.out.println("CRL 已生成: " + issuer.serial + " (算法 " + keyType + "/" + hash
                 + ", 吊销 " + revokedCount(issuer, all) + " 条)");
@@ -206,9 +206,11 @@ public final class RootGetCrl {
         } // end of file lock
     }
 
-    /** CERTS.txt 内部时间（本地时间）转 Date。 */
+    /** CERTS.txt 内部时间（本地时间）转 Date。
+     *  台账由 CertsDB 以 {@code LocalDateTime.now()} 按本机时区写入，读取必须用同一时区；
+     *  若按固定 UTC+8 解析，非 UTC+8 主机会得到偏移的吊销时间（可能晚于 producedAt）。 */
     private static Date parseModTime(LocalDateTime t) {
-        return Date.from(t.toInstant(ZoneOffset.ofHours(8))); // 按 UTC+8 解析（对齐 Go 文本时间）
+        return Date.from(t.atZone(java.time.ZoneId.systemDefault()).toInstant());
     }
 
     /** 由证书签名算法 OID 推导哈希算法。 */

@@ -1,0 +1,42 @@
+[TlsSrv] getSupportedVersions 调用
+[BlockingInput] 取到数据 len=427 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.3
+[TlsSrv] getCertificateRequest tls13=true ver=TLS 1.3
+[TlsSrv] DEBUG_NO_CLIENT_CERT 返回 null（诊断用）
+[TlsSrv] getCredentials tls13=true ver=TLS 1.3
+[EAP-TLS][t=84067] 握手异常: org.bouncycastle.tls.TlsFatalAlert: internal_error(80) inQ残留=0 out总=185 sent=0
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1921)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+    cause[0]=java.lang.IllegalStateException @ org.bouncycastle.tls.Certificate.encode(Unknown Source)
+[handleEapTls] feed后 pollOutput=185B done=true ok=false err=org.bouncycastle.tls.TlsFatalAlert: internal_error(80) hex=160303007a020000760303d730687dcb9c0f9aa0c45ce8b69dbfe9d8a40abb32adfd864f28d840bc3f9686207b67c39b7e7163103d7134706240ac19
+[TlsSrv] getSupportedVersions 调用
+[BlockingInput] 取到数据 len=427 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.3
+[TlsSrv] getCertificateRequest tls13=true ver=TLS 1.3
+[TlsSrv] DEBUG_NO_CLIENT_CERT 返回 null（诊断用）
+[TlsSrv] getCredentials tls13=true ver=TLS 1.3
+[EAP-TLS][t=45726] 握手异常: org.bouncycastle.tls.TlsFatalAlert: internal_error(80) inQ残留=0 out总=185 sent=0
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1921)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+    cause[0]=java.lang.IllegalStateException @ org.bouncycastle.tls.Certificate.encode(Unknown Source)
+[handleEapTls] feed后 pollOutput=185B done=true ok=false err=org.bouncycastle.tls.TlsFatalAlert: internal_error(80) hex=160303007a0200007603034bbdae649f6bec60d4891284453ec34d618d294f5ddb446533e49aa53c0949d7201d4863df121fa91276c5a4ed61f4bed5
+[TlsSrv] getSupportedVersions 调用
+[BlockingInput] 取到数据 len=427 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.3
+[TlsSrv] getCertificateRequest tls13=true ver=TLS 1.3
+[TlsSrv] DEBUG_NO_CLIENT_CERT 返回 null（诊断用）
+[TlsSrv] getCredentials tls13=true ver=TLS 1.3
+[EAP-TLS][t=58031] 握手异常: org.bouncycastle.tls.TlsFatalAlert: internal_error(80) inQ残留=0 out总=185 sent=0
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1921)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+    cause[0]=java.lang.IllegalStateException @ org.bouncycastle.tls.Certificate.encode(Unknown Source)
+[handleEapTls] feed后 pollOutput=185B done=true ok=false err=org.bouncycastle.tls.TlsFatalAlert: internal_error(80) hex=160303007a020000760303015052c2357a2e032fef3dce62f836dc3dd86dc06545e2e07412afe1024a42b220675a16fcc4e4844915a1232db80e58cd

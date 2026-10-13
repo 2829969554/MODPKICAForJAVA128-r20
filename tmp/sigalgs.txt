@@ -1,0 +1,9 @@
+size=6
+  hash=4 sig=4 recognized=true
+  hash=5 sig=5 recognized=true
+  hash=6 sig=6 recognized=true
+  hash=4 sig=3 recognized=true
+  hash=5 sig=3 recognized=true
+  hash=6 sig=3 recognized=true
+encode OK len=14
+addSignatureAlgorithmsExtension OK ext.size=1

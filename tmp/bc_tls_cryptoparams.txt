@@ -1,0 +1,11 @@
+public class org.bouncycastle.tls.crypto.TlsCryptoParameters {
+  private final org.bouncycastle.tls.TlsContext context;
+  public org.bouncycastle.tls.crypto.TlsCryptoParameters(org.bouncycastle.tls.TlsContext);
+  public org.bouncycastle.tls.SecurityParameters getSecurityParametersConnection();
+  public org.bouncycastle.tls.SecurityParameters getSecurityParametersHandshake();
+  public org.bouncycastle.tls.ProtocolVersion getClientVersion();
+  public org.bouncycastle.tls.ProtocolVersion getRSAPreMasterSecretVersion();
+  public org.bouncycastle.tls.ProtocolVersion getServerVersion();
+  public boolean isServer();
+  public org.bouncycastle.tls.crypto.TlsNonceGenerator getNonceGenerator();
+}

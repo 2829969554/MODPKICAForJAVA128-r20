@@ -1,0 +1,24 @@
+﻿public class org.bouncycastle.tls.SignatureAlgorithm {
+  public static final short anonymous;
+  public static final short rsa;
+  public static final short dsa;
+  public static final short ecdsa;
+  public static final short ed25519;
+  public static final short ed448;
+  public static final short rsa_pss_rsae_sha256;
+  public static final short rsa_pss_rsae_sha384;
+  public static final short rsa_pss_rsae_sha512;
+  public static final short rsa_pss_pss_sha256;
+  public static final short rsa_pss_pss_sha384;
+  public static final short rsa_pss_pss_sha512;
+  public static final short ecdsa_brainpoolP256r1tls13_sha256;
+  public static final short ecdsa_brainpoolP384r1tls13_sha384;
+  public static final short ecdsa_brainpoolP512r1tls13_sha512;
+  public static final short gostr34102012_256;
+  public static final short gostr34102012_512;
+  public org.bouncycastle.tls.SignatureAlgorithm();
+  public static short getClientCertificateType(short);
+  public static java.lang.String getName(short);
+  public static java.lang.String getText(short);
+  public static boolean isRecognized(short);
+}

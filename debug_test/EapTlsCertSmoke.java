@@ -431,6 +431,10 @@ public class EapTlsCertSmoke {
             return;
         }
         eapId = eap2[1] & 0xff;
+        // RFC 3748 §4.1：客户端响应回显服务器 Request 的 Identifier。
+        // 服务端每个 Request 都会换新 Id，因此相邻两次空拉取片不再逐字节相同
+        // （否则会被事务重传检测判为"IKE 层重传"而回放上一片，握手无法推进）。
+        int srvEapId = eapId;
         byte[] tlsStart = eap2.length > 5 ? Arrays.copyOfRange(eap2, 5, eap2.length) : new byte[0];
         int startFlags = tlsStart.length > 0 ? (tlsStart[0] & 0xff) : 0;
         System.out.println("[4] 收到 EAP-Request/TLS Start（flags=0x" + Integer.toHexString(startFlags) + "）——服务器已切换到 EAP-TLS");
@@ -520,7 +524,7 @@ public class EapTlsCertSmoke {
                             + " total=" + (pendingFrag.length > 4 ? ((pendingFrag[1]&0xff)<<24|(pendingFrag[2]&0xff)<<16|(pendingFrag[3]&0xff)<<8|(pendingFrag[4]&0xff)) : -1)
                             + " sent=" + sent[0] + "/" + toSend.length);
                 }
-                eapResp = eapPacket(EAP_CODE_RESPONSE, (eapId + 1) & 0xff, EAP_TYPE_TLS, pendingFrag);
+                eapResp = eapPacket(EAP_CODE_RESPONSE, srvEapId, EAP_TYPE_TLS, pendingFrag);
                 hasPendingResp = false;
                 if (sent[0] >= toSend.length && s.thread != null) {
                     System.out.println("[发完] 客户端线程=" + s.thread.getState() + " done=" + s.done + " err=" + s.err
@@ -539,7 +543,7 @@ public class EapTlsCertSmoke {
             } else if (serverMore) {
                 // 服务器数据未收齐：空包拉取续片
                 System.out.println("[CLI→] 拉取续片（空包 flags=0）");
-                eapResp = eapPacket(EAP_CODE_RESPONSE, (eapId + 1) & 0xff, EAP_TYPE_TLS, new byte[]{0});
+                eapResp = eapPacket(EAP_CODE_RESPONSE, srvEapId, EAP_TYPE_TLS, new byte[]{0});
             } else {
                 // 客户端数据发完、服务器数据收齐：等 TLS 线程新输出；无输出则空包维持
                 byte[] nxt = pollOutput(s, 2500);
@@ -593,7 +597,7 @@ public class EapTlsCertSmoke {
                         System.out.println("      at " + ste);
                     }
                 }
-                eapResp = eapPacket(EAP_CODE_RESPONSE, (eapId + 1) & 0xff, EAP_TYPE_TLS, new byte[]{0});
+                eapResp = eapPacket(EAP_CODE_RESPONSE, srvEapId, EAP_TYPE_TLS, new byte[]{0});
             }
             List<Attr> a = new ArrayList<>();
             a.add(new Attr(ATTR_USER_NAME, "localhost".getBytes("UTF-8")));
@@ -626,6 +630,7 @@ public class EapTlsCertSmoke {
                 continue;
             }
             idle = 0;
+            srvEapId = ee[1] & 0xff;   // 回显服务器本次 Request 的 Identifier（RFC 3748 §4.1）
             byte[] payload = ee.length > 5 ? Arrays.copyOfRange(ee, 5, ee.length) : new byte[0];
             if (payload.length == 0 || ((payload[0] & 0xff) & EAP_TLS_FLAG_START) != 0) {
                 continue;   // Start 不应重复出现
@@ -669,11 +674,18 @@ public class EapTlsCertSmoke {
         sock.close();
     }
 
+    /** 取属性值；EAP-Message（79）按 RFC 3579 §2.1 由发送方切成多个 ≤253B 属性，
+     *  这里必须**按顺序拼接**全部同名属性，否则每个服务器分片只拿到首块 → flight 残缺。 */
     static byte[] findAttr(List<Attr> attrs, int type) {
+        ByteArrayOutputStream b = new ByteArrayOutputStream();
+        boolean found = false;
         for (Attr a : attrs) {
-            if (a.type == type) return a.value;
+            if (a.type == type) {
+                b.write(a.value, 0, a.value.length);
+                found = true;
+            }
         }
-        return null;
+        return found ? b.toByteArray() : null;
     }
 
     /** 轮询 TLS 会话输出缓冲：只返回自上次读取以来的增量（握手线程写入 out）。 */

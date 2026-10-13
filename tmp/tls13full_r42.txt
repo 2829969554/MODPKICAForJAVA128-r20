@@ -1,0 +1,18 @@
+﻿�ͻ���֤��=CN=localhost ˽Կ����=RSAPrivateCrtKeyParameters
+[1] Identity -> code=11
+[2] NAK -> code=11 EAP=010200060d20
+EAP-TLS Start �յ���EAP-id=2
+BC ��� 244B -> �������: 16030100ef010000eb03036d227cd7ca29c874f1de6124d60becc61d84ab39ff
+      4b1a9256e009a4dc
+[recv] code=3 id=3 len=44
+  attr type=79 vlen=4 hex=04020004
+  attr type=80 vlen=16 hex=94e2d3a620bcf6adc8e81277e53ea700
+java : Exception in thread "main" java.lang.ArrayIndexOutOfBoundsException: Index 5 out of bounds for length 4
+所在位置 行:1 字符: 92
++ ... s;BC185\*"; java "-Dfile.encoding=UTF-8" -cp $cp Tls13FullClientTest  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Exception in th...ds for length 4:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+	at Tls13FullClientTest.recvTlsFrames(Tls13FullClientTest.java:116)
+	at Tls13FullClientTest.main(Tls13FullClientTest.java:245)

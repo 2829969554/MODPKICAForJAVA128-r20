@@ -1,0 +1,6 @@
+[EAP-TLS][t=74734] Œ’ ÷“Ï≥£: org.bouncycastle.tls.TlsFatalAlert: internal_error(80) inQ≤–¡Ù=0
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1894)
+    at java.base/java.lang.Thread.run(Thread.java:1516)

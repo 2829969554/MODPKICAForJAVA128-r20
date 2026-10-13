@@ -1,0 +1,16 @@
+﻿�ͻ���֤��=CN=localhost ˽Կ����=RSAPrivateCrtKeyParameters
+[1] Identity -> code=11
+[2] NAK -> code=11 EAP=010200060d20
+EAP-TLS Start �յ���EAP-id=2
+BC ��� 244B -> �������: 16030100ef010000eb0303839ff88b69c412d415d07b0a904e507c1d64d324a4
+      980171804304af4d
+[recv] EAP-Failure
+java : Exception in thread "main" java.io.IOException: EAP-Failure
+所在位置 行:1 字符: 92
++ ... s;BC185\*"; java "-Dfile.encoding=UTF-8" -cp $cp Tls13FullClientTest  ...
++                 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (Exception in th...on: EAP-Failure:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+	at Tls13FullClientTest.recvTlsFrames(Tls13FullClientTest.java:120)
+	at Tls13FullClientTest.main(Tls13FullClientTest.java:266)

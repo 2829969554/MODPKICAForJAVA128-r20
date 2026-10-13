@@ -1,0 +1,171 @@
+﻿==================== CMD: journalctl -u strongswan --since '40 minutes ago' --no-pager 2>/dev/null | tail -150 ====================
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 649 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 649 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 650 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 650 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 651 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 651 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 652 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 652 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 653 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 653 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 654 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 654 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 655 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 655 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 656 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 656 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 657 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 657 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 658 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 658 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 659 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 659 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 660 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 660 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 661 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 661 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 662 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 662 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 663 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 663 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 664 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 664 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 665 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 665 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 666 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 666 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 667 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 667 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 668 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 668 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 669 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 669 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 670 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 670 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 671 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 671 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 672 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 672 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:44 server charon-systemd[712]: received packet: from 10.255.228.120[4500] to 10.255.228.225[4500] (236 bytes)
+10月 11 12:54:44 server charon-systemd[712]: parsed IKE_AUTH request 673 [ EAP/RES/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending RADIUS Access-Request to server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: received RADIUS Access-Challenge from server 'primary'
+10月 11 12:54:44 server charon-systemd[712]: generating IKE_AUTH response 673 [ EAP/REQ/TLS ]
+10月 11 12:54:44 server charon-systemd[712]: sending packet: from 10.255.228.225[4500] to 10.255.228.120[4500] (316 bytes)
+10月 11 12:54:56 server charon-systemd[712]: deleting half open IKE_SA with 10.255.228.120 after timeout
+
+==================== CMD: ipsec statusall 2>/dev/null | head -60 ====================
+
+==================== CMD: grep -rn 'eap-radius' /etc/strongswan.d/ 2>/dev/null; echo '---'; cat /etc/strongswan.d/charon/eap-radius.conf 2>/dev/null ====================
+/etc/strongswan.d/charon/eap-radius.conf.bak.guide:1:eap-radius {
+/etc/strongswan.d/charon/eap-radius.conf.bak.1791198744:1:eap-radius {
+/etc/strongswan.d/charon/eap-radius.conf:1:eap-radius {
+---
+eap-radius {
+	load = yes
+	servers {
+		primary {
+			address = 10.255.228.55
+			secret = mytestkey
+			auth_port = 1812
+			acct_port = 1813
+		}
+	}
+}
+

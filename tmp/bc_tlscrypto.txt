@@ -1,0 +1,38 @@
+public interface org.bouncycastle.tls.crypto.TlsCrypto {
+  public abstract boolean hasAnyStreamVerifiers(java.util.Vector);
+  public abstract boolean hasAnyStreamVerifiersLegacy(short[]);
+  public abstract boolean hasCertificateType(short);
+  public abstract boolean hasCryptoHashAlgorithm(int);
+  public abstract boolean hasCryptoSignatureAlgorithm(int);
+  public abstract boolean hasDHAgreement();
+  public abstract boolean hasECDHAgreement();
+  public abstract boolean hasEncryptionAlgorithm(int);
+  public abstract boolean hasHKDFAlgorithm(int);
+  public abstract boolean hasKemAgreement();
+  public abstract boolean hasMacAlgorithm(int);
+  public abstract boolean hasNamedGroup(int);
+  public abstract boolean hasRSAEncryption();
+  public abstract boolean hasSignatureAlgorithm(short);
+  public abstract boolean hasSignatureAndHashAlgorithm(org.bouncycastle.tls.SignatureAndHashAlgorithm);
+  public abstract boolean hasSignatureScheme(int);
+  public abstract boolean hasSRPAuthentication();
+  public abstract org.bouncycastle.tls.crypto.TlsSecret createHybridSecret(org.bouncycastle.tls.crypto.TlsSecret, org.bouncycastle.tls.crypto.TlsSecret);
+  public abstract org.bouncycastle.tls.crypto.TlsSecret createSecret(byte[]);
+  public abstract org.bouncycastle.tls.crypto.TlsSecret generateRSAPreMasterSecret(org.bouncycastle.tls.ProtocolVersion);
+  public abstract java.security.SecureRandom getSecureRandom();
+  public abstract org.bouncycastle.tls.crypto.TlsCertificate createCertificate(byte[]) throws java.io.IOException;
+  public abstract org.bouncycastle.tls.crypto.TlsCertificate createCertificate(short, byte[]) throws java.io.IOException;
+  public abstract org.bouncycastle.tls.crypto.TlsCipher createCipher(org.bouncycastle.tls.crypto.TlsCryptoParameters, int, int) throws java.io.IOException;
+  public abstract org.bouncycastle.tls.crypto.TlsDHDomain createDHDomain(org.bouncycastle.tls.crypto.TlsDHConfig);
+  public abstract org.bouncycastle.tls.crypto.TlsECDomain createECDomain(org.bouncycastle.tls.crypto.TlsECConfig);
+  public abstract org.bouncycastle.tls.crypto.TlsKemDomain createKemDomain(org.bouncycastle.tls.crypto.TlsKemConfig);
+  public abstract org.bouncycastle.tls.crypto.TlsSecret adoptSecret(org.bouncycastle.tls.crypto.TlsSecret);
+  public abstract org.bouncycastle.tls.crypto.TlsHash createHash(int);
+  public abstract org.bouncycastle.tls.crypto.TlsHMAC createHMAC(int);
+  public abstract org.bouncycastle.tls.crypto.TlsHMAC createHMACForHash(int);
+  public abstract org.bouncycastle.tls.crypto.TlsNonceGenerator createNonceGenerator(byte[]);
+  public abstract org.bouncycastle.tls.crypto.TlsSRP6Client createSRP6Client(org.bouncycastle.tls.crypto.TlsSRPConfig);
+  public abstract org.bouncycastle.tls.crypto.TlsSRP6Server createSRP6Server(org.bouncycastle.tls.crypto.TlsSRPConfig, java.math.BigInteger);
+  public abstract org.bouncycastle.tls.crypto.TlsSRP6VerifierGenerator createSRP6VerifierGenerator(org.bouncycastle.tls.crypto.TlsSRPConfig);
+  public abstract org.bouncycastle.tls.crypto.TlsSecret hkdfInit(int);
+}

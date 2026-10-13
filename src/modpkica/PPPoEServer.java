@@ -76,6 +76,10 @@ public class PPPoEServer {
     private final AtomicInteger activeSessions = new AtomicInteger();
     /** addr:port -> sessionId */
     private final Map<String, Integer> sessions = new ConcurrentHashMap<>();
+    /** addr:port -> 最近一次活动时刻（毫秒），用于空闲会话回收（无 PADT 的掉线客户端）。 */
+    private final Map<String, Long> sessionLastSeen = new ConcurrentHashMap<>();
+    /** 空闲会话超时（毫秒）：超过该时长无任何报文即回收，避免 sessions/计数无限增长。 */
+    private static final long SESSION_IDLE_TIMEOUT_MS = 10 * 60_000L;
     /** addr:port -> CHAP challenge（byte[0]=id, byte[1..]=challenge value） */
     private final Map<String, byte[]> chapChallenges = new ConcurrentHashMap<>();
     private final Deque<LogEntry> logs = new ArrayDeque<>();
@@ -252,8 +256,12 @@ public class PPPoEServer {
             } else if (code == CODE_PADR) {
                 String svc = getTagString(payload, TAG_SERVICE_NAME);
                 int sid = allocSessionId();
-                sessions.put(key, sid);
-                activeSessions.incrementAndGet();
+                // 同一来源重复 PADR：只替换映射，不重复计数（否则 activeSessions 只增不减）
+                Integer prev = sessions.put(key, sid);
+                if (prev == null) {
+                    activeSessions.incrementAndGet();
+                }
+                sessionLastSeen.put(key, System.currentTimeMillis());
                 byte[] pads = buildDiscovery(ETYPE_DISC, CODE_PADS, sid,
                         tag(TAG_SERVICE_NAME, svc == null ? new byte[0]
                                 : svc.getBytes(StandardCharsets.UTF_8)),
@@ -266,6 +274,7 @@ public class PPPoEServer {
                 if (sid != null) {
                     activeSessions.decrementAndGet();
                 }
+                sessionLastSeen.remove(key);
                 chapChallenges.remove(key);
                 log("收到 PADT，会话 " + (sid == null ? "(未知)" : sid) + " 已断开");
             } else {
@@ -273,6 +282,24 @@ public class PPPoEServer {
             }
         } catch (Exception e) {
             log("Discovery 处理异常: " + e.getMessage());
+        }
+    }
+
+    /** 回收空闲会话（客户端掉线未发 PADT）：sessions 与 activeSessions 只增不减会导致计数失真。 */
+    private void reapIdleSessions() {
+        long now = System.currentTimeMillis();
+        for (Map.Entry<String, Long> e : sessionLastSeen.entrySet()) {
+            if (now - e.getValue() > SESSION_IDLE_TIMEOUT_MS) {
+                String key = e.getKey();
+                sessionLastSeen.remove(key);
+                Integer sid = sessions.remove(key);
+                chapChallenges.remove(key);
+                if (sid != null) {
+                    activeSessions.decrementAndGet();
+                    log("会话 " + sid + " 空闲超时（" + (SESSION_IDLE_TIMEOUT_MS / 60000)
+                            + " 分钟无报文），已回收");
+                }
+            }
         }
     }
 
@@ -306,6 +333,7 @@ public class PPPoEServer {
                 sessSocket.receive(pkt);
                 handleSession(pkt);
             } catch (SocketTimeoutException ignored) {
+                reapIdleSessions();
             } catch (Exception e) {
                 if (running) {
                     log("Session 接收异常: " + e.getMessage());
@@ -331,6 +359,9 @@ public class PPPoEServer {
         }
         String key = pkt.getAddress().getHostAddress() + ":" + pkt.getPort();
         Integer sid = sessions.get(key);
+        if (sid != null) {
+            sessionLastSeen.put(key, System.currentTimeMillis());
+        }
         // PPP 帧: ff 03 协议(2) 信息
         byte[] ppp = Arrays.copyOfRange(data, 8, 8 + len);
         if (ppp.length < 4 || (ppp[0] & 0xff) != 0xff || (ppp[1] & 0xff) != 0x03) {
@@ -419,7 +450,11 @@ public class PPPoEServer {
         String pass = new String(info, 3 + peerLen + 1, passLen, StandardCharsets.UTF_8);
         totalAuth.incrementAndGet();
         UsersDB.User u = UsersDB.find(baseDir, peer);
-        if (u != null && u.enabled() && u.password.equals(pass)) {
+        // 口令用常数时间比较（与 CHAP 分支、RADIUS 一致），避免远程计时侧信道
+        boolean passOk = u != null && MessageDigest.isEqual(
+                u.password.getBytes(StandardCharsets.UTF_8),
+                pass.getBytes(StandardCharsets.UTF_8));
+        if (u != null && u.enabled() && passOk) {
             okAuth.incrementAndGet();
             byte[] ack = papFrame(id, PAP_AUTH_ACK, "Welcome to MODPKICA PPPoE");
             send(sessSocket, pkt.getAddress(), pkt.getPort(), sessionFrame(sid, ack));
@@ -481,6 +516,7 @@ public class PPPoEServer {
 
     private void closeSession(String key, Integer sid) {
         sessions.remove(key);
+        sessionLastSeen.remove(key);
         chapChallenges.remove(key);
         if (sid != null) {
             activeSessions.decrementAndGet();

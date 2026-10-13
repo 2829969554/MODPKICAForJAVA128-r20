@@ -178,6 +178,10 @@ public final class TimestampUtil {
         @Override
         public byte[] getDigest() {
             byte[] data = buffer.toByteArray();
+            // 取摘要后必须清空缓冲并复位摘要器：否则同一实例第二次调用会把
+            // 上次数据 + 新数据一起哈希，产出错误的 messageImprint（客户端验签必失败）
+            buffer.reset();
+            digest.reset();
             digest.update(data, 0, data.length);
             byte[] out = new byte[digest.getDigestSize()];
             digest.doFinal(out, 0);
@@ -206,7 +210,10 @@ public final class TimestampUtil {
                                                       X509Certificate cert,
                                                       PrivateKey key,
                                                       int digitype) throws Exception {
-        boolean sm2 = "SM2".equalsIgnoreCase(key.getAlgorithm());
+        // BC 对 SM2 私钥报告的算法名是 "EC"，不能只看 key.getAlgorithm()：
+        // 否则 SM2 TSA 会退化为 SHA256withECDSA（签名算法与密钥/证书不匹配）。
+        boolean sm2 = "SM2".equalsIgnoreCase(key.getAlgorithm())
+                || CertUtil.isSm2PublicKey(cert.getPublicKey());
         String signAlg;
         if (sm2) {
             signAlg = "SM3withSM2";

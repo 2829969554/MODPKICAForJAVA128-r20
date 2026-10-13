@@ -1,0 +1,11 @@
+﻿�ͻ���֤��=CN=localhost ˽Կ����=RSAPrivateCrtKeyParameters
+[1] Identity -> code=11
+[2] NAK -> code=11 EAP=010200060d20
+EAP-TLS Start �յ���EAP-id=2
+BC ��� 244B -> �������: 16030100ef010000eb030340d46ce876c30e04334ddb80f04ce2548e37e07e01
+      5bc3d39b9d4d8d67
+[recv] code=11 id=3 len=46
+  attr type=79 vlen=6 hex=010200060d00
+  attr type=80 vlen=16 hex=c54b9c981eba4551cfa9556ce42ab918
+����� flight �յ� 0B: 
+=== ��ʱ��BC �߳��Դ�� ===

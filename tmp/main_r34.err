@@ -1,0 +1,10 @@
+[TlsSrv] getSupportedVersions 调用
+[TlsSrv] notifyClientVersion=TLS 1.3
+[TlsSrv] getCertificateRequest tls13=true ver=TLS 1.3
+[EAP-TLS][t=20205] 握手异常: org.bouncycastle.tls.TlsFatalAlert: internal_error(80) inQ残留=0
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1913)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+[handleEapTls] feed后 pollOutput=185B done=true ok=false err=org.bouncycastle.tls.TlsFatalAlert: internal_error(80)

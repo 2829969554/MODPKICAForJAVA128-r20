@@ -1,0 +1,39 @@
+[TlsSrv] getSupportedVersions 调用
+[BlockingInput] 取到数据 len=427 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.3
+[TlsSrv] getCertificateRequest tls13=true ver=TLS 1.3
+[TlsSrv] DEBUG_NO_CLIENT_CERT 返回 null（诊断用）
+[TlsSrv] getCredentials tls13=true ver=TLS 1.3
+[EAP-TLS][t=72399] 握手异常: org.bouncycastle.tls.TlsFatalAlert: internal_error(80) inQ残留=0 out总=185 sent=0
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1921)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+[handleEapTls] feed后 pollOutput=185B done=true ok=false err=org.bouncycastle.tls.TlsFatalAlert: internal_error(80) hex=160303007a0200007603030add40630f65f5f380fdb53256ad5afe67c31530e93beaceae33d2c98686092220a331f4980ba2456933425cefa0cad275
+[TlsSrv] getSupportedVersions 调用
+[BlockingInput] 取到数据 len=427 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.3
+[TlsSrv] getCertificateRequest tls13=true ver=TLS 1.3
+[TlsSrv] DEBUG_NO_CLIENT_CERT 返回 null（诊断用）
+[TlsSrv] getCredentials tls13=true ver=TLS 1.3
+[EAP-TLS][t=10389] 握手异常: org.bouncycastle.tls.TlsFatalAlert: internal_error(80) inQ残留=0 out总=185 sent=0
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1921)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+[handleEapTls] feed后 pollOutput=185B done=true ok=false err=org.bouncycastle.tls.TlsFatalAlert: internal_error(80) hex=160303007a0200007603038e8ee9af9b0e1ba9784410c8a8e6b46aff0fb23961549e6e6b8363305c4ea36f20280ebea8acb4a714a4ab48a6257b4989
+[TlsSrv] getSupportedVersions 调用
+[BlockingInput] 取到数据 len=427 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.3
+[TlsSrv] getCertificateRequest tls13=true ver=TLS 1.3
+[TlsSrv] DEBUG_NO_CLIENT_CERT 返回 null（诊断用）
+[TlsSrv] getCredentials tls13=true ver=TLS 1.3
+[EAP-TLS][t=58959] 握手异常: org.bouncycastle.tls.TlsFatalAlert: internal_error(80) inQ残留=0 out总=185 sent=0
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1921)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+[handleEapTls] feed后 pollOutput=185B done=true ok=false err=org.bouncycastle.tls.TlsFatalAlert: internal_error(80) hex=160303007a020000760303bfc392cd3beed2ae31943cc5efcdd1dc14228248efc5e3f67760f4cd9a3e6b8f20062fae1aa6ed9d11f93e9b03dbb95272

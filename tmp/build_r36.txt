@@ -1,0 +1,39 @@
+﻿============================================
+  MODPKICA Java One-Click Build (offline)
+============================================
+[1/2] Compiling shared library and all 7 main programs...
+cmd : src\modpkica\RadiusServer.java:335: ����: [dangling-doc-comments] �ĵ�ע��δ���ӵ��κ�����
+所在位置 行:1 字符: 137
++ ... rce; Start-Sleep 1; cmd /c build.cmd > tmp\build_r36.txt 2>&1; Select ...
++                         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+    + CategoryInfo          : NotSpecified: (src\modpkica\Ra...��δ���ӵ��κ�����:String) [], RemoteException
+    + FullyQualifiedErrorId : NativeCommandError
+ 
+    /** ����ʽ�������������̴߳Ӷ���ȡ�ͻ��� EAP ���ݣ�������=EOF�� */
+    ^
+1 ������
+[2/2] Verifying class output...
+
+Build SUCCESS. Classes are in .\out
+
+How to run (set MODPKICA_BASE to your PKI root first):
+  set MODPKICA_BASE=C:\path\to\your\pki_root
+
+  [1] java "-Dfile.encoding=UTF-8" -cp "out;BC185\*;lib\*" modpkica.MAIN
+      (GUI auto starts at http://localhost:8080)
+  [2] java "-Dfile.encoding=UTF-8" -cp "out;BC185\*;lib\*" modpkica.WebAdmin
+      (GUI only)
+  [3] java "-Dfile.encoding=UTF-8" -cp "out;BC185\*;lib\*" modpkica.Admin
+  [4] java "-Dfile.encoding=UTF-8" -cp "out;BC185\*;lib\*" modpkica.MakeRoot "CN=Root,O=Org,C=CN" 2048 sha256 RSA
+  [5] java "-Dfile.encoding=UTF-8" -cp "out;BC185\*;lib\*" modpkica.MakeCert "CN=www.test.com" 2048 sha256 1 1 0 1 "www.test.com" null null ROOTSERIAL RSA
+      (ROOTSERIAL = CERTS.txt 中 R 类型根证书的序列号，多根模型已废除 root 别名)
+  [6] java "-Dfile.encoding=UTF-8" -cp "out;BC185\*;lib\*" modpkica.RootGetCrl
+  [7] java "-Dfile.encoding=UTF-8" -cp "out;BC185\*;lib\*" modpkica.CertVerify cert.crt
+  [8] java "-Dfile.encoding=UTF-8" -cp "out;BC185\*;lib\*" modpkica.Auto revoke 1234567890 1
+  [9] java "-Dfile.encoding=UTF-8" -cp "out;debug_test\classes;BC185\*;lib\*" ModpkicaUnitTest
+      (unit tests: compile + run, requires the [1/2] build above)
+
+          (If compilation fails, the command is NOT executed.)
+
+Note: PKI folder layout (CERTS.txt, ROOT, CA, CERT, KEY, OCSP,
+      TIMSTAMP, WebPublic, CONFIG.txt, logs.log) is created at MODPKICA_BASE.

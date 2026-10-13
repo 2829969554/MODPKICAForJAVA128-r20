@@ -443,6 +443,12 @@ public final class SignTool {
             throw new IllegalArgumentException("不是有效 PE 文件（缺 MZ 头）");
         }
         long eLfanew = readU32(file, 0x3C);
+        // PE 头偏移来自文件内容，必须做边界校验：畸形文件会让 readU16/writeU32
+        // 越界（ArrayIndexOutOfBoundsException）而不是给出可读的错误信息
+        if (eLfanew <= 0 || eLfanew + 24 + 2 > file.length) {
+            throw new IllegalArgumentException("PE 头偏移非法（e_lfanew=" + eLfanew
+                    + "，文件长度 " + file.length + "）");
+        }
         int magic = readU16(file, (int) eLfanew + 24);
         if (magic != 0x10B && magic != 0x20B) {
             throw new IllegalArgumentException("无法识别的 PE 魔术字: 0x" + Integer.toHexString(magic));
@@ -451,6 +457,11 @@ public final class SignTool {
         int dataDirStart = is64 ? 112 : 96;
         long checksumOff = eLfanew + 24 + 64;                              // OptionalHeader.Checksum
         long secDirOff = eLfanew + 24 + dataDirStart + 4 * 8;              // DataDirectory[4] Certificate Table
+        // Security Directory（8 字节）必须落在文件内，后续 writeU32 才能安全写入
+        if (secDirOff + 8 > file.length) {
+            throw new IllegalArgumentException("PE 可选头截断：安全目录偏移 " + secDirOff
+                    + " 超出文件长度 " + file.length);
+        }
 
         // 证书表起始 = 原文件长度 8 字节对齐
         long certTableOffset = (file.length + 7) & ~7L;
@@ -2101,6 +2112,7 @@ public final class SignTool {
             }
             int code = conn.getResponseCode();
             if (code != HttpURLConnection.HTTP_OK) {
+                System.err.println("[SignTool] HTTP POST 返回 " + code + "（" + url + "）");
                 return null;
             }
             ByteArrayOutputStream resp = new ByteArrayOutputStream();
@@ -2113,6 +2125,8 @@ public final class SignTool {
             }
             return resp.toByteArray();
         } catch (Exception e) {
+            // 静默返回 null 会让"时间戳降级 / LTV 缺失"无从排查，必须留下原因
+            System.err.println("[SignTool] HTTP POST 失败（" + url + "）: " + e);
             return null;
         }
     }
@@ -2126,6 +2140,7 @@ public final class SignTool {
             conn.setReadTimeout(20000);
             int code = conn.getResponseCode();
             if (code != HttpURLConnection.HTTP_OK) {
+                System.err.println("[SignTool] HTTP GET 返回 " + code + "（" + url + "）");
                 return null;
             }
             ByteArrayOutputStream resp = new ByteArrayOutputStream();
@@ -2138,6 +2153,7 @@ public final class SignTool {
             }
             return resp.toByteArray();
         } catch (Exception e) {
+            System.err.println("[SignTool] HTTP GET 失败（" + url + "）: " + e);
             return null;
         }
     }

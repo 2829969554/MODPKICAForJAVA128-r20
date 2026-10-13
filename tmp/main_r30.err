@@ -1,0 +1,13 @@
+[EAP-TLS][t=3688] Œ’ ÷“Ï≥£: org.bouncycastle.tls.TlsFatalAlert: handshake_failure(40); No selectable cipher suite inQ≤–¡Ù=0
+    at org.bouncycastle.tls.AbstractTlsServer.getSelectedCipherSuite(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.generate13ServerHello(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.generateServerHello(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.handleHandshakeMessage(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.processHandshakeQueue(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.processRecord(Unknown Source)
+    at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1832)
+    at java.base/java.lang.Thread.run(Thread.java:1516)

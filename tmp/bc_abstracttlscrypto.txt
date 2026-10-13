@@ -1,0 +1,5 @@
+public abstract class org.bouncycastle.tls.crypto.impl.AbstractTlsCrypto implements org.bouncycastle.tls.crypto.TlsCrypto {
+  public org.bouncycastle.tls.crypto.impl.AbstractTlsCrypto();
+  public org.bouncycastle.tls.crypto.TlsSecret adoptSecret(org.bouncycastle.tls.crypto.TlsSecret);
+  public boolean hasCertificateType(short);
+}

@@ -1,0 +1,30 @@
+[TlsSrv] getSupportedVersions 调用
+[BlockingInput] 取到数据 len=151 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.2
+[TlsSrv] getCredentials tls13=false ver=TLS 1.2
+[TlsSrv] getCertificateRequest tls13=false ver=TLS 1.2
+[handleEapTls] feed后 pollOutput=3112B done=false ok=false err= hex=160303003b0200003703036acb6b03e27e099c4b65204d385fe3e860c70d5d20669c27444f574e4752440100c02f00000f00170000ff01000100000b
+[BlockingInput] 取到数据 len=427 eof=false
+[EAP-TLS][t=99803] 握手异常: org.bouncycastle.tls.TlsFatalAlert: unexpected_message(10) inQ残留=0 out总=3119 sent=3112
+    at org.bouncycastle.tls.TlsServerProtocol.handleHandshakeMessage(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.processHandshakeQueue(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.processRecord(Unknown Source)
+    at org.bouncycastle.tls.RecordStream.readRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1932)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+[handleEapTls] feed后 pollOutput=7B done=true ok=false err=org.bouncycastle.tls.TlsFatalAlert: unexpected_message(10) hex=1503030002020a
+[TlsSrv] getSupportedVersions 调用
+[BlockingInput] 取到数据 len=427 eof=false
+[TlsSrv] notifyClientVersion=TLS 1.3
+[TlsSrv] getCertificateRequest tls13=true ver=TLS 1.3
+[EAP-TLS][t=84712] 握手异常: org.bouncycastle.tls.TlsFatalAlert: internal_error(80) inQ残留=0 out总=185 sent=0
+    at org.bouncycastle.tls.TlsProtocol.safeReadRecord(Unknown Source)
+    at org.bouncycastle.tls.TlsProtocol.blockForHandshake(Unknown Source)
+    at org.bouncycastle.tls.TlsServerProtocol.accept(Unknown Source)
+    at modpkica.RadiusServer.lambda$startEapTls$0(RadiusServer.java:1932)
+    at java.base/java.lang.Thread.run(Thread.java:1516)
+    cause[0]=java.lang.IllegalArgumentException: 'supportedSignatureAlgorithms' must have length from 1 to (2^15 - 1) @ org.bouncycastle.tls.TlsUtils.encodeSupportedSignatureAlgorithms(Unknown Source)
+[handleEapTls] feed后 pollOutput=185B done=true ok=false err=org.bouncycastle.tls.TlsFatalAlert: internal_error(80) hex=160303007a0200007603039876e25966b0a447a676af85f0f16a4bff4ea25eafbf69dac60011bcae57c3eb201b490247b2b851eaa7f8b71560ed3d6a

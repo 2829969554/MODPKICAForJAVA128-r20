@@ -13,7 +13,6 @@ import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 /**
  * CertsDB —— 证书台账 CERTS.txt 的读取 / 追加 / 吊销修改。
@@ -38,15 +37,17 @@ public class CertsDB {
     private static final DateTimeFormatter TIME_FMT =
             DateTimeFormatter.ofPattern("yyyy/MM/dd-HH:mm:ss");
 
-    /** 内存中缓存的全部台账条目（CopyOnWriteArrayList：读多写少，遍历永不抛 CME） */
-    private final CopyOnWriteArrayList<CertEntry> entries = new CopyOnWriteArrayList<>();
+    /** 内存中缓存的全部台账条目。写方在文件锁内构建新列表后**整体替换引用**，
+     *  读方拿到的永远是完整快照——不会观察到"清空后尚未重填"的空表，
+     *  也不会因并发重载读到半更新的数据。 */
+    private volatile List<CertEntry> entries = new ArrayList<>();
 
     /** 原文件中 # 注释行与空行（用户"删除证书=行首 # 注释"的语义载体）。
-     *  仅 load 与 rewriteAll 在锁内访问；rewriteAll 时原样保留，避免重写抹掉注释。 */
-    private final List<String> preservedLines = new ArrayList<>();
+     *  与 entries 一样按不可变快照整体替换；rewriteAll 时原样保留，避免重写抹掉注释。 */
+    private volatile List<String> preservedLines = new ArrayList<>();
 
     /** CERTS.txt 的完整路径 */
-    private Path dbPath;
+    private volatile Path dbPath;
 
     /** 最近一次加载的警告信息（坏行 / IO 失败），空串表示正常（P2-14）。 */
     public String lastLoadWarning = "";
@@ -57,8 +58,19 @@ public class CertsDB {
     /** 跨进程 + 进程内双重互斥：通过 CERTS.txt.lock 文件锁实现（P2-02）。
      *  动作内部抛出的 RuntimeException（含 UncheckedIOException）原样上抛。 */
     private void withLock(Runnable action) {
+        withFileLock(dbPath, action);
+    }
+
+    /** 在指定 CERTS.txt 的跨进程文件锁（&lt;path&gt;.lock）内执行读-改-写。
+     *  供直接改写同一文件的程序（MakeCert 删除旧登记行 / Auto 吊销）复用，
+     *  避免与 CertsDB.addEntry/rewriteAll 互相用旧快照覆盖对方的新记录。 */
+    public static void withCertsLock(String baseDir, Runnable action) {
+        withFileLock(Paths.get(baseDir, "PKI", "CERTS.txt"), action);
+    }
+
+    private static void withFileLock(Path certsPath, Runnable action) {
         synchronized (FILE_LOCK) {
-            Path lockPath = Paths.get(dbPath.toString() + ".lock");
+            Path lockPath = Paths.get(certsPath.toString() + ".lock");
             try (FileChannel lc = FileChannel.open(lockPath,
                     StandardOpenOption.CREATE, StandardOpenOption.WRITE);
                  FileLock fl = lc.lock()) {
@@ -98,57 +110,63 @@ public class CertsDB {
      * @param baseDir MODPKICA 根目录
      */
     public void load(String baseDir) {
-        dbPath = Paths.get(baseDir, "PKI", "CERTS.txt");
-        entries.clear();
-        preservedLines.clear();
-        lastLoadWarning = "";
-        if (!Files.exists(dbPath)) {
-            return;
-        }
-        List<String> lines;
-        try {
-            lines = Files.readAllLines(dbPath, StandardCharsets.UTF_8);
-        } catch (IOException e) {
-            lastLoadWarning = "CERTS.txt 读取失败: " + e;
-            System.err.println("[CertsDB] " + lastLoadWarning);
-            return;
-        }
-        int bad = 0;
-        for (String raw : lines) {
-            String line = stripCrLf(raw).trim();
-            // 防御 UTF-8 BOM：外部工具（如记事本/PowerShell）可能写入 BOM，剥掉后注释行才能被识别
-            if (!line.isEmpty() && line.charAt(0) == '\uFEFF') {
-                line = line.substring(1).trim();
-            }
-            if (line.isEmpty() || line.startsWith("#")) {
-                // 保留注释/空行：重写文件时不丢失（用户"删除=行首 # 注释"语义）
-                preservedLines.add(raw);
-                continue;
-            }
-            // 按空白切分：serial type status reason time issuerId algo
-            String[] p = line.split("\\s+");
-            if (p.length < 7) {
-                bad++;
-                continue;
-            }
+        Path path = Paths.get(baseDir, "PKI", "CERTS.txt");
+        dbPath = path;
+        List<CertEntry> newEntries = new ArrayList<>();
+        List<String> newPreserved = new ArrayList<>();
+        String warning = "";
+        if (Files.exists(path)) {
+            List<String> lines;
             try {
-                CertEntry e = new CertEntry();
-                e.serial = p[0];
-                e.type = p[1].charAt(0);
-                e.status = p[2].charAt(0);
-                e.reason = Integer.parseInt(p[3]);
-                e.time = LocalDateTime.parse(p[4], TIME_FMT);
-                e.issuerId = p[5];
-                e.algo = p[6];
-                entries.add(e);
-            } catch (Exception ignore) {
-                bad++;
+                lines = Files.readAllLines(path, StandardCharsets.UTF_8);
+            } catch (IOException e) {
+                warning = "CERTS.txt 读取失败: " + e;
+                System.err.println("[CertsDB] " + warning);
+                lines = null;
+            }
+            if (lines != null) {
+                int bad = 0;
+                for (String raw : lines) {
+                    String line = stripCrLf(raw).trim();
+                    // 防御 UTF-8 BOM：外部工具（如记事本/PowerShell）可能写入 BOM，剥掉后注释行才能被识别
+                    if (!line.isEmpty() && line.charAt(0) == '\uFEFF') {
+                        line = line.substring(1).trim();
+                    }
+                    if (line.isEmpty() || line.startsWith("#")) {
+                        // 保留注释/空行：重写文件时不丢失（用户"删除=行首 # 注释"语义）
+                        newPreserved.add(raw);
+                        continue;
+                    }
+                    // 按空白切分：serial type status reason time issuerId algo
+                    String[] p = line.split("\\s+");
+                    if (p.length < 7) {
+                        bad++;
+                        continue;
+                    }
+                    try {
+                        CertEntry e = new CertEntry();
+                        e.serial = p[0];
+                        e.type = p[1].charAt(0);
+                        e.status = p[2].charAt(0);
+                        e.reason = Integer.parseInt(p[3]);
+                        e.time = LocalDateTime.parse(p[4], TIME_FMT);
+                        e.issuerId = p[5];
+                        e.algo = p[6];
+                        newEntries.add(e);
+                    } catch (Exception ignore) {
+                        bad++;
+                    }
+                }
+                if (bad > 0) {
+                    warning = "CERTS.txt 有 " + bad + " 行无法解析（已跳过）";
+                    System.err.println("[CertsDB] " + warning);
+                }
             }
         }
-        if (bad > 0) {
-            lastLoadWarning = "CERTS.txt 有 " + bad + " 行无法解析（已跳过）";
-            System.err.println("[CertsDB] " + lastLoadWarning);
-        }
+        // 整体替换引用：并发读者要么看到旧快照、要么看到新快照，绝不会看到空表/半表
+        entries = newEntries;
+        preservedLines = newPreserved;
+        lastLoadWarning = warning;
     }
 
     /** 重新从磁盘加载（外部修改后调用）。 */
@@ -230,20 +248,24 @@ public class CertsDB {
                 // 写文件失败必须暴露：否则内存记录与磁盘不一致（重启后记录丢失）
                 throw new java.io.UncheckedIOException("写 CERTS.txt 失败: " + dbPath, ex);
             }
-            entries.add(e); // 写成功后才加入内存（锁内，避免并发 add）
+            // 写成功后才加入内存（锁内整体替换，避免并发 add 丢条目）
+            List<CertEntry> copy = new ArrayList<>(entries);
+            copy.add(e);
+            entries = copy;
         });
     }
 
     /**
      * 把指定序列号证书状态改为 R（吊销），更新原因与时间，并整文件重写。
      * 内存采用"新对象替换"而非改字段，读方不会看到半更新状态。
+     * 内存替换与文件重写在同一把锁内完成，避免并发下用旧快照覆盖新增记录。
      *
      * @param serial 证书序列号
      * @param reason 吊销原因码
      * @param time   吊销时间
      */
     public void revokeCert(String serial, int reason, LocalDateTime time) {
-        synchronized (FILE_LOCK) {
+        withLock(() -> {
             CertEntry e = findBySerial(serial);
             if (e == null) {
                 return;
@@ -254,11 +276,12 @@ public class CertsDB {
             n.time = time;
             int idx = entries.indexOf(e);
             if (idx >= 0) {
-                entries.set(idx, n);
+                List<CertEntry> copy = new ArrayList<>(entries);
+                copy.set(idx, n);
+                entries = copy;
             }
-        }
-        // 重写文件（withLock 内部重新获取 FILE_LOCK，synchronized 可重入 + 文件锁此时无重叠）
-        rewriteAll();
+            rewriteAllLocked();
+        });
     }
 
     /**
@@ -308,6 +331,11 @@ public class CertsDB {
     /** 把内存中全部条目按行重写回文件（P2-01：tmp → fsync → .bak → 原子替换，锁内执行）。
      *  注释/空行（preservedLines）按原顺序写回最前，保证"行首 # 注释"的删除语义不被重写抹掉。 */
     private void rewriteAll() {
+        withLock(this::rewriteAllLocked);
+    }
+
+    /** 必须在 withLock 内调用：快照取自锁内，避免"先取快照后进锁"期间并发写入被旧快照覆盖。 */
+    private void rewriteAllLocked() {
         StringBuilder sb = new StringBuilder();
         for (String cl : preservedLines) {
             sb.append(cl).append(System.lineSeparator());
@@ -316,26 +344,24 @@ public class CertsDB {
             sb.append(formatLine(e)).append(System.lineSeparator());
         }
         String content = sb.toString();
-        withLock(() -> {
-            Path tmp = Paths.get(dbPath.toString() + ".tmp");
-            try {
-                Files.writeString(tmp, content, StandardCharsets.UTF_8,
-                        StandardOpenOption.CREATE,
-                        StandardOpenOption.TRUNCATE_EXISTING);
-                // fsync 落盘，避免断电/崩溃后半文件
-                try (java.io.FileOutputStream fos = new java.io.FileOutputStream(tmp.toString(), true)) {
-                    fos.getFD().sync();
-                }
-                // 保留 .bak 备份
-                if (Files.exists(dbPath)) {
-                    Files.copy(dbPath, Paths.get(dbPath.toString() + ".bak"),
-                            StandardCopyOption.REPLACE_EXISTING);
-                }
-                Files.move(tmp, dbPath, StandardCopyOption.REPLACE_EXISTING);
-            } catch (IOException ex) {
-                throw new java.io.UncheckedIOException("rewrite CERTS.txt failed: " + dbPath, ex);
+        Path tmp = Paths.get(dbPath.toString() + ".tmp");
+        try {
+            Files.writeString(tmp, content, StandardCharsets.UTF_8,
+                    StandardOpenOption.CREATE,
+                    StandardOpenOption.TRUNCATE_EXISTING);
+            // fsync 落盘，避免断电/崩溃后半文件
+            try (java.io.FileOutputStream fos = new java.io.FileOutputStream(tmp.toString(), true)) {
+                fos.getFD().sync();
             }
-        });
+            // 保留 .bak 备份
+            if (Files.exists(dbPath)) {
+                Files.copy(dbPath, Paths.get(dbPath.toString() + ".bak"),
+                        StandardCopyOption.REPLACE_EXISTING);
+            }
+            Files.move(tmp, dbPath, StandardCopyOption.REPLACE_EXISTING);
+        } catch (IOException ex) {
+            throw new java.io.UncheckedIOException("rewrite CERTS.txt failed: " + dbPath, ex);
+        }
     }
 
     /** 把条目格式化为文件中的一行（不补换行）。 */

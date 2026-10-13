@@ -133,13 +133,6 @@ public final class PemIO {
         }
     }
 
-    /**
-     * 读取私钥并直接返回可用于签名的对象（BC 私钥参数）。
-     */
-    public static Object readPrivateKeyAsSigner(String path) throws Exception {
-        return readPrivateKey(path);
-    }
-
     // ============================ 写证书 ============================
 
     /**
@@ -343,26 +336,42 @@ public final class PemIO {
         atomicWrite(out, bytes);
     }
 
-    /** 原子写文件（对齐 CertsDB.rewriteAll：tmp → fsync → .bak → move），POSIX 上私钥收紧为 600。 */
+    /** POSIX 平台用于敏感文件的权限：仅属主可读写。 */
+    private static final java.util.Set<java.nio.file.attribute.PosixFilePermission> OWNER_ONLY =
+            java.nio.file.attribute.PosixFilePermissions.fromString("rw-------");
+
+    /** 原子写文件（对齐 CertsDB.rewriteAll：tmp → fsync → .bak → move）。
+     *
+     * <p>POSIX 平台上临时文件、备份文件与目标文件一律收紧为 600：临时文件若按默认
+     * umask（常见 644）创建，私钥会在写入窗口内对同机其他用户可读；.bak 是旧私钥副本，
+     * 同样必须收紧。Windows（NTFS 无 POSIX 权限）自动跳过。 */
     public static void atomicWrite(Path out, byte[] bytes) throws Exception {
         Path tmp = out.resolveSibling(out.getFileName() + ".tmp");
+        Path bak = out.resolveSibling(out.getFileName() + ".bak");
+        // 先以 600 建文件再写入（FileOutputStream 截断写不会改变已存在的权限）
+        createOwnerOnly(tmp);
         try (java.io.FileOutputStream fos = new java.io.FileOutputStream(tmp.toString())) {
             fos.write(bytes);
             fos.getFD().sync();
         }
         if (Files.exists(out)) {
-            Files.copy(out, out.resolveSibling(out.getFileName() + ".bak"),
-                    java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            Files.copy(out, bak, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
+            createOwnerOnly(bak);
         }
         Files.move(tmp, out, java.nio.file.StandardCopyOption.REPLACE_EXISTING);
-        // 私钥/证书类敏感文件：POSIX 平台收紧权限（Windows 无 POSIX 权限，忽略）
+        createOwnerOnly(out);
+    }
+
+    /** 非 POSIX 文件系统（Windows NTFS）不支持权限设置：静默跳过，不影响写入结果。 */
+    private static void createOwnerOnly(Path p) {
         try {
-            Files.setPosixFilePermissions(out,
-                    java.nio.file.attribute.PosixFilePermissions.fromString("rw-------"));
-        } catch (UnsupportedOperationException ignored) {
-            // 非 POSIX 文件系统（如 Windows NTFS）不支持，跳过
-        } catch (java.io.IOException ignored) {
-            // 权限设置失败不影响写入结果
+            if (Files.exists(p)) {
+                Files.setPosixFilePermissions(p, OWNER_ONLY);
+            } else {
+                Files.createFile(p,
+                        java.nio.file.attribute.PosixFilePermissions.asFileAttribute(OWNER_ONLY));
+            }
+        } catch (UnsupportedOperationException | java.io.IOException ignored) {
         }
     }
 }

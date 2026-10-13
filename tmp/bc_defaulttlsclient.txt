@@ -1,0 +1,6 @@
+public abstract class org.bouncycastle.tls.DefaultTlsClient extends org.bouncycastle.tls.AbstractTlsClient {
+  private static final int[] DEFAULT_CIPHER_SUITES;
+  public org.bouncycastle.tls.DefaultTlsClient(org.bouncycastle.tls.crypto.TlsCrypto);
+  protected int[] getSupportedCipherSuites();
+  static {};
+}

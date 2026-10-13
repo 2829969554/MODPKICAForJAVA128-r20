@@ -61245,3 +61245,1943 @@
 命令: 来源=10.255.228.225:43733 用户=CN=vpn.local,OU=IT Clubs,O=China IT Boys,L=newer york 方法=EAP(EAP-TLS)
 结果: 认证通过
 
+时间: 2026/10/11 10:01:25
+时间戳: 1791684085717
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 10:03:04
+时间戳: 1791684184475
+操作: Radius 认证
+命令: 来源=10.255.228.225:53304 用户=CN=vpn.local,OU=IT Clubs,O=China IT Boys,L=newer york 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/11 10:05:29
+时间戳: 1791684329903
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 10:07:35
+时间戳: 1791684455914
+操作: Radius 认证
+命令: 来源=10.255.228.225:53304 用户=CN=vpn.local,OU=IT Clubs,O=China IT Boys,L=newer york 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/11 10:11:13
+时间戳: 1791684673820
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 10:12:05
+时间戳: 1791684725831
+操作: Radius 认证
+命令: 来源=10.255.228.225:53304 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/11 10:15:50
+时间戳: 1791684950693
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/
+
+时间: 2026/10/11 10:15:50
+时间戳: 1791684950931
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/favicon.ico
+
+时间: 2026/10/11 10:15:55
+时间戳: 1791684955272
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/
+
+时间: 2026/10/11 10:16:10
+时间戳: 1791684970789
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/CRT/123456.pfx
+
+时间: 2026/10/11 10:16:10
+时间戳: 1791684970794
+操作: 文件响应
+命令: 
+结果: 文件=123456.pfx 大小=4763字节 类型=pfx
+
+时间: 2026/10/11 10:19:01
+时间戳: 1791685141683
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/
+
+时间: 2026/10/11 10:19:10
+时间戳: 1791685150419
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/CRT/123456a.pfx
+
+时间: 2026/10/11 10:19:10
+时间戳: 1791685150420
+操作: 文件响应
+命令: 
+结果: 文件=123456a.pfx 大小=4282字节 类型=pfx
+
+时间: 2026/10/11 10:19:51
+时间戳: 1791685191630
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/
+
+时间: 2026/10/11 10:20:06
+时间戳: 1791685206949
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/crt/123456a.pfx
+
+时间: 2026/10/11 10:20:06
+时间戳: 1791685206950
+操作: 文件响应
+命令: 
+结果: 文件=123456a.pfx 大小=4282字节 类型=pfx
+
+时间: 2026/10/11 10:21:46
+时间戳: 1791685306926
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/
+
+时间: 2026/10/11 10:21:53
+时间戳: 1791685313471
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/crt/aaa.pfx
+
+时间: 2026/10/11 10:21:53
+时间戳: 1791685313473
+操作: 文件响应
+命令: 
+结果: 文件=aaa.pfx 大小=4282字节 类型=pfx
+
+时间: 2026/10/11 10:23:31
+时间戳: 1791685411842
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/
+
+时间: 2026/10/11 10:23:38
+时间戳: 1791685418125
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/aaaa.pfx
+
+时间: 2026/10/11 10:23:50
+时间戳: 1791685430865
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/
+
+时间: 2026/10/11 10:23:59
+时间戳: 1791685439159
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/crt/aaaa.pfx
+
+时间: 2026/10/11 10:23:59
+时间戳: 1791685439161
+操作: 文件响应
+命令: 
+结果: 文件=aaaa.pfx 大小=4282字节 类型=pfx
+
+时间: 2026/10/11 10:25:17
+时间戳: 1791685517607
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"f7679b33352bd0d0e150e8594606c01f"}
+结果:         版本： 3\r\n      序列号： f7679b33352bd0d0e150e8594606c01f\r\n    签名算法： SHA256-RSA (1.2.840.113549.1.1.11)\r\n签名哈希算法： SHA256\n\r\n颁发者： CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n有效期从： Fri Oct 09 20:21:10 CST 2026\r\n有效期到： Sat Oct 09 20:21:10 CST 2027\n\r\n使用者： CN=vpn.local, OU=IT Clubs, O=China IT Boys, L=newer york, C=CN\r\n    公钥： RSA 2048\r\n授权密钥标识符  ： 3999d910628fcf8b64448f4837339b356a26e0f6\r\n使用者密钥标识符： 7484227250eeb140f9399f8871809c606f0809f6\n\r\n增强型密钥用法：\n\r\n              服务器身份验证 (1.3.6.1.5.5.7.3.1)\r\n\n使用者可选名称：\r\n              DNS = vpn.local\r\n              IP = 10.255.228.225\r\n              IP = 127.0.0.1\r\n授权信息访问：\r\n证书吊销列表：\r\n密钥用法： digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyAgreement\r\n证书策略：\r\n              证书颁发策略(Statement Identifier) OID = 1.3.6.1.4.1.4146.1.95\r\nSCT列表:\r\n      第 1 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  9a1bb0c17324f2c23c32c01b558c154a7b629cbd0167fd1a498cd302c1d17bb9\r\n          时间戳:  Fri Oct 09 20:21:11 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  3046022100a8950e11783a1f4243f3df7807472acbf870626e1bade7473e2a58a7a2191a8c022100ce8e5599c45bf6cce5b78ee63061e90b7bfac0d6589af1f849de5c124cff61ee\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 2 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log RSA\r\n      日志标识符:  09690e3801caf77fb71d72636dd9a274ac894447ea40ed1ef6dd65fc7251c82b\r\n          时间戳:  Fri Oct 09 20:21:11 CST 2026\r\n        签名类型:  RSA-SHA256\r\n            签名:  26bb76ab28aa5127da5dadedab526fe657e3256a5c7bc02d85fca436674adbdc2c685fe6dd47bfec56489e995243d86448250c1817f9ea0076d6d5be7f061bf0a7018943351ecba1e280a7ed2d7477ec6e7cf4eec3eefa6a4023f01666cff21a94137072454c0c9b2618e07ccc7ad554769dcd8a8ec5b57bf1dd5a98028e5455a3ea505a3db317cee72675ab8a0e669c019ffa88f434441385f765d58a815b903dddcd3622bfd38e7c1642764f51bedc51edb4e28e2af0ef8a9bcf13369ef3e23aeb767bc61e0192a816ff1fd6102fd1af39cbfa74f5a64665b839077aa00ac25201469dd83912cd56a512f20b000e3e343b1d3168900c3eebccefe7005370e3\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 3 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  280b8458b32b2fa115f245555ea427bf8695c252f1c4428eb3c4d23922e68f76\r\n          时间戳:  Fri Oct 09 20:21:11 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  304502207d1217c028219f64ede11a16e5769ee46eb230c34008729a25d276a6e96ab063022100e09de3831e211158b1a1fb8e5ba4a84e420ee297531a92cea1cce2718143acb4\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n\n\n\r\n证书签名：\n        37fea10645ceb070855769fffdcab277970f8642045370f10ab40a408f8b9991b6f3631b48a5c969f6aa8dbffb811c87b4144e9e17b9204006c153960b72c8e337358ece0bdd34cda5cf7f1facfcf10b9c6fe5395c02a57060cfab9ba0e6c924e49f729341d364da4260fff6f1723af1ff9378bbf112dd9f1024ab579e6408e5\n\r\n证书类别： 非根证书\n\r\n证书链： \r\n验证签名： 颁发者证书来自本地 PKI 目录/cacerts（AIA 缺失或不可用）\r\n       Root --> 3999d910628fcf8b64448f4837339b356a26e0f6\r\n信任状态： 可信 (此证书已通过信任锚[Root根证书]的验证)\n\r\n验证签名： 通过、签名有效 颁发者=CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n证书状态：CRL无法检查吊销状态 | None~ \r\n        OCSP无法检查吊销状态:None~ \r\n\r\n密钥 Id 哈希(SHA1)          ： 77d28348b6d6961e030a139423c186d14df7ae3c\r\n密钥 Id 哈希(RFC-SHA1)      ： 7484227250eeb140f9399f8871809c606f0809f6\r\n密钥 Id 哈希(Pin-SHA256)    ： AUKP+gPlggP5JgQMpd1HMDlUEIkHJNF3eFdo6pTyNxU=\r\n密钥 Id 哈希(Pin-SHA256-Hex)： 01428ffa03e58203f926040ca5dd4730395410890724d177785768ea94f23715\r\n\n\r\n证书哈希(SHA1)              ： 8f80a6417c6efb93488e77005ddcb8a5b8659bae\r\n证书哈希(SHA256)            ： 6b1bea29cacdb2ea957e2dbaa0eabef1d86c71a8b2902af9d987392f1c1aef39\r\n签名哈希                    ： 7237ea7cce72b54b0d1460f92da92a606d035c46f4558524405a5a42e6ab25ee\r\n
+
+时间: 2026/10/11 10:25:28
+时间戳: 1791685528307
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"0a66de5fea3df44c8f8687f31d75384d"}
+结果: 文件 C:\Users\28299\Desktop\modpkica4JAVA/PKI/WebPublic/CRT/0a66de5fea3df44c8f8687f31d75384d.crt 不存在（如输入的是序列号，请确认 WebPublic/CRT/序列号.crt 存在）\r\n
+
+时间: 2026/10/11 10:25:40
+时间戳: 1791685540859
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"f7679b33352bd0d0e150e8594606c01f"}
+结果:         版本： 3\r\n      序列号： f7679b33352bd0d0e150e8594606c01f\r\n    签名算法： SHA256-RSA (1.2.840.113549.1.1.11)\r\n签名哈希算法： SHA256\n\r\n颁发者： CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n有效期从： Fri Oct 09 20:21:10 CST 2026\r\n有效期到： Sat Oct 09 20:21:10 CST 2027\n\r\n使用者： CN=vpn.local, OU=IT Clubs, O=China IT Boys, L=newer york, C=CN\r\n    公钥： RSA 2048\r\n授权密钥标识符  ： 3999d910628fcf8b64448f4837339b356a26e0f6\r\n使用者密钥标识符： 7484227250eeb140f9399f8871809c606f0809f6\n\r\n增强型密钥用法：\n\r\n              服务器身份验证 (1.3.6.1.5.5.7.3.1)\r\n\n使用者可选名称：\r\n              DNS = vpn.local\r\n              IP = 10.255.228.225\r\n              IP = 127.0.0.1\r\n授权信息访问：\r\n证书吊销列表：\r\n密钥用法： digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyAgreement\r\n证书策略：\r\n              证书颁发策略(Statement Identifier) OID = 1.3.6.1.4.1.4146.1.95\r\nSCT列表:\r\n      第 1 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  9a1bb0c17324f2c23c32c01b558c154a7b629cbd0167fd1a498cd302c1d17bb9\r\n          时间戳:  Fri Oct 09 20:21:11 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  3046022100a8950e11783a1f4243f3df7807472acbf870626e1bade7473e2a58a7a2191a8c022100ce8e5599c45bf6cce5b78ee63061e90b7bfac0d6589af1f849de5c124cff61ee\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 2 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log RSA\r\n      日志标识符:  09690e3801caf77fb71d72636dd9a274ac894447ea40ed1ef6dd65fc7251c82b\r\n          时间戳:  Fri Oct 09 20:21:11 CST 2026\r\n        签名类型:  RSA-SHA256\r\n            签名:  26bb76ab28aa5127da5dadedab526fe657e3256a5c7bc02d85fca436674adbdc2c685fe6dd47bfec56489e995243d86448250c1817f9ea0076d6d5be7f061bf0a7018943351ecba1e280a7ed2d7477ec6e7cf4eec3eefa6a4023f01666cff21a94137072454c0c9b2618e07ccc7ad554769dcd8a8ec5b57bf1dd5a98028e5455a3ea505a3db317cee72675ab8a0e669c019ffa88f434441385f765d58a815b903dddcd3622bfd38e7c1642764f51bedc51edb4e28e2af0ef8a9bcf13369ef3e23aeb767bc61e0192a816ff1fd6102fd1af39cbfa74f5a64665b839077aa00ac25201469dd83912cd56a512f20b000e3e343b1d3168900c3eebccefe7005370e3\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 3 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  280b8458b32b2fa115f245555ea427bf8695c252f1c4428eb3c4d23922e68f76\r\n          时间戳:  Fri Oct 09 20:21:11 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  304502207d1217c028219f64ede11a16e5769ee46eb230c34008729a25d276a6e96ab063022100e09de3831e211158b1a1fb8e5ba4a84e420ee297531a92cea1cce2718143acb4\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n\n\n\r\n证书签名：\n        37fea10645ceb070855769fffdcab277970f8642045370f10ab40a408f8b9991b6f3631b48a5c969f6aa8dbffb811c87b4144e9e17b9204006c153960b72c8e337358ece0bdd34cda5cf7f1facfcf10b9c6fe5395c02a57060cfab9ba0e6c924e49f729341d364da4260fff6f1723af1ff9378bbf112dd9f1024ab579e6408e5\n\r\n证书类别： 非根证书\n\r\n证书链： \r\n验证签名： 颁发者证书来自本地 PKI 目录/cacerts（AIA 缺失或不可用）\r\n       Root --> 3999d910628fcf8b64448f4837339b356a26e0f6\r\n信任状态： 可信 (此证书已通过信任锚[Root根证书]的验证)\n\r\n验证签名： 通过、签名有效 颁发者=CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n证书状态：CRL无法检查吊销状态 | None~ \r\n        OCSP无法检查吊销状态:None~ \r\n\r\n密钥 Id 哈希(SHA1)          ： 77d28348b6d6961e030a139423c186d14df7ae3c\r\n密钥 Id 哈希(RFC-SHA1)      ： 7484227250eeb140f9399f8871809c606f0809f6\r\n密钥 Id 哈希(Pin-SHA256)    ： AUKP+gPlggP5JgQMpd1HMDlUEIkHJNF3eFdo6pTyNxU=\r\n密钥 Id 哈希(Pin-SHA256-Hex)： 01428ffa03e58203f926040ca5dd4730395410890724d177785768ea94f23715\r\n\n\r\n证书哈希(SHA1)              ： 8f80a6417c6efb93488e77005ddcb8a5b8659bae\r\n证书哈希(SHA256)            ： 6b1bea29cacdb2ea957e2dbaa0eabef1d86c71a8b2902af9d987392f1c1aef39\r\n签名哈希                    ： 7237ea7cce72b54b0d1460f92da92a606d035c46f4558524405a5a42e6ab25ee\r\n
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562460
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562466
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562489
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562492
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562502
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562507
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562517
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562520
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562531
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562535
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562550
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=117字节
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562555
+操作: OCSP请求解析
+命令: 
+结果: 序列号=cd1fbe25c92ddd8179ec46fb792c93da 哈希=1.3.14.3.2.26 Nonce=0d24e59a8500d62c56b57acf6fc3f39a
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562590
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=cd1fbe25c92ddd8179ec46fb792c93da
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562592
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1846字节
+
+时间: 2026/10/11 10:26:02
+时间戳: 1791685562605
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"cd1fbe25c92ddd8179ec46fb792c93da"}
+结果:         版本： 3\r\n      序列号： cd1fbe25c92ddd8179ec46fb792c93da\r\n    签名算法： SHA256-RSA (1.2.840.113549.1.1.11)\r\n签名哈希算法： SHA256\n\r\n颁发者： CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n有效期从： Thu Oct 01 21:14:40 CST 2026\r\n有效期到： Sat Oct 31 21:14:43 CST 2026\n\r\n使用者： CN=ggg, O=My Org\r\n    公钥： RSA 2048\r\n授权密钥标识符  ： 3999d910628fcf8b64448f4837339b356a26e0f6\r\n使用者密钥标识符： 4ead66162aeeb2983178abca6932dfc42c312105\n\r\n增强型密钥用法：\n\r\n              服务器身份验证 (1.3.6.1.5.5.7.3.1)\r\n              客户端身份验证 (1.3.6.1.5.5.7.3.2)\r\n授权信息访问：\r\n              OCSP   URL=http://localhost:80/OCSP\r\n              颁发者 URL=http://localhost:80/CRT/7712d9352e6038ce78e57e3f572cec74.crt\r\n证书吊销列表：\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.crl\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.der.crl\r\n密钥用法： digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyAgreement\r\n证书策略：\r\n              证书颁发策略(Statement Identifier) OID = 1.3.6.1.4.1.4146.1.95\r\n               OID = 1.3.6.1.5.5.7.3.36\r\nSCT列表:\r\n      第 1 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  9a1bb0c17324f2c23c32c01b558c154a7b629cbd0167fd1a498cd302c1d17bb9\r\n          时间戳:  Wed Oct 07 21:42:10 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  304502203e759deeb4985232887a49244b489d95f45e92da2cce4decc1c7475266b6f772022100957e164c6d4222f80e2af761397090bf7b36cb0de8a617f0f7d4fcade0dfe0fa\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 2 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  280b8458b32b2fa115f245555ea427bf8695c252f1c4428eb3c4d23922e68f76\r\n          时间戳:  Wed Oct 07 21:42:10 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  304502200ff750c457b841b5208a73b62b07ae28ca015073bbe846bff82a2cbae1e7457302210081d0ad927311af2e73af2030536ad26963470601196f560d5914e5d57d940e0d\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 3 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log RSA\r\n      日志标识符:  09690e3801caf77fb71d72636dd9a274ac894447ea40ed1ef6dd65fc7251c82b\r\n          时间戳:  Wed Oct 07 21:42:10 CST 2026\r\n        签名类型:  RSA-SHA256\r\n            签名:  9f8e8cbe6c2b8267368973e32166177a90f7bd08d41cd78a03cfafc6444682e739103f7acc896c8ae3121121465bb2414e839f9aea58d1b2c3629e40996f60b8e9e69450a06a43b221420ea9257cbf4b4924fbaefebce0adb5efebcb60c4ad43f03c086d21d2ce8e1d42be630bc098c0f9777675fc36f46dc3ecbd611440b78c59de1aabffc6176c21c71bc78ba84068943a5f7489d5ee889bfc31fa73b30de2f6e3f23713090ad11978c11370e6821d5ba6d79f9a591336022cbc043d69c6b0dfc26b24c82f862a523581d04b7c29de12ec132292116a96a39ca04b6c32e036bb9ee62eb5ac2f653ea320bf4a4643f0a870c3da4070ad4818d224fc5d21fe6a\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n\n\n\r\n证书签名：\n        474f111b607ec56d30e56c42dc8d2d97d001cde7fe9080f1f6f521623f933ec7dd8e92bb1b897439e78731168fa5a01de2dacdd5a1c6cc40be9e676ba7b74dcf90888f99cdfbe21e79a3e9b906f178855b297f570cdd62a8a78609f739d202e69f208538cbfc33fc2ef24b01c943579db93328014ee722eb365c6aeff6715ea5\n\r\n证书类别： 非根证书\n\r\n证书链： \r\n       Root --> 3999d910628fcf8b64448f4837339b356a26e0f6\r\n信任状态： 可信 (此证书已通过信任锚[Root根证书]的验证)\n\r\n验证签名： 通过、签名有效 颁发者=CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n证书状态：证书正常。（CRL）\r\n2026/10/11 10:26:02 OCSP:正常,序列号 cd1fbe25c92ddd8179ec46fb792c93da\r\n          证书正常。（OCSP）\r\n\r\n密钥 Id 哈希(SHA1)          ： 9e76372c7c5593110e8af366b14cc35840c8b77f\r\n密钥 Id 哈希(RFC-SHA1)      ： 4ead66162aeeb2983178abca6932dfc42c312105\r\n密钥 Id 哈希(Pin-SHA256)    ： c7G6cUf2qw5927hHCmj0NFe+Ap6wBOeabYr0fatfOBg=\r\n密钥 Id 哈希(Pin-SHA256-Hex)： 73b1ba7147f6ab0e7ddbb8470a68f43457be029eb004e79a6d8af47dab5f3818\r\n\n\r\n证书哈希(SHA1)              ： 5ffebe3e75be8224fbf0ae2fe943034f7ac73455\r\n证书哈希(SHA256)            ： c14a24f7f836c98bf89bd70b1ac212458382942e515e78c9308a268da97a3082\r\n签名哈希                    ： 414123a5d59c9d88b24d158c8fb0e88592720d83d6cac6174c485ded045fdb94\r\n
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573086
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573091
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573143
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573151
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573167
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573171
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573176
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573180
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573185
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573190
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=116字节
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573192
+操作: OCSP请求解析
+命令: 
+结果: 序列号=2d15dfab22eba220ab2c5692614701e6 哈希=1.3.14.3.2.26 Nonce=4b265db89e2bf0df07e797c0045be296
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573194
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573226
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=2d15dfab22eba220ab2c5692614701e6
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573242
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1845字节
+
+时间: 2026/10/11 10:26:13
+时间戳: 1791685573249
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"2d15dfab22eba220ab2c5692614701e6"}
+结果:         版本： 3\r\n      序列号： 2d15dfab22eba220ab2c5692614701e6\r\n    签名算法： SHA256-RSA (1.2.840.113549.1.1.11)\r\n签名哈希算法： SHA256\n\r\n颁发者： CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n有效期从： Thu Oct 01 21:14:40 CST 2026\r\n有效期到： Sat Oct 31 21:14:43 CST 2026\n\r\n使用者： CN=ggg, O=My Org\r\n    公钥： RSA 1024\r\n授权密钥标识符  ： 3999d910628fcf8b64448f4837339b356a26e0f6\r\n使用者密钥标识符： 788daf05a24e8f4476fa1599bda3437e55f72821\n\r\n增强型密钥用法：\n\r\n              服务器身份验证 (1.3.6.1.5.5.7.3.1)\r\n              客户端身份验证 (1.3.6.1.5.5.7.3.2)\r\n授权信息访问：\r\n              OCSP   URL=http://localhost:80/OCSP\r\n              颁发者 URL=http://localhost:80/CRT/7712d9352e6038ce78e57e3f572cec74.crt\r\n证书吊销列表：\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.crl\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.der.crl\r\n密钥用法： digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyAgreement\r\n证书策略：\r\n              证书颁发策略(Statement Identifier) OID = 1.3.6.1.4.1.4146.1.95\r\n               OID = 1.3.6.1.5.5.7.3.36\r\nSCT列表:\r\n      第 1 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log RSA\r\n      日志标识符:  90cc21ee226524a0e54bd351193b32d668654a88c249357418ec298d58321ca6\r\n          时间戳:  Wed Oct 07 21:41:16 CST 2026\r\n        签名类型:  RSA-SHA256\r\n            签名:  26d677e7f104c3389fb7501209eed029a6d6c98924d7968d9ef04a2af71eef14852d23680e5edfe4ac41e93280d4b3385e1d94ab23c70625cf42f7dd2ddfb2020acf199ba7da49813b706ee9cea73b356897a6f57b0a5d580836ed6bf4b9175e64326b715e54c24486101b42324aeb018837d927b55f2c02659311b83d310a91190f755a05d8066e21249a0e3b1dd92830c3ea574b691ecff8c85c18ba44523d564b2431be7fff0f5a9196dd9896bffdd6d228535ee78a68cc40c4fb15103f09c05b665d1db7d17f16ac3ddb159ccf77984a19d82907f41a9e9a6c0b48649454cb6f2e101d6290d01f52c8a7eb56659c83d03098942073ab4b8e2c03d768a5c3\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 2 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  280b8458b32b2fa115f245555ea427bf8695c252f1c4428eb3c4d23922e68f76\r\n          时间戳:  Wed Oct 07 21:41:16 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  304502207d5c2038c92d82d47b8152cf2d147b12be357f6f2f96cbb4ad79cd3efdb54e97022100d65ff1971272cd1b895212938d96324485c75a0ae0c6514854686d3b24a9aa0c\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n\n\n\r\n证书签名：\n        3ab7ef70d6e49122a3895edae67dedf67dc593eae29ccc0b2592d2a95f3bb2713e8707aa387d222e6ffeb068223e4e5159313a262a2754bfd98a0c1f41c21416a11f7ef46b279cbe3b15a4f5f72f9db2fcd3c88b7e9c8906bc8de5e8a3655a93c955325e7f409cb3bc1a48872bd8794dcbd08cfbf2e2ac863801a2e1fab8cd0c\n\r\n证书类别： 非根证书\n\r\n证书链： \r\n       Root --> 3999d910628fcf8b64448f4837339b356a26e0f6\r\n信任状态： 可信 (此证书已通过信任锚[Root根证书]的验证)\n\r\n验证签名： 通过、签名有效 颁发者=CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n证书状态：证书正常。（CRL）\r\n2026/10/11 10:26:13 OCSP:正常,序列号 2d15dfab22eba220ab2c5692614701e6\r\n          证书正常。（OCSP）\r\n\r\n密钥 Id 哈希(SHA1)          ： 211be10f25a08ad351758d43f2d7021cb5044497\r\n密钥 Id 哈希(RFC-SHA1)      ： 788daf05a24e8f4476fa1599bda3437e55f72821\r\n密钥 Id 哈希(Pin-SHA256)    ： bhWAKxNF/R2jO4UirW4AqQeLf0+XqhrIHrt0ezH0yFo=\r\n密钥 Id 哈希(Pin-SHA256-Hex)： 6e15802b1345fd1da33b8522ad6e00a9078b7f4f97aa1ac81ebb747b31f4c85a\r\n\n\r\n证书哈希(SHA1)              ： f5e4d54c57510ec4472bca79f04ddb311de97015\r\n证书哈希(SHA256)            ： afc23f6f149b0c62d6c28d186d1bad76d19461dd4ffcd1224c9bda3b12e862d8\r\n签名哈希                    ： ed1cf19dfab6b295eb8339c1d96d10f68faa50022d7b4febbef997ca05ac6510\r\n
+
+时间: 2026/10/11 10:26:17
+时间戳: 1791685577144
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"0a66de5fea3df44c8f8687f31d75384d"}
+结果: 文件 C:\Users\28299\Desktop\modpkica4JAVA/PKI/WebPublic/CRT/0a66de5fea3df44c8f8687f31d75384d.crt 不存在（如输入的是序列号，请确认 WebPublic/CRT/序列号.crt 存在）\r\n
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591066
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591076
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591091
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591093
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591103
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591105
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591107
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591137
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591139
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591143
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591144
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=117字节
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591149
+操作: OCSP请求解析
+命令: 
+结果: 序列号=b53080fef0b95fd6730fec18d55b6ac8 哈希=1.3.14.3.2.26 Nonce=1b38a6ba953665e653d8a4477dcb10d4
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591170
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=b53080fef0b95fd6730fec18d55b6ac8
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591180
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"b53080fef0b95fd6730fec18d55b6ac8"}
+结果:         版本： 3\r\n      序列号： b53080fef0b95fd6730fec18d55b6ac8\r\n    签名算法： SHA256-RSA (1.2.840.113549.1.1.11)\r\n签名哈希算法： SHA256\n\r\n颁发者： CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n有效期从： Mon Oct 05 22:43:37 CST 2026\r\n有效期到： Wed Oct 04 22:43:37 CST 2028\n\r\n使用者： CN=vpn.local, OU=IT Clubs, O=China IT Boys, L=newer york\r\n    公钥： RSA 2048\r\n授权密钥标识符  ： 3999d910628fcf8b64448f4837339b356a26e0f6\r\n使用者密钥标识符： 5e672ab7b8ea5e11d46b3fc15c1f46bb68dc06a2\n\r\n增强型密钥用法：\n\r\n              服务器身份验证 (1.3.6.1.5.5.7.3.1)\r\n              客户端身份验证 (1.3.6.1.5.5.7.3.2)\r\n\n使用者可选名称：\r\n              DNS = vpn.local\r\n              IP = 127.0.0.1\r\n              IP = 192.168.1.42\r\n              IP = 192.168.1.6\r\n              IP = 192.168.1.36\r\n授权信息访问：\r\n              OCSP   URL=http://localhost:80/OCSP\r\n              颁发者 URL=http://localhost:80/CRT/7712d9352e6038ce78e57e3f572cec74.crt\r\n证书吊销列表：\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.crl\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.der.crl\r\n密钥用法： digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyAgreement\r\n证书策略：\r\n              证书颁发策略(Statement Identifier) OID = 1.3.6.1.4.1.4146.1.95\r\nSCT列表:\r\n      第 1 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log RSA\r\n      日志标识符:  90cc21ee226524a0e54bd351193b32d668654a88c249357418ec298d58321ca6\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  RSA-SHA256\r\n            签名:  19e90a6838c3ae250e93971df663a6f9e6db61ad8f8dbad69c4581aaf279db3c4974219e987ba0e717d45413e8f27efc23704bd9c47516c7c1f3219e3bbd8fb85b89cd6d4f911732287d1abd244920ba1e0fd8e9561b635dce6e419f8b1bd53ffc53ff66c3c4860bd707ed89f7321175bbad4380b36086862e8c8bf748b449f786ca2d55c7bbeb8280f24e7bb09b98cc8cdb723f69c40daabe1bb6f191380c764407225cf86f35f363d4746eefdba863b9f26a94c2ddba2ca3b8099211ecf225de7a9c4d23d0936d58ed2387b675f1bf371b9bbdedfaa75a34ab15a4f19d8d018d12aaaf6c8c490289b7ac59e8ca15279d484bf2676a19b91043a91d474c6275\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 2 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  9a1bb0c17324f2c23c32c01b558c154a7b629cbd0167fd1a498cd302c1d17bb9\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  304402201f9ef8770a80ea4ca5cb1a6bb9ada8480af18154b31e0d01343599d038efd31c02204766e8131d24456feba182d2d85bb0723d61dc758f9178c5595f3b162568d432\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 3 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  280b8458b32b2fa115f245555ea427bf8695c252f1c4428eb3c4d23922e68f76\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  3045022100c8500bc20ffe29b733fc6a377cfbc82f6b570a8334268178e994a618739b9e0902205baf0fb4c37d415e4066294673b3456b1b3570c42b414424cea41000b7e85fcc\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n\n\n\r\n证书签名：\n        6bf7dee425a3e5f2fed20b5a7254844c112ed2b8a349f4683ae21146ff9a37fdbc814185cf0bdc3081817d1855ba574b4cb3ff90004277d149fd31155162ffed3b610c2c43db34a68eb10f9e7e8225635279cb3892330a40dd354d4cd90f8b02903d11f93248c54a660ec9b53cae20bedb4e3dd1b9a0575525a5032d511948cc\n\r\n证书类别： 非根证书\n\r\n证书链： \r\n       Root --> 3999d910628fcf8b64448f4837339b356a26e0f6\r\n信任状态： 可信 (此证书已通过信任锚[Root根证书]的验证)\n\r\n验证签名： 通过、签名有效 颁发者=CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n证书状态：证书正常。（CRL）\r\n2026/10/11 10:26:31 OCSP:正常,序列号 b53080fef0b95fd6730fec18d55b6ac8\r\n          证书正常。（OCSP）\r\n\r\n密钥 Id 哈希(SHA1)          ： 7a7a3bac4899a2e9d39e0808985e08c74ff8bdaa\r\n密钥 Id 哈希(RFC-SHA1)      ： 5e672ab7b8ea5e11d46b3fc15c1f46bb68dc06a2\r\n密钥 Id 哈希(Pin-SHA256)    ： I5qlvN8i3xLEOOhqh58flA/CZzdXCvQNNwwfI8CRbTE=\r\n密钥 Id 哈希(Pin-SHA256-Hex)： 239aa5bcdf22df12c438e86a879f1f940fc26737570af40d370c1f23c0916d31\r\n\n\r\n证书哈希(SHA1)              ： 7927c712eb3b0e9a08b0d1b88f3a5cf70fcb9792\r\n证书哈希(SHA256)            ： 1bcae0d473ce15169b402530d0493af713e1c1f7d83e1076fef2f69659b3357d\r\n签名哈希                    ： c5706b27e3b2f67ce9a757df0752d1082a9cc5d3fe04a0019aafb87d68309e20\r\n
+
+时间: 2026/10/11 10:26:31
+时间戳: 1791685591182
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1846字节
+
+时间: 2026/10/11 10:26:52
+时间戳: 1791685612916
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:52
+时间戳: 1791685612918
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:52
+时间戳: 1791685612987
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:52
+时间戳: 1791685612988
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:52
+时间戳: 1791685612994
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/11 10:26:52
+时间戳: 1791685613000
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/11 10:26:53
+时间戳: 1791685613001
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:53
+时间戳: 1791685613008
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:26:53
+时间戳: 1791685613010
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:53
+时间戳: 1791685613012
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:26:53
+时间戳: 1791685613032
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=117字节
+
+时间: 2026/10/11 10:26:53
+时间戳: 1791685613034
+操作: OCSP请求解析
+命令: 
+结果: 序列号=b53080fef0b95fd6730fec18d55b6ac8 哈希=1.3.14.3.2.26 Nonce=63e74786132c0eda99e2a1e4d2acd9bc
+
+时间: 2026/10/11 10:26:53
+时间戳: 1791685613056
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=b53080fef0b95fd6730fec18d55b6ac8
+
+时间: 2026/10/11 10:26:53
+时间戳: 1791685613058
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1846字节
+
+时间: 2026/10/11 10:26:53
+时间戳: 1791685613062
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"b53080fef0b95fd6730fec18d55b6ac8"}
+结果:         版本： 3\r\n      序列号： b53080fef0b95fd6730fec18d55b6ac8\r\n    签名算法： SHA256-RSA (1.2.840.113549.1.1.11)\r\n签名哈希算法： SHA256\n\r\n颁发者： CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n有效期从： Mon Oct 05 22:43:37 CST 2026\r\n有效期到： Wed Oct 04 22:43:37 CST 2028\n\r\n使用者： CN=vpn.local, OU=IT Clubs, O=China IT Boys, L=newer york\r\n    公钥： RSA 2048\r\n授权密钥标识符  ： 3999d910628fcf8b64448f4837339b356a26e0f6\r\n使用者密钥标识符： 5e672ab7b8ea5e11d46b3fc15c1f46bb68dc06a2\n\r\n增强型密钥用法：\n\r\n              服务器身份验证 (1.3.6.1.5.5.7.3.1)\r\n              客户端身份验证 (1.3.6.1.5.5.7.3.2)\r\n\n使用者可选名称：\r\n              DNS = vpn.local\r\n              IP = 127.0.0.1\r\n              IP = 192.168.1.42\r\n              IP = 192.168.1.6\r\n              IP = 192.168.1.36\r\n授权信息访问：\r\n              OCSP   URL=http://localhost:80/OCSP\r\n              颁发者 URL=http://localhost:80/CRT/7712d9352e6038ce78e57e3f572cec74.crt\r\n证书吊销列表：\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.crl\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.der.crl\r\n密钥用法： digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyAgreement\r\n证书策略：\r\n              证书颁发策略(Statement Identifier) OID = 1.3.6.1.4.1.4146.1.95\r\nSCT列表:\r\n      第 1 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log RSA\r\n      日志标识符:  90cc21ee226524a0e54bd351193b32d668654a88c249357418ec298d58321ca6\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  RSA-SHA256\r\n            签名:  19e90a6838c3ae250e93971df663a6f9e6db61ad8f8dbad69c4581aaf279db3c4974219e987ba0e717d45413e8f27efc23704bd9c47516c7c1f3219e3bbd8fb85b89cd6d4f911732287d1abd244920ba1e0fd8e9561b635dce6e419f8b1bd53ffc53ff66c3c4860bd707ed89f7321175bbad4380b36086862e8c8bf748b449f786ca2d55c7bbeb8280f24e7bb09b98cc8cdb723f69c40daabe1bb6f191380c764407225cf86f35f363d4746eefdba863b9f26a94c2ddba2ca3b8099211ecf225de7a9c4d23d0936d58ed2387b675f1bf371b9bbdedfaa75a34ab15a4f19d8d018d12aaaf6c8c490289b7ac59e8ca15279d484bf2676a19b91043a91d474c6275\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 2 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  9a1bb0c17324f2c23c32c01b558c154a7b629cbd0167fd1a498cd302c1d17bb9\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  304402201f9ef8770a80ea4ca5cb1a6bb9ada8480af18154b31e0d01343599d038efd31c02204766e8131d24456feba182d2d85bb0723d61dc758f9178c5595f3b162568d432\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 3 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  280b8458b32b2fa115f245555ea427bf8695c252f1c4428eb3c4d23922e68f76\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  3045022100c8500bc20ffe29b733fc6a377cfbc82f6b570a8334268178e994a618739b9e0902205baf0fb4c37d415e4066294673b3456b1b3570c42b414424cea41000b7e85fcc\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n\n\n\r\n证书签名：\n        6bf7dee425a3e5f2fed20b5a7254844c112ed2b8a349f4683ae21146ff9a37fdbc814185cf0bdc3081817d1855ba574b4cb3ff90004277d149fd31155162ffed3b610c2c43db34a68eb10f9e7e8225635279cb3892330a40dd354d4cd90f8b02903d11f93248c54a660ec9b53cae20bedb4e3dd1b9a0575525a5032d511948cc\n\r\n证书类别： 非根证书\n\r\n证书链： \r\n       Root --> 3999d910628fcf8b64448f4837339b356a26e0f6\r\n信任状态： 可信 (此证书已通过信任锚[Root根证书]的验证)\n\r\n验证签名： 通过、签名有效 颁发者=CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n证书状态：证书正常。（CRL）\r\n2026/10/11 10:26:53 OCSP:正常,序列号 b53080fef0b95fd6730fec18d55b6ac8\r\n          证书正常。（OCSP）\r\n\r\n密钥 Id 哈希(SHA1)          ： 7a7a3bac4899a2e9d39e0808985e08c74ff8bdaa\r\n密钥 Id 哈希(RFC-SHA1)      ： 5e672ab7b8ea5e11d46b3fc15c1f46bb68dc06a2\r\n密钥 Id 哈希(Pin-SHA256)    ： I5qlvN8i3xLEOOhqh58flA/CZzdXCvQNNwwfI8CRbTE=\r\n密钥 Id 哈希(Pin-SHA256-Hex)： 239aa5bcdf22df12c438e86a879f1f940fc26737570af40d370c1f23c0916d31\r\n\n\r\n证书哈希(SHA1)              ： 7927c712eb3b0e9a08b0d1b88f3a5cf70fcb9792\r\n证书哈希(SHA256)            ： 1bcae0d473ce15169b402530d0493af713e1c1f7d83e1076fef2f69659b3357d\r\n签名哈希                    ： c5706b27e3b2f67ce9a757df0752d1082a9cc5d3fe04a0019aafb87d68309e20\r\n
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677715
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677727
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677742
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677752
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677756
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677759
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677760
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677762
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677765
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677772
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677775
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=117字节
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677777
+操作: OCSP请求解析
+命令: 
+结果: 序列号=b53080fef0b95fd6730fec18d55b6ac8 哈希=1.3.14.3.2.26 Nonce=07cd7165c5d04b66f30724d87bd808fd
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677815
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=b53080fef0b95fd6730fec18d55b6ac8
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677821
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1846字节
+
+时间: 2026/10/11 10:27:57
+时间戳: 1791685677826
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"b53080fef0b95fd6730fec18d55b6ac8"}
+结果:         版本： 3\r\n      序列号： b53080fef0b95fd6730fec18d55b6ac8\r\n    签名算法： SHA256-RSA (1.2.840.113549.1.1.11)\r\n签名哈希算法： SHA256\n\r\n颁发者： CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n有效期从： Mon Oct 05 22:43:37 CST 2026\r\n有效期到： Wed Oct 04 22:43:37 CST 2028\n\r\n使用者： CN=vpn.local, OU=IT Clubs, O=China IT Boys, L=newer york\r\n    公钥： RSA 2048\r\n授权密钥标识符  ： 3999d910628fcf8b64448f4837339b356a26e0f6\r\n使用者密钥标识符： 5e672ab7b8ea5e11d46b3fc15c1f46bb68dc06a2\n\r\n增强型密钥用法：\n\r\n              服务器身份验证 (1.3.6.1.5.5.7.3.1)\r\n              客户端身份验证 (1.3.6.1.5.5.7.3.2)\r\n\n使用者可选名称：\r\n              DNS = vpn.local\r\n              IP = 127.0.0.1\r\n              IP = 192.168.1.42\r\n              IP = 192.168.1.6\r\n              IP = 192.168.1.36\r\n授权信息访问：\r\n              OCSP   URL=http://localhost:80/OCSP\r\n              颁发者 URL=http://localhost:80/CRT/7712d9352e6038ce78e57e3f572cec74.crt\r\n证书吊销列表：\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.crl\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.der.crl\r\n密钥用法： digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyAgreement\r\n证书策略：\r\n              证书颁发策略(Statement Identifier) OID = 1.3.6.1.4.1.4146.1.95\r\nSCT列表:\r\n      第 1 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log RSA\r\n      日志标识符:  90cc21ee226524a0e54bd351193b32d668654a88c249357418ec298d58321ca6\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  RSA-SHA256\r\n            签名:  19e90a6838c3ae250e93971df663a6f9e6db61ad8f8dbad69c4581aaf279db3c4974219e987ba0e717d45413e8f27efc23704bd9c47516c7c1f3219e3bbd8fb85b89cd6d4f911732287d1abd244920ba1e0fd8e9561b635dce6e419f8b1bd53ffc53ff66c3c4860bd707ed89f7321175bbad4380b36086862e8c8bf748b449f786ca2d55c7bbeb8280f24e7bb09b98cc8cdb723f69c40daabe1bb6f191380c764407225cf86f35f363d4746eefdba863b9f26a94c2ddba2ca3b8099211ecf225de7a9c4d23d0936d58ed2387b675f1bf371b9bbdedfaa75a34ab15a4f19d8d018d12aaaf6c8c490289b7ac59e8ca15279d484bf2676a19b91043a91d474c6275\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 2 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  9a1bb0c17324f2c23c32c01b558c154a7b629cbd0167fd1a498cd302c1d17bb9\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  304402201f9ef8770a80ea4ca5cb1a6bb9ada8480af18154b31e0d01343599d038efd31c02204766e8131d24456feba182d2d85bb0723d61dc758f9178c5595f3b162568d432\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 3 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  280b8458b32b2fa115f245555ea427bf8695c252f1c4428eb3c4d23922e68f76\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  3045022100c8500bc20ffe29b733fc6a377cfbc82f6b570a8334268178e994a618739b9e0902205baf0fb4c37d415e4066294673b3456b1b3570c42b414424cea41000b7e85fcc\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n\n\n\r\n证书签名：\n        6bf7dee425a3e5f2fed20b5a7254844c112ed2b8a349f4683ae21146ff9a37fdbc814185cf0bdc3081817d1855ba574b4cb3ff90004277d149fd31155162ffed3b610c2c43db34a68eb10f9e7e8225635279cb3892330a40dd354d4cd90f8b02903d11f93248c54a660ec9b53cae20bedb4e3dd1b9a0575525a5032d511948cc\n\r\n证书类别： 非根证书\n\r\n证书链： \r\n       Root --> 3999d910628fcf8b64448f4837339b356a26e0f6\r\n信任状态： 可信 (此证书已通过信任锚[Root根证书]的验证)\n\r\n验证签名： 通过、签名有效 颁发者=CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n证书状态：证书正常。（CRL）\r\n2026/10/11 10:27:57 OCSP:正常,序列号 b53080fef0b95fd6730fec18d55b6ac8\r\n          证书正常。（OCSP）\r\n\r\n密钥 Id 哈希(SHA1)          ： 7a7a3bac4899a2e9d39e0808985e08c74ff8bdaa\r\n密钥 Id 哈希(RFC-SHA1)      ： 5e672ab7b8ea5e11d46b3fc15c1f46bb68dc06a2\r\n密钥 Id 哈希(Pin-SHA256)    ： I5qlvN8i3xLEOOhqh58flA/CZzdXCvQNNwwfI8CRbTE=\r\n密钥 Id 哈希(Pin-SHA256-Hex)： 239aa5bcdf22df12c438e86a879f1f940fc26737570af40d370c1f23c0916d31\r\n\n\r\n证书哈希(SHA1)              ： 7927c712eb3b0e9a08b0d1b88f3a5cf70fcb9792\r\n证书哈希(SHA256)            ： 1bcae0d473ce15169b402530d0493af713e1c1f7d83e1076fef2f69659b3357d\r\n签名哈希                    ： c5706b27e3b2f67ce9a757df0752d1082a9cc5d3fe04a0019aafb87d68309e20\r\n
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701263
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701269
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701274
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701275
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701279
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701281
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701282
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701285
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701287
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701289
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701290
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=117字节
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701292
+操作: OCSP请求解析
+命令: 
+结果: 序列号=b53080fef0b95fd6730fec18d55b6ac8 哈希=1.3.14.3.2.26 Nonce=5e81f18c67e2909da2647f56b407801e
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701306
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=b53080fef0b95fd6730fec18d55b6ac8
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701308
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1846字节
+
+时间: 2026/10/11 10:28:21
+时间戳: 1791685701310
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"b53080fef0b95fd6730fec18d55b6ac8"}
+结果:         版本： 3\r\n      序列号： b53080fef0b95fd6730fec18d55b6ac8\r\n    签名算法： SHA256-RSA (1.2.840.113549.1.1.11)\r\n签名哈希算法： SHA256\n\r\n颁发者： CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n有效期从： Mon Oct 05 22:43:37 CST 2026\r\n有效期到： Wed Oct 04 22:43:37 CST 2028\n\r\n使用者： CN=vpn.local, OU=IT Clubs, O=China IT Boys, L=newer york\r\n    公钥： RSA 2048\r\n授权密钥标识符  ： 3999d910628fcf8b64448f4837339b356a26e0f6\r\n使用者密钥标识符： 5e672ab7b8ea5e11d46b3fc15c1f46bb68dc06a2\n\r\n增强型密钥用法：\n\r\n              服务器身份验证 (1.3.6.1.5.5.7.3.1)\r\n              客户端身份验证 (1.3.6.1.5.5.7.3.2)\r\n\n使用者可选名称：\r\n              DNS = vpn.local\r\n              IP = 127.0.0.1\r\n              IP = 192.168.1.42\r\n              IP = 192.168.1.6\r\n              IP = 192.168.1.36\r\n授权信息访问：\r\n              OCSP   URL=http://localhost:80/OCSP\r\n              颁发者 URL=http://localhost:80/CRT/7712d9352e6038ce78e57e3f572cec74.crt\r\n证书吊销列表：\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.crl\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.der.crl\r\n密钥用法： digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyAgreement\r\n证书策略：\r\n              证书颁发策略(Statement Identifier) OID = 1.3.6.1.4.1.4146.1.95\r\nSCT列表:\r\n      第 1 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log RSA\r\n      日志标识符:  90cc21ee226524a0e54bd351193b32d668654a88c249357418ec298d58321ca6\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  RSA-SHA256\r\n            签名:  19e90a6838c3ae250e93971df663a6f9e6db61ad8f8dbad69c4581aaf279db3c4974219e987ba0e717d45413e8f27efc23704bd9c47516c7c1f3219e3bbd8fb85b89cd6d4f911732287d1abd244920ba1e0fd8e9561b635dce6e419f8b1bd53ffc53ff66c3c4860bd707ed89f7321175bbad4380b36086862e8c8bf748b449f786ca2d55c7bbeb8280f24e7bb09b98cc8cdb723f69c40daabe1bb6f191380c764407225cf86f35f363d4746eefdba863b9f26a94c2ddba2ca3b8099211ecf225de7a9c4d23d0936d58ed2387b675f1bf371b9bbdedfaa75a34ab15a4f19d8d018d12aaaf6c8c490289b7ac59e8ca15279d484bf2676a19b91043a91d474c6275\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 2 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  9a1bb0c17324f2c23c32c01b558c154a7b629cbd0167fd1a498cd302c1d17bb9\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  304402201f9ef8770a80ea4ca5cb1a6bb9ada8480af18154b31e0d01343599d038efd31c02204766e8131d24456feba182d2d85bb0723d61dc758f9178c5595f3b162568d432\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 3 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  280b8458b32b2fa115f245555ea427bf8695c252f1c4428eb3c4d23922e68f76\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  3045022100c8500bc20ffe29b733fc6a377cfbc82f6b570a8334268178e994a618739b9e0902205baf0fb4c37d415e4066294673b3456b1b3570c42b414424cea41000b7e85fcc\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n\n\n\r\n证书签名：\n        6bf7dee425a3e5f2fed20b5a7254844c112ed2b8a349f4683ae21146ff9a37fdbc814185cf0bdc3081817d1855ba574b4cb3ff90004277d149fd31155162ffed3b610c2c43db34a68eb10f9e7e8225635279cb3892330a40dd354d4cd90f8b02903d11f93248c54a660ec9b53cae20bedb4e3dd1b9a0575525a5032d511948cc\n\r\n证书类别： 非根证书\n\r\n证书链： \r\n       Root --> 3999d910628fcf8b64448f4837339b356a26e0f6\r\n信任状态： 可信 (此证书已通过信任锚[Root根证书]的验证)\n\r\n验证签名： 通过、签名有效 颁发者=CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n证书状态：证书正常。（CRL）\r\n2026/10/11 10:28:21 OCSP:正常,序列号 b53080fef0b95fd6730fec18d55b6ac8\r\n          证书正常。（OCSP）\r\n\r\n密钥 Id 哈希(SHA1)          ： 7a7a3bac4899a2e9d39e0808985e08c74ff8bdaa\r\n密钥 Id 哈希(RFC-SHA1)      ： 5e672ab7b8ea5e11d46b3fc15c1f46bb68dc06a2\r\n密钥 Id 哈希(Pin-SHA256)    ： I5qlvN8i3xLEOOhqh58flA/CZzdXCvQNNwwfI8CRbTE=\r\n密钥 Id 哈希(Pin-SHA256-Hex)： 239aa5bcdf22df12c438e86a879f1f940fc26737570af40d370c1f23c0916d31\r\n\n\r\n证书哈希(SHA1)              ： 7927c712eb3b0e9a08b0d1b88f3a5cf70fcb9792\r\n证书哈希(SHA256)            ： 1bcae0d473ce15169b402530d0493af713e1c1f7d83e1076fef2f69659b3357d\r\n签名哈希                    ： c5706b27e3b2f67ce9a757df0752d1082a9cc5d3fe04a0019aafb87d68309e20\r\n
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705016
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705021
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705056
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705057
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705066
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705072
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705078
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705082
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705086
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705088
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705090
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=117字节
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705093
+操作: OCSP请求解析
+命令: 
+结果: 序列号=b53080fef0b95fd6730fec18d55b6ac8 哈希=1.3.14.3.2.26 Nonce=db0cc60bf1d89410a0e8e15d05aca358
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705144
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=b53080fef0b95fd6730fec18d55b6ac8
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705164
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"b53080fef0b95fd6730fec18d55b6ac8"}
+结果:         版本： 3\r\n      序列号： b53080fef0b95fd6730fec18d55b6ac8\r\n    签名算法： SHA256-RSA (1.2.840.113549.1.1.11)\r\n签名哈希算法： SHA256\n\r\n颁发者： CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n有效期从： Mon Oct 05 22:43:37 CST 2026\r\n有效期到： Wed Oct 04 22:43:37 CST 2028\n\r\n使用者： CN=vpn.local, OU=IT Clubs, O=China IT Boys, L=newer york\r\n    公钥： RSA 2048\r\n授权密钥标识符  ： 3999d910628fcf8b64448f4837339b356a26e0f6\r\n使用者密钥标识符： 5e672ab7b8ea5e11d46b3fc15c1f46bb68dc06a2\n\r\n增强型密钥用法：\n\r\n              服务器身份验证 (1.3.6.1.5.5.7.3.1)\r\n              客户端身份验证 (1.3.6.1.5.5.7.3.2)\r\n\n使用者可选名称：\r\n              DNS = vpn.local\r\n              IP = 127.0.0.1\r\n              IP = 192.168.1.42\r\n              IP = 192.168.1.6\r\n              IP = 192.168.1.36\r\n授权信息访问：\r\n              OCSP   URL=http://localhost:80/OCSP\r\n              颁发者 URL=http://localhost:80/CRT/7712d9352e6038ce78e57e3f572cec74.crt\r\n证书吊销列表：\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.crl\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.der.crl\r\n密钥用法： digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyAgreement\r\n证书策略：\r\n              证书颁发策略(Statement Identifier) OID = 1.3.6.1.4.1.4146.1.95\r\nSCT列表:\r\n      第 1 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log RSA\r\n      日志标识符:  90cc21ee226524a0e54bd351193b32d668654a88c249357418ec298d58321ca6\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  RSA-SHA256\r\n            签名:  19e90a6838c3ae250e93971df663a6f9e6db61ad8f8dbad69c4581aaf279db3c4974219e987ba0e717d45413e8f27efc23704bd9c47516c7c1f3219e3bbd8fb85b89cd6d4f911732287d1abd244920ba1e0fd8e9561b635dce6e419f8b1bd53ffc53ff66c3c4860bd707ed89f7321175bbad4380b36086862e8c8bf748b449f786ca2d55c7bbeb8280f24e7bb09b98cc8cdb723f69c40daabe1bb6f191380c764407225cf86f35f363d4746eefdba863b9f26a94c2ddba2ca3b8099211ecf225de7a9c4d23d0936d58ed2387b675f1bf371b9bbdedfaa75a34ab15a4f19d8d018d12aaaf6c8c490289b7ac59e8ca15279d484bf2676a19b91043a91d474c6275\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 2 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  9a1bb0c17324f2c23c32c01b558c154a7b629cbd0167fd1a498cd302c1d17bb9\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  304402201f9ef8770a80ea4ca5cb1a6bb9ada8480af18154b31e0d01343599d038efd31c02204766e8131d24456feba182d2d85bb0723d61dc758f9178c5595f3b162568d432\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 3 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  280b8458b32b2fa115f245555ea427bf8695c252f1c4428eb3c4d23922e68f76\r\n          时间戳:  Mon Oct 05 22:43:38 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  3045022100c8500bc20ffe29b733fc6a377cfbc82f6b570a8334268178e994a618739b9e0902205baf0fb4c37d415e4066294673b3456b1b3570c42b414424cea41000b7e85fcc\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n\n\n\r\n证书签名：\n        6bf7dee425a3e5f2fed20b5a7254844c112ed2b8a349f4683ae21146ff9a37fdbc814185cf0bdc3081817d1855ba574b4cb3ff90004277d149fd31155162ffed3b610c2c43db34a68eb10f9e7e8225635279cb3892330a40dd354d4cd90f8b02903d11f93248c54a660ec9b53cae20bedb4e3dd1b9a0575525a5032d511948cc\n\r\n证书类别： 非根证书\n\r\n证书链： \r\n       Root --> 3999d910628fcf8b64448f4837339b356a26e0f6\r\n信任状态： 可信 (此证书已通过信任锚[Root根证书]的验证)\n\r\n验证签名： 通过、签名有效 颁发者=CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n证书状态：证书正常。（CRL）\r\n2026/10/11 10:28:25 OCSP:正常,序列号 b53080fef0b95fd6730fec18d55b6ac8\r\n          证书正常。（OCSP）\r\n\r\n密钥 Id 哈希(SHA1)          ： 7a7a3bac4899a2e9d39e0808985e08c74ff8bdaa\r\n密钥 Id 哈希(RFC-SHA1)      ： 5e672ab7b8ea5e11d46b3fc15c1f46bb68dc06a2\r\n密钥 Id 哈希(Pin-SHA256)    ： I5qlvN8i3xLEOOhqh58flA/CZzdXCvQNNwwfI8CRbTE=\r\n密钥 Id 哈希(Pin-SHA256-Hex)： 239aa5bcdf22df12c438e86a879f1f940fc26737570af40d370c1f23c0916d31\r\n\n\r\n证书哈希(SHA1)              ： 7927c712eb3b0e9a08b0d1b88f3a5cf70fcb9792\r\n证书哈希(SHA256)            ： 1bcae0d473ce15169b402530d0493af713e1c1f7d83e1076fef2f69659b3357d\r\n签名哈希                    ： c5706b27e3b2f67ce9a757df0752d1082a9cc5d3fe04a0019aafb87d68309e20\r\n
+
+时间: 2026/10/11 10:28:25
+时间戳: 1791685705167
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1846字节
+
+时间: 2026/10/11 10:30:11
+时间戳: 1791685811717
+操作: WebAdmin /api/signcert 异常
+命令: POST /api/signcert 提交数据={"dn":"C=CN,L=newer york,O=China IT Boys,OU=IT Clubs,CN=localhost,1.2.840.113549.1.9.1=2829969554@qq.com","bits":"2048","hash":"sha256","keyusage":"1","exusage":"1.3.6.1.5.5.7.3.1,1.3.6.1.5.5.7.3.2","isca":"0","days":"2026/10/01-10:29:30T2027/10/31-10:29:34","dns":"localhost,anqikeji.picp.net","ips":"10.255.228.55,127.0.0.1,10.255.228.*","issuer":"7712d9352e6038ce78e57e3f572cec74","algo":"RSA","pathlen":"null","policy":"2.23.140.1.1"}
+结果: 
+错误: java.net.UnknownHostException: 不知道这样的主机。 (10.255.228.*)
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840742
+操作: CTLog保存原始证书
+命令: 接口原始证书
+结果: 文件=598966e517ab66863731d60ce72c51ab_1791685840734.crt 序列号=598966e517ab66863731d60ce72c51ab 时间戳=1791685840734
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840759
+操作: CTLog add-pre-chain
+命令: 日志=MODPKICA CT Log RSA log_id=on90puUJYio0fsL84603RXDZTWkGLMVbkhpUitRsMAw= 预证书=EMAILADDRESS=2829969554@qq.com, CN=localhost, OU=IT Clubs, O=China IT Boys, L=newer york, C=CN
+结果: 已签发 SCT timestamp=1791685840734，并追加到 Merkle 树
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840766
+操作: CTLog提交预证书
+命令: url=http://127.0.0.1:80/ct/v1/add-pre-chain 接口=/ct/v1/add-pre-chain 长度=3321字节
+结果: 获取 SCT 列表 483字节
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840771
+操作: CTLog保存原始证书
+命令: 接口原始证书
+结果: 文件=598966e517ab66863731d60ce72c51ab_1791685840769.crt 序列号=598966e517ab66863731d60ce72c51ab 时间戳=1791685840769
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840777
+操作: CTLog add-pre-chain
+命令: 日志=MODPKICA CT Log RSA log_id=kMwh7iJlJKDlS9NRGTsy1mhlSojCSTV0GOwpjVgyHKY= 预证书=EMAILADDRESS=2829969554@qq.com, CN=localhost, OU=IT Clubs, O=China IT Boys, L=newer york, C=CN
+结果: 已签发 SCT timestamp=1791685840769，并追加到 Merkle 树
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840778
+操作: CTLog提交预证书
+命令: url=http://127.0.0.1:80/ct/v1/add-pre-chain 接口=/ct/v1/add-pre-chain 长度=3321字节
+结果: 获取 SCT 列表 483字节
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840783
+操作: CTLog保存原始证书
+命令: 接口原始证书
+结果: 文件=598966e517ab66863731d60ce72c51ab_1791685840781.crt 序列号=598966e517ab66863731d60ce72c51ab 时间戳=1791685840781
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840792
+操作: CTLog add-pre-chain
+命令: 日志=MODPKICA CT Log ECDSA log_id=mhuwwXMk8sI8MsAbVYwVSntinL0BZ/0aSYzTAsHRe7k= 预证书=EMAILADDRESS=2829969554@qq.com, CN=localhost, OU=IT Clubs, O=China IT Boys, L=newer york, C=CN
+结果: 已签发 SCT timestamp=1791685840781，并追加到 Merkle 树
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840793
+操作: CTLog提交预证书
+命令: url=http://127.0.0.1:80/ct/v1/add-pre-chain 接口=/ct/v1/add-pre-chain 长度=3321字节
+结果: 获取 SCT 列表 237字节
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840805
+操作: MakeCert输出
+命令: 签发证书
+结果: 用户证书生成成功！
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840823
+操作: ADMIN signCERT
+命令: signCERT "C=CN,L=newer york,O=China IT Boys,OU=IT Clubs,CN=localhost,1.2.840.113549.1.9.1=2829969554@qq.com" 2048 sha256 1 1.3.6.1.5.5.7.3.1,1.3.6.1.5.5.7.3.2 0 2026/10/01-10:29:30T2027/10/31-10:29:34 localhost,anqikeji.picp.net 10.255.228.55,127.0.0.1,10.255.228.225 7712d9352e6038ce78e57e3f572cec74 RSA pathLen=null policy=2.23.140.1.1
+结果: 签发证书 C=CN,L=newer york,O=China IT Boys,OU=IT Clubs,CN=localhost,1.2.840.113549.1.9.1=2829969554@qq.com 算法=RSA 颁发者=7712d9352e6038ce78e57e3f572cec74
+
+时间: 2026/10/11 10:30:40
+时间戳: 1791685840824
+操作: WebAdmin /api/signcert
+命令: POST /api/signcert 提交数据={"dn":"C=CN,L=newer york,O=China IT Boys,OU=IT Clubs,CN=localhost,1.2.840.113549.1.9.1=2829969554@qq.com","bits":"2048","hash":"sha256","keyusage":"1","exusage":"1.3.6.1.5.5.7.3.1,1.3.6.1.5.5.7.3.2","isca":"0","days":"2026/10/01-10:29:30T2027/10/31-10:29:34","dns":"localhost,anqikeji.picp.net","ips":"10.255.228.55,127.0.0.1,10.255.228.225","issuer":"7712d9352e6038ce78e57e3f572cec74","algo":"RSA","pathlen":"null","policy":"2.23.140.1.1"}
+结果: 2026/10/11 10:30:40 CTLog v1 add-pre-chain 预证书=EMAILADDRESS=2829969554@qq.com, CN=localhost, OU=IT Clubs, O=China IT Boys, L=newer york, C=CN 日志=MODPKICA CT Log RSA\r\n2026/10/11 10:30:40 CTLog v1 add-pre-chain 预证书=EMAILADDRESS=2829969554@qq.com, CN=localhost, OU=IT Clubs, O=China IT Boys, L=newer york, C=CN 日志=MODPKICA CT Log RSA\r\n2026/10/11 10:30:40 CTLog v1 add-pre-chain 预证书=EMAILADDRESS=2829969554@qq.com, CN=localhost, OU=IT Clubs, O=China IT Boys, L=newer york, C=CN 日志=MODPKICA CT Log ECDSA\r\n
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846378
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846382
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846393
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846459
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846462
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846464
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846464
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846466
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846467
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846469
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846475
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=116字节
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846478
+操作: OCSP请求解析
+命令: 
+结果: 序列号=598966e517ab66863731d60ce72c51ab 哈希=1.3.14.3.2.26 Nonce=58a1046e008dac4f06c603cc238c94ee
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846494
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=598966e517ab66863731d60ce72c51ab
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846499
+操作: WebAdmin /api/verify
+命令: POST /api/verify 提交数据={"target":"598966e517ab66863731d60ce72c51ab"}
+结果:         版本： 3\r\n      序列号： 598966e517ab66863731d60ce72c51ab\r\n    签名算法： SHA256-RSA (1.2.840.113549.1.1.11)\r\n签名哈希算法： SHA256\n\r\n颁发者： CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n有效期从： Thu Oct 01 10:29:30 CST 2026\r\n有效期到： Sun Oct 31 10:29:34 CST 2027\n\r\n使用者： EMAILADDRESS=2829969554@qq.com, CN=localhost, OU=IT Clubs, O=China IT Boys, L=newer york, C=CN\r\n    公钥： RSA 2048\r\n授权密钥标识符  ： 3999d910628fcf8b64448f4837339b356a26e0f6\r\n使用者密钥标识符： 8ab48a90aded2b5060e0976b4de71967140219dd\n\r\n增强型密钥用法：\n\r\n              服务器身份验证 (1.3.6.1.5.5.7.3.1)\r\n              客户端身份验证 (1.3.6.1.5.5.7.3.2)\r\n\n使用者可选名称：\r\n              DNS = localhost\r\n              DNS = anqikeji.picp.net\r\n              IP = 10.255.228.55\r\n              IP = 127.0.0.1\r\n              IP = 10.255.228.225\r\n授权信息访问：\r\n              OCSP   URL=http://localhost:80/OCSP\r\n              颁发者 URL=http://localhost:80/CRT/7712d9352e6038ce78e57e3f572cec74.crt\r\n证书吊销列表：\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.crl\r\n              CRL分发点 = http://localhost:80/CRL/7712d9352e6038ce78e57e3f572cec74.der.crl\r\n密钥用法： digitalSignature, nonRepudiation, keyEncipherment, dataEncipherment, keyAgreement\r\n证书策略：\r\n              证书颁发策略(Statement Identifier) OID = 1.3.6.1.4.1.4146.1.95\r\n              Extended Validation(扩展验证，SSL) OID = 2.23.140.1.1\r\nSCT列表:\r\n      第 1 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log RSA\r\n      日志标识符:  a27f74a6e509622a347ec2fce3ad374570d94d69062cc55b921a548ad46c300c\r\n          时间戳:  Sun Oct 11 10:30:40 CST 2026\r\n        签名类型:  RSA-SHA256\r\n            签名:  845f75f21c06f3ae997ea6c1d5e5bf5d00dc370d2ddc244c4e050e94cba8aa96c1094c51bba7f46257b61cd67f8d03526d24831c286df22851c45fd6923ca76d6392ad3d6eb1fa988e2d5f163ad4ca2871f9751b792dc8f186d6068084b1672e378e574944bcce02e8ac420e5391141932831ba5a43ea643fb51b6277fc4d5ebac4d1fa7ab69f3816e532204dbca7d25de99b4afc51e877280f9e10cc5312b822b42c8ba369feffc0ed51c25eb58a6a4446a1a80c21d9f10dc46d3c49ccc0fba8bc8d3dfcafe134f2dbf1892fe1aec9e136e603e82bf326384f62ebb15db8fc5d741c3d6fa0934c343b2d827844c256b7b5a0021aac726fbeb84448b54c17f46\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 2 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log RSA\r\n      日志标识符:  90cc21ee226524a0e54bd351193b32d668654a88c249357418ec298d58321ca6\r\n          时间戳:  Sun Oct 11 10:30:40 CST 2026\r\n        签名类型:  RSA-SHA256\r\n            签名:  c2da57f4b89d628992baaf8895cb63284b54407fdaeaa61272211e473bdc3a0b9b59a5b6f67ef59d828931580e94e312938a8eec5af68b9663f32161c04ef4e51e893e6ed2a02ed3983f378e31a1b3ab397d1df474c648da1bf1eb73c3a4940f413b8daf4aa6b2c0b0b029208bb9463defc1bab1fc99a82c752298a68e085d23a2015f1f6d0b68d8c1141c66efdbe06610c45ce2d715ce38698d6049c7a402edf496e13e76b846e0fd7daa7e8ec5d5e0302bb236d05ae2fb4e0c9ec8a854abb4293319cc30ce7c9f09c9edab635c6c4a249ea5345c2e4a693085000447c9ac908ff75927a615102d406c9b5245fb2f33a89507a6be971679819cb3466c15b4bf\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n      第 3 条 SCT:\r\n        日志版本:  V1\r\n        日志名称:  MODPKICA CT Log ECDSA\r\n      日志标识符:  9a1bb0c17324f2c23c32c01b558c154a7b629cbd0167fd1a498cd302c1d17bb9\r\n          时间戳:  Sun Oct 11 10:30:40 CST 2026\r\n        签名类型:  ECDSA-SHA256\r\n            签名:  3045022100ebe78dce9d02e71a7d6ea86b9395a13ae9da41027e38dcb2bd3aba8a321bb49102206a22f390cdcc13be90ec40c6e27b75fbf688473c2822b22d38a55287b23dbebe\r\n        原始类型:  预证书模式(precert_entry)\r\n            状态:  签名有效\r\n\r\n\n\n\r\n证书签名：\n        5c6cc3a42f507117a83848845c9742f4dc2242f1610f5ba64f84bb5085867b34a7e90f0ff5f208ee711ac8af1a1a47f86a2325914aaca87c6c33e4d9bb79154fa89bb265da23dd29f3d81bc27eaa04602899711f65d5b79038ad275da2c43b39ef999ab73b29d9277226404f5a864b61f15695a07389d5c2e00e395c6224e6a6\n\r\n证书类别： 非根证书\n\r\n证书链： \r\n       Root --> 3999d910628fcf8b64448f4837339b356a26e0f6\r\n信任状态： 可信 (此证书已通过信任锚[Root根证书]的验证)\n\r\n验证签名： 通过、签名有效 颁发者=CN=ChinaITboys RSA ROOT, OU=ChinaITboy, O=ChinaITboy, C=CN\r\n证书状态：证书正常。（CRL）\r\n2026/10/11 10:30:46 OCSP:正常,序列号 598966e517ab66863731d60ce72c51ab\r\n          证书正常。（OCSP）\r\n\r\n密钥 Id 哈希(SHA1)          ： fd12615adb6b5be4de700ac05e7a216be583031a\r\n密钥 Id 哈希(RFC-SHA1)      ： 8ab48a90aded2b5060e0976b4de71967140219dd\r\n密钥 Id 哈希(Pin-SHA256)    ： J7bJtZzMYC0EHwrT0HiqOGcFxTY0LVJcRzmKb4JmZ8I=\r\n密钥 Id 哈希(Pin-SHA256-Hex)： 27b6c9b59ccc602d041f0ad3d078aa386705c536342d525c47398a6f826667c2\r\n\n\r\n证书哈希(SHA1)              ： ed29b363c65390bd06db73cc396dc7d1fab1cd38\r\n证书哈希(SHA256)            ： e24f280cfc0edada4366906d5a39775e474f692ddd904b9332acb6156f444cf8\r\n签名哈希                    ： f3d21656f972fd11b5eb7f53ee2c7fa7c3f75dac0aacf21bdca55c35588fd189\r\n
+
+时间: 2026/10/11 10:30:46
+时间戳: 1791685846502
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1845字节
+
+时间: 2026/10/11 10:31:42
+时间戳: 1791685902885
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/
+
+时间: 2026/10/11 10:31:59
+时间戳: 1791685919641
+操作: 收到文件请求
+命令: 
+结果: 来源=10.255.228.120 路径=/crt/123456.pfx
+
+时间: 2026/10/11 10:31:59
+时间戳: 1791685919643
+操作: 文件响应
+命令: 
+结果: 文件=123456.pfx 大小=5097字节 类型=pfx
+
+时间: 2026/10/11 10:36:52
+时间戳: 1791686212355
+操作: Radius 认证
+命令: 来源=10.255.228.225:53304 用户=1.2.840.113549.1.9.1=#1611323832393936393535344071712e636f6d,CN=localhost,OU=IT Clubs,O=China IT Boys,L=newer york,C=CN 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/11 10:37:42
+时间戳: 1791686262389
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 10:47:45
+时间戳: 1791686865706
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 10:49:35
+时间戳: 1791686975555
+操作: Radius 认证
+命令: 来源=127.0.0.1:50669 用户=CN=localhost 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/11 10:54:01
+时间戳: 1791687241079
+操作: Radius 认证
+命令: 来源=10.255.228.225:53304 用户=CN=localhost 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/11 10:54:08
+时间戳: 1791687248546
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 10:54:41
+时间戳: 1791687281814
+操作: Radius 服务停止
+命令: 
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/11 10:54:41
+时间戳: 1791687281815
+操作: WebAdmin /api/radius/stop
+命令: POST /api/radius/stop 提交数据={}
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/11 10:54:45
+时间戳: 1791687285155
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 10:54:48
+时间戳: 1791687288502
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 10:54:49
+时间戳: 1791687289329
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 10:54:49
+时间戳: 1791687289759
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 10:54:50
+时间戳: 1791687290014
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 10:54:51
+时间戳: 1791687291251
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 10:54:51
+时间戳: 1791687291251
+操作: WebAdmin /api/radius/start
+命令: POST /api/radius/start 提交数据={"auth_port":"1812","acct_port":"1813","secret":"mytestkey"}
+结果: RADIUS 服务器已启动（认证 1812 / 计费 1813，已加载 3 个账号）
+
+时间: 2026/10/11 11:12:16
+时间戳: 1791688336960
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 12:34:37
+时间戳: 1791693277527
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 12:35:48
+时间戳: 1791693348348
+操作: Radius 认证
+命令: 来源=10.255.228.225:53304 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/11 12:35:55
+时间戳: 1791693355595
+操作: Radius 认证
+命令: 来源=10.255.228.225:53304 用户=1.2.840.113549.1.9.1=#1611323832393936393535344071712e636f6d,CN=localhost,OU=IT Clubs,O=China IT Boys,L=newer york,C=CN 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/11 12:36:37
+时间戳: 1791693397272
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 12:52:21
+时间戳: 1791694341051
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 12:53:46
+时间戳: 1791694426535
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 12:53:48
+时间戳: 1791694428459
+操作: Radius 服务停止
+命令: 
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/11 12:53:48
+时间戳: 1791694428460
+操作: WebAdmin /api/radius/stop
+命令: POST /api/radius/stop 提交数据={}
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/11 12:53:49
+时间戳: 1791694429196
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 12:53:49
+时间戳: 1791694429197
+操作: WebAdmin /api/radius/start
+命令: POST /api/radius/start 提交数据={"auth_port":"1812","acct_port":"1813","secret":"mytestkey"}
+结果: RADIUS 服务器已启动（认证 1812 / 计费 1813，已加载 3 个账号）
+
+时间: 2026/10/11 13:01:38
+时间戳: 1791694898335
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 13:09:50
+时间戳: 1791695390739
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 13:15:11
+时间戳: 1791695711561
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 13:22:50
+时间戳: 1791696170631
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 13:25:19
+时间戳: 1791696319930
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 13:31:01
+时间戳: 1791696661151
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 13:32:50
+时间戳: 1791696770317
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 13:33:00
+时间戳: 1791696780243
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 13:55:15
+时间戳: 1791698115310
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/11 14:36:18
+时间戳: 1791700578158
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 15:01:36
+时间戳: 1791702096627
+操作: Radius 认证
+命令: 来源=10.255.228.225:53304 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/11 15:23:22
+时间戳: 1791703402903
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 16:07:04
+时间戳: 1791706024740
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 16:15:49
+时间戳: 1791706549425
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 16:22:18
+时间戳: 1791706938850
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 16:29:50
+时间戳: 1791707390817
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 16:48:50
+时间戳: 1791708530137
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 16:59:43
+时间戳: 1791709183856
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 17:10:35
+时间戳: 1791709835028
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 17:12:58
+时间戳: 1791709978448
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 17:22:32
+时间戳: 1791710552442
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 17:30:16
+时间戳: 1791711016432
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 18:41:09
+时间戳: 1791715269780
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 18:53:57
+时间戳: 1791716037454
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 18:59:40
+时间戳: 1791716380239
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 19:03:45
+时间戳: 1791716625862
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 19:05:18
+时间戳: 1791716718753
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/11 20:28:57
+时间戳: 1791721737450
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/13 01:21:26
+时间戳: 1791825686634
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/13 01:22:59
+时间戳: 1791825779133
+操作: Radius 认证
+命令: 来源=10.255.228.225:36965 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/13 01:30:07
+时间戳: 1791826207382
+操作: Radius 认证
+命令: 来源=10.255.228.225:36965 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/13 01:40:25
+时间戳: 1791826825052
+操作: WebAdmin /api/radius/dial 异常
+命令: POST /api/radius/dial 提交数据={"method":"EAP-TLS","username":"admin666","password":"admin888","secret":"mytestkey","port":"1812"}
+结果: 
+错误: java.lang.IllegalArgumentException: 用户名与密码不能为空
+
+时间: 2026/10/13 01:40:42
+时间戳: 1791826842352
+操作: Radius 客户端调试
+命令: 认证方式=EAP-TLS 用户=admin666 目标=127.0.0.1:1812
+结果: EAP-TLS 客户端握手失败: org.bouncycastle.tls.TlsFatalAlert: decrypt_error(51)
+
+时间: 2026/10/13 01:40:42
+时间戳: 1791826842353
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"EAP-TLS","user":"admin666","pass":"admin888","secret":"mytestkey","port":"1812"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: EAP-TLS，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(tls:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（71 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/TLS Start（RADIUS=Access-Challenge）\n[4] 发送 EAP-Response/TLS（片 1/1，159B 拆 1 片）\n[5] 已发送 Access-Request（223 字节）→ 127.0.0.1:1812\n[6] 收到服务器 TLS 分片（M=1，继续拉取）\n[7] 已发送 Access-Request（60 字节）→ 127.0.0.1:1812\n[8] 收到服务器 TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（60 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: EAP-TLS 客户端握手失败: org.bouncycastle.tls.TlsFatalAlert: decrypt_error(51)
+
+时间: 2026/10/13 01:40:43
+时间戳: 1791826843502
+操作: Radius 客户端调试
+命令: 认证方式=EAP-TLS 用户=tls:admin666 目标=127.0.0.1:1812 证书=598966e517ab66863731d60ce72c51ab
+结果: EAP-TLS 客户端握手失败: org.bouncycastle.tls.TlsFatalAlert: decrypt_error(51)
+
+时间: 2026/10/13 01:40:43
+时间戳: 1791826843503
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"EAP-TLS","user":"tls:admin666","pass":"admin888","secret":"mytestkey","port":"1812","cert":"598966e517ab66863731d60ce72c51ab"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: tls:admin666，认证方式: EAP-TLS，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(tls:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（71 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/TLS Start（RADIUS=Access-Challenge）\n已加载客户端证书（信任锚链 2 级，含私钥作客户端凭据）\n[4] 发送 EAP-Response/TLS（片 1/1，159B 拆 1 片）\n[5] 已发送 Access-Request（223 字节）→ 127.0.0.1:1812\n[6] 收到服务器 TLS 分片（M=1，继续拉取）\n[7] 已发送 Access-Request（60 字节）→ 127.0.0.1:1812\n[8] 收到服务器 TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（60 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: EAP-TLS 客户端握手失败: org.bouncycastle.tls.TlsFatalAlert: decrypt_error(51)
+
+时间: 2026/10/13 01:40:53
+时间戳: 1791826853328
+操作: Radius 客户端调试
+命令: 认证方式=EAP-TLS 用户=tls:admin666 目标=127.0.0.1:1812 证书=598966e517ab66863731d60ce72c51ab
+结果: EAP-TLS 客户端握手失败: org.bouncycastle.tls.TlsFatalAlert: decrypt_error(51)
+
+时间: 2026/10/13 01:40:53
+时间戳: 1791826853329
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"EAP-TLS","user":"tls:admin666","pass":"admin888","secret":"mytestkey","port":"1812","cert":"598966e517ab66863731d60ce72c51ab"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: tls:admin666，认证方式: EAP-TLS，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(tls:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（71 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/TLS Start（RADIUS=Access-Challenge）\n已加载客户端证书（信任锚链 2 级，含私钥作客户端凭据）\n[4] 发送 EAP-Response/TLS（片 1/1，159B 拆 1 片）\n[5] 已发送 Access-Request（223 字节）→ 127.0.0.1:1812\n[6] 收到服务器 TLS 分片（M=1，继续拉取）\n[7] 已发送 Access-Request（60 字节）→ 127.0.0.1:1812\n[8] 收到服务器 TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（60 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: EAP-TLS 客户端握手失败: org.bouncycastle.tls.TlsFatalAlert: decrypt_error(51)
+
+时间: 2026/10/13 02:04:00
+时间戳: 1791828240372
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/13 02:04:00
+时间戳: 1791828240386
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/13 02:04:00
+时间戳: 1791828240387
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/13 02:04:00
+时间戳: 1791828240389
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/13 02:04:00
+时间戳: 1791828240398
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/13 02:04:00
+时间戳: 1791828240400
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/13 02:04:00
+时间戳: 1791828240453
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=116字节
+
+时间: 2026/10/13 02:04:00
+时间戳: 1791828240640
+操作: OCSP请求解析
+命令: 
+结果: 序列号=7712d9352e6038ce78e57e3f572cec74 哈希=1.3.14.3.2.26 Nonce=5856f1b94af69dc3cb1f4f6f0f2325ba
+
+时间: 2026/10/13 02:04:00
+时间戳: 1791828240828
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=7712d9352e6038ce78e57e3f572cec74
+
+时间: 2026/10/13 02:04:00
+时间戳: 1791828240834
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1845字节
+
+时间: 2026/10/13 02:04:57
+时间戳: 1791828297022
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/13 02:05:39
+时间戳: 1791828339555
+操作: Radius 认证
+命令: 来源=127.0.0.1:55377 用户=1.2.840.113549.1.9.1=#1611323832393936393535344071712e636f6d,CN=localhost,OU=IT Clubs,O=China IT Boys,L=newer york,C=CN 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/13 02:05:39
+时间戳: 1791828339565
+操作: Radius 客户端调试
+命令: 认证方式=EAP-TLS 用户=tls:admin666 目标=127.0.0.1:1812 证书=598966e517ab66863731d60ce72c51ab
+结果: EAP-TLS 认证通过（EAP-Success）
+
+时间: 2026/10/13 02:05:39
+时间戳: 1791828339567
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"EAP-TLS","user":"tls:admin666","pass":"admin888","secret":"mytestkey","port":"1812","cert":"598966e517ab66863731d60ce72c51ab"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: tls:admin666，认证方式: EAP-TLS，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：EAP-Response/Identity(tls:admin666) + Message-Authenticator\n[2] 已发送 Access-Request（71 字节）→ 127.0.0.1:1812\n[3] 收到 EAP-Request/TLS Start（RADIUS=Access-Challenge）\n已加载客户端证书（信任锚链 2 级，含私钥作客户端凭据）\n[4] 发送 EAP-Response/TLS（片 1/1，159B 拆 1 片）\n[5] 已发送 Access-Request（223 字节）→ 127.0.0.1:1812\n[6] 收到服务器 TLS 分片（M=1，继续拉取）\n[7] 已发送 Access-Request（60 字节）→ 127.0.0.1:1812\n[8] 收到服务器 TLS 分片（M=1，继续拉取）\n[9] 已发送 Access-Request（60 字节）→ 127.0.0.1:1812\n[10] 发送 EAP-Response/TLS（片 1/3，2473B 拆 3 片）\n[11] 已发送 Access-Request（1172 字节）→ 127.0.0.1:1812\n[12] 发送 EAP-Response/TLS（片 2/3，2473B 拆 3 片）\n[13] 已发送 Access-Request（1168 字节）→ 127.0.0.1:1812\n[14] 发送 EAP-Response/TLS（片 3/3，2473B 拆 3 片）\n[15] 已发送 Access-Request（335 字节）→ 127.0.0.1:1812\n[16] 握手完成，发送 EAP-Response/TLS(空)\n[17] 已发送 Access-Request（60 字节）→ 127.0.0.1:1812\n=== 流程结束 ===\n结果: EAP-TLS 认证通过（EAP-Success）
+
+时间: 2026/10/13 02:06:47
+时间戳: 1791828407210
+操作: Radius 认证
+命令: 来源=127.0.0.1:49414 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证失败
+
+时间: 2026/10/13 02:06:47
+时间戳: 1791828407211
+操作: Radius 客户端调试
+命令: 认证方式=EAP-MSCHAPv2 用户=admin666 目标=127.0.0.1:1812
+结果: EAP-MSCHAPv2 认证失败
+
+时间: 2026/10/13 02:06:47
+时间戳: 1791828407212
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"EAP-MSCHAPv2","user":"admin666","pass":"admin888","secret":"mytestkey","port":"1812"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: EAP-MSCHAPv2，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：User-Name(mschapv2:admin666) + EAP-Response/Identity + Message-Authenticator\n[2] 已发送 Access-Request（81 字节）→ 127.0.0.1:1812\n[6] 收到 EAP-Request/MSCHAPV2（ID=237，MS-CHAPv2-ID=2，挑战 9b145829f46ebfb87a81e58cb39d34ed）\n[7] 发送 Access-Request：EAP-Response/MSCHAPV2（NT-Response e1eb2a81dececa9716ebd34574f3cf5e…）\n[8] 已发送 Access-Request（126 字节）→ 127.0.0.1:1812\n[9] 收到 Access-Reject（ID=236，响应 Authenticator 校验通过）\n=== 流程结束 ===\n结果: EAP-MSCHAPv2 认证失败
+
+时间: 2026/10/13 02:06:47
+时间戳: 1791828407362
+操作: Radius 认证
+命令: 来源=127.0.0.1:49415 用户=admin666 方法=PAP
+结果: 认证失败
+
+时间: 2026/10/13 02:06:47
+时间戳: 1791828407367
+操作: Radius 客户端调试
+命令: 认证方式=PAP 用户=admin666 目标=127.0.0.1:1812
+结果: PAP 认证失败
+
+时间: 2026/10/13 02:06:47
+时间戳: 1791828407368
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"PAP","user":"admin666","pass":"admin888","secret":"mytestkey","port":"1812"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: PAP，目标: 127.0.0.1:1812\n[1] 构造 Access-Request：User-Name(admin666) + User-Password(16B，RFC 2865 §5.2 用 MD5(secret+Authenticator) 混淆)\n[2] 已发送 Access-Request（48 字节）→ 127.0.0.1:1812\n[3] 收到 Access-Reject（ID=20，响应 Authenticator 校验通过）\n=== 流程结束 ===\n结果: PAP 认证失败
+
+时间: 2026/10/13 02:07:09
+时间戳: 1791828429827
+操作: Radius 认证
+命令: 来源=127.0.0.1:57808 用户=admin666 方法=PAP
+结果: 认证通过
+
+时间: 2026/10/13 02:07:09
+时间戳: 1791828429829
+操作: Radius 客户端调试
+命令: 认证方式=PAP 用户=admin666 目标=127.0.0.1:1812
+结果: PAP 认证通过
+
+时间: 2026/10/13 02:07:09
+时间戳: 1791828429830
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"PAP","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: PAP，目标: 127.0.0.1:1812\n[1] 构造 Access-Request：User-Name(admin666) + User-Password(16B，RFC 2865 §5.2 用 MD5(secret+Authenticator) 混淆)\n[2] 已发送 Access-Request（48 字节）→ 127.0.0.1:1812\n[3] 收到 Access-Accept（ID=132，响应 Authenticator 校验通过）\n=== 流程结束 ===\n结果: PAP 认证通过
+
+时间: 2026/10/13 02:07:10
+时间戳: 1791828430038
+操作: Radius 认证
+命令: 来源=127.0.0.1:57809 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/13 02:07:10
+时间戳: 1791828430045
+操作: Radius 客户端调试
+命令: 认证方式=EAP-MSCHAPv2 用户=admin888 目标=127.0.0.1:1812
+结果: EAP-MSCHAPv2 认证通过（EAP-Success）
+
+时间: 2026/10/13 02:07:10
+时间戳: 1791828430046
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"EAP-MSCHAPv2","user":"admin888","pass":"admin888","secret":"mytestkey","port":"1812"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin888，认证方式: EAP-MSCHAPv2，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：User-Name(mschapv2:admin888) + EAP-Response/Identity + Message-Authenticator\n[2] 已发送 Access-Request（81 字节）→ 127.0.0.1:1812\n[6] 收到 EAP-Request/MSCHAPV2（ID=195，MS-CHAPv2-ID=2，挑战 800ffd15689a6be2fe763a541d8fc351）\n[7] 发送 Access-Request：EAP-Response/MSCHAPV2（NT-Response 2599fa59631ac2a914ca02daeed5416e…）\n[8] 已发送 Access-Request（126 字节）→ 127.0.0.1:1812\n[9] 收到 Access-Challenge + 方法层 MS-CHAPv2 Success（OpCode=3，MS-Length=46，Authenticator 验证通过）\n[10] 发送 Access-Request：空 EAP-Response 确认 Success\n[8] 已发送 Access-Request（63 字节）→ 127.0.0.1:1812\n[12] 收到 Access-Accept（ID=194，响应 Authenticator 校验通过）\n=== 流程结束 ===\n结果: EAP-MSCHAPv2 认证通过（EAP-Success）
+
+时间: 2026/10/13 02:07:10
+时间戳: 1791828430461
+操作: Radius 认证
+命令: 来源=127.0.0.1:51967 用户=admin666 方法=EAP(EAP-MD5)
+结果: 认证通过
+
+时间: 2026/10/13 02:07:10
+时间戳: 1791828430463
+操作: Radius 客户端调试
+命令: 认证方式=EAP-MD5 用户=admin666 目标=127.0.0.1:1812
+结果: EAP-MD5 认证通过
+
+时间: 2026/10/13 02:07:10
+时间戳: 1791828430468
+操作: WebAdmin /api/radius/dial
+命令: POST /api/radius/dial 提交数据={"method":"EAP-MD5","user":"admin666","pass":"admin666","secret":"mytestkey","port":"1812"}
+结果: === RADIUS 客户端认证模拟开始 ===\n账号: admin666，认证方式: EAP-MD5，目标: 127.0.0.1:1812\n[1] 发送 Access-Request：User-Name(md5:admin666) + EAP-Response/Identity + Message-Authenticator(HMAC-MD5)\n[2] 已发送 Access-Request（71 字节）→ 127.0.0.1:1812\n[3] 收到 Access-Challenge + EAP-Request/MD5（ID=178，挑战 5f55395d53795c96d8e1e196eaca843c）\n[4] 发送 Access-Request：EAP-Response/MD5（32102e7689aed166634d8bdf888e7349）\n[8] 已发送 Access-Request（72 字节）→ 127.0.0.1:1812\n[6] 收到 Access-Accept（ID=178，响应 Authenticator 校验通过）\n=== 流程结束 ===\n结果: EAP-MD5 认证通过
+
+时间: 2026/10/13 06:00:29
+时间戳: 1791842429771
+操作: Radius 认证
+命令: 来源=10.255.228.225:36965 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/13 06:00:33
+时间戳: 1791842433272
+操作: Radius 认证
+命令: 来源=10.255.228.225:36965 用户=1.2.840.113549.1.9.1=#1611323832393936393535344071712e636f6d,CN=localhost,OU=IT Clubs,O=China IT Boys,L=newer york,C=CN 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/13 19:44:11
+时间戳: 1791891851144
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/13 20:31:50
+时间戳: 1791894710841
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/13 20:32:28
+时间戳: 1791894748229
+操作: Radius 认证
+命令: 来源=10.255.228.225:38230 用户=1.2.840.113549.1.9.1=#1611323832393936393535344071712e636f6d,CN=localhost,OU=IT Clubs,O=China IT Boys,L=newer york,C=CN 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/13 20:32:31
+时间戳: 1791894751545
+操作: Radius 认证
+命令: 来源=10.255.228.225:38230 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/13 20:33:38
+时间戳: 1791894818754
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/13 20:33:38
+时间戳: 1791894818810
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/13 20:33:38
+时间戳: 1791894818818
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/13 20:33:38
+时间戳: 1791894818827
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/13 20:33:38
+时间戳: 1791894818835
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/13 20:33:38
+时间戳: 1791894818840
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/13 20:33:38
+时间戳: 1791894818860
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=116字节
+
+时间: 2026/10/13 20:33:38
+时间戳: 1791894818871
+操作: OCSP请求解析
+命令: 
+结果: 序列号=7712d9352e6038ce78e57e3f572cec74 哈希=1.3.14.3.2.26 Nonce=9fd5aab49747a81305c72a6cd44ec9fb
+
+时间: 2026/10/13 20:33:38
+时间戳: 1791894818934
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=7712d9352e6038ce78e57e3f572cec74
+
+时间: 2026/10/13 20:33:38
+时间戳: 1791894818940
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1845字节
+
+时间: 2026/10/13 20:36:30
+时间戳: 1791894990591
+操作: Radius 认证
+命令: 来源=127.0.0.1:61456 用户=CN=localhost 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/13 20:36:50
+时间戳: 1791895010064
+操作: Radius 认证
+命令: 来源=127.0.0.1:63378 用户=CN=localhost 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/13 20:39:38
+时间戳: 1791895178681
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/13 20:39:38
+时间戳: 1791895178685
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/13 20:39:38
+时间戳: 1791895178697
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/13 20:39:38
+时间戳: 1791895178702
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/13 20:39:38
+时间戳: 1791895178707
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/13 20:39:38
+时间戳: 1791895178712
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/13 20:39:38
+时间戳: 1791895178737
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=116字节
+
+时间: 2026/10/13 20:39:38
+时间戳: 1791895178740
+操作: OCSP请求解析
+命令: 
+结果: 序列号=7712d9352e6038ce78e57e3f572cec74 哈希=1.3.14.3.2.26 Nonce=89ee4f7b9d1f9e50b82a2ad2686586ed
+
+时间: 2026/10/13 20:39:38
+时间戳: 1791895178772
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=7712d9352e6038ce78e57e3f572cec74
+
+时间: 2026/10/13 20:39:38
+时间戳: 1791895178813
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1845字节
+
+时间: 2026/10/13 20:40:01
+时间戳: 1791895201736
+操作: Radius 认证
+命令: 来源=127.0.0.1:57375 用户=CN=localhost 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/13 20:46:32
+时间戳: 1791895592815
+操作: WebAdmin /api/radius/clearlogs
+命令: POST /api/radius/clearlogs 提交数据={}
+结果: 日志已清空
+
+时间: 2026/10/13 20:46:33
+时间戳: 1791895593928
+操作: Radius 服务停止
+命令: 
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/13 20:46:33
+时间戳: 1791895593930
+操作: WebAdmin /api/radius/stop
+命令: POST /api/radius/stop 提交数据={}
+结果: RADIUS 服务器已停止
+
+时间: 2026/10/13 20:46:34
+时间戳: 1791895594950
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/13 20:46:34
+时间戳: 1791895594951
+操作: WebAdmin /api/radius/start
+命令: POST /api/radius/start 提交数据={"auth_port":"1812","acct_port":"1813","secret":"mytestkey"}
+结果: RADIUS 服务器已启动（认证 1812 / 计费 1813，已加载 3 个账号）
+
+时间: 2026/10/13 20:46:41
+时间戳: 1791895601828
+操作: Radius 认证
+命令: 来源=10.255.228.225:38230 用户=1.2.840.113549.1.9.1=#1611323832393936393535344071712e636f6d,CN=localhost,OU=IT Clubs,O=China IT Boys,L=newer york,C=CN 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/13 20:47:16
+时间戳: 1791895636535
+操作: Radius 认证
+命令: 来源=10.255.228.225:38230 用户=CN=vpn.local,OU=IT Clubs,O=China IT Boys,L=newer york 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/13 20:47:22
+时间戳: 1791895642368
+操作: Radius 认证
+命令: 来源=10.255.228.225:38230 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/13 20:47:26
+时间戳: 1791895646571
+操作: Radius 认证
+命令: 来源=10.255.228.225:38230 用户=admin666 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/13 20:47:34
+时间戳: 1791895654911
+操作: Radius 认证
+命令: 来源=10.255.228.225:38230 用户=admin888 方法=EAP(EAP-MSCHAPv2)
+结果: 认证通过
+
+时间: 2026/10/13 20:47:39
+时间戳: 1791895659024
+操作: Radius 认证
+命令: 来源=10.255.228.225:38230 用户=1.2.840.113549.1.9.1=#1611323832393936393535344071712e636f6d,CN=localhost,OU=IT Clubs,O=China IT Boys,L=newer york,C=CN 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/13 20:59:29
+时间戳: 1791896369092
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/13 21:02:52
+时间戳: 1791896572282
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/13 21:02:52
+时间戳: 1791896572434
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/13 21:02:52
+时间戳: 1791896572440
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/13 21:02:52
+时间戳: 1791896572455
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/13 21:02:52
+时间戳: 1791896572457
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/13 21:02:52
+时间戳: 1791896572469
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/13 21:02:52
+时间戳: 1791896572522
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=116字节
+
+时间: 2026/10/13 21:02:52
+时间戳: 1791896572541
+操作: OCSP请求解析
+命令: 
+结果: 序列号=7712d9352e6038ce78e57e3f572cec74 哈希=1.3.14.3.2.26 Nonce=24e8701acac485bd967f9fa64e8dfd18
+
+时间: 2026/10/13 21:02:52
+时间戳: 1791896572717
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=7712d9352e6038ce78e57e3f572cec74
+
+时间: 2026/10/13 21:02:52
+时间戳: 1791896572721
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1845字节
+
+时间: 2026/10/13 21:03:17
+时间戳: 1791896597053
+操作: Radius 认证
+命令: 来源=127.0.0.1:55804 用户=CN=localhost 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/13 21:08:09
+时间戳: 1791896889075
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRL/7712d9352e6038ce78e57e3f572cec74.crl
+
+时间: 2026/10/13 21:08:09
+时间戳: 1791896889078
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crl 大小=518字节 类型=crl
+
+时间: 2026/10/13 21:08:09
+时间戳: 1791896889083
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/13 21:08:09
+时间戳: 1791896889086
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/13 21:08:09
+时间戳: 1791896889094
+操作: 收到文件请求
+命令: 
+结果: 来源=127.0.0.1 路径=/CRT/7712d9352e6038ce78e57e3f572cec74.crt
+
+时间: 2026/10/13 21:08:09
+时间戳: 1791896889096
+操作: 文件响应
+命令: 
+结果: 文件=7712d9352e6038ce78e57e3f572cec74.crt 大小=1588字节 类型=crt
+
+时间: 2026/10/13 21:08:09
+时间戳: 1791896889117
+操作: 收到OCSP请求
+命令: 
+结果: 来源=127.0.0.1 路径=/OCSP 长度=116字节
+
+时间: 2026/10/13 21:08:09
+时间戳: 1791896889119
+操作: OCSP请求解析
+命令: 
+结果: 序列号=7712d9352e6038ce78e57e3f572cec74 哈希=1.3.14.3.2.26 Nonce=1ff28931fe7e4bb8a39e03987f4f0099
+
+时间: 2026/10/13 21:08:09
+时间戳: 1791896889143
+操作: OCSP签名
+命令: 
+结果: 算法=RSA(sha1) 响应者=CN=ChinaITboys RSA ROOT By OCSP, OU=Only OCSP Signing, C=CN, O=ChinaITboy 请求序列号=7712d9352e6038ce78e57e3f572cec74
+
+时间: 2026/10/13 21:08:09
+时间戳: 1791896889147
+操作: OCSP响应
+命令: 
+结果: 状态=success(200) 长度=1845字节
+
+时间: 2026/10/13 21:08:33
+时间戳: 1791896913702
+操作: Radius 服务启动
+命令: authPort=1812 acctPort=1813
+结果: RADIUS 服务器已启动，账号数=3
+
+时间: 2026/10/13 21:08:50
+时间戳: 1791896930213
+操作: Radius 认证
+命令: 来源=127.0.0.1:53454 用户=CN=localhost 方法=EAP(EAP-TLS)
+结果: 认证通过
+
+时间: 2026/10/13 21:08:56
+时间戳: 1791896936674
+操作: Radius 认证
+命令: 来源=10.255.228.225:38230 用户=1.2.840.113549.1.9.1=#1611323832393936393535344071712e636f6d,CN=localhost,OU=IT Clubs,O=China IT Boys,L=newer york,C=CN 方法=EAP(EAP-TLS)
+结果: 认证通过
+

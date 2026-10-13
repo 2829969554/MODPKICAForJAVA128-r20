@@ -8,7 +8,6 @@ import org.bouncycastle.asn1.ASN1OctetString;
 import org.bouncycastle.asn1.ASN1Primitive;
 import org.bouncycastle.asn1.ASN1TaggedObject;
 import org.bouncycastle.asn1.DERBitString;
-import org.bouncycastle.asn1.ASN1Enumerated;
 import org.bouncycastle.asn1.DERNull;
 import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
@@ -103,6 +102,12 @@ public final class OcspUtil {
         Req[] reqs = ocspReq.getRequestList();
         if (reqs == null || reqs.length == 0) {
             throw new IllegalArgumentException("OCSP 请求为空");
+        }
+        if (reqs.length > 1) {
+            // 本服务只生成单证书响应：静默只回答 reqs[0] 会让客户端误以为其余 CertID
+            // 也包含在响应里（RFC 6960 允许多请求，本服务显式拒绝而非漏答）
+            throw new UnsupportedRequestException(
+                    "不支持批量 OCSP 请求（CertID 数=" + reqs.length + "），请逐个证书请求");
         }
         CertificateID cid = reqs[0].getCertID();
         OcspRequest r = new OcspRequest();
@@ -370,5 +375,23 @@ public final class OcspUtil {
      */
     public static byte[] unauthorizedResponse() {
         return new byte[]{0x30, 0x03, 0x0A, 0x01, 0x06};
+    }
+
+    /**
+     * malformedRequest 错误响应（RFC 6960 §4.2.1，status=1）：
+     * {0x30,0x03,0x0A,0x01,0x01}。本服务只支持单证书请求，
+     * 批量请求必须显式返回该状态，而不是静默只回答第一个 CertID。
+     */
+    public static byte[] malformedRequestResponse() {
+        return new byte[]{0x30, 0x03, 0x0A, 0x01, 0x01};
+    }
+
+    /** OCSP 请求不被支持（批量 CertID 等）时抛出，调用方据此返回 malformedRequest。 */
+    public static class UnsupportedRequestException extends Exception {
+        private static final long serialVersionUID = 1L;
+
+        public UnsupportedRequestException(String message) {
+            super(message);
+        }
     }
 }

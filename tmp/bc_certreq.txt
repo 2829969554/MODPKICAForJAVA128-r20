@@ -1,0 +1,402 @@
+﻿public class org.bouncycastle.tls.CertificateRequest {
+  protected final byte[] certificateRequestContext;
+
+  protected final short[] certificateTypes;
+
+  protected final java.util.Vector supportedSignatureAlgorithms;
+
+  protected final java.util.Vector supportedSignatureAlgorithmsCert;
+
+  protected final java.util.Vector certificateAuthorities;
+
+  private static java.util.Vector checkSupportedSignatureAlgorithms(java.util.Vector, short) throws java.io.IOException;
+    Code:
+         0: aconst_null
+         1: aload_0
+         2: if_acmpne     16
+         5: new           #102                // class org/bouncycastle/tls/TlsFatalAlert
+         8: dup
+         9: iload_1
+        10: ldc           #3                  // String \'signature_algorithms\' is required
+        12: invokespecial #213                // Method org/bouncycastle/tls/TlsFatalAlert."<init>":(SLjava/lang/String;)V
+        15: athrow
+        16: aload_0
+        17: areturn
+
+  public org.bouncycastle.tls.CertificateRequest(short[], java.util.Vector, java.util.Vector);
+    Code:
+         0: aload_0
+         1: aconst_null
+         2: aload_1
+         3: aload_2
+         4: aconst_null
+         5: aload_3
+         6: invokespecial #206                // Method "<init>":([B[SLjava/util/Vector;Ljava/util/Vector;Ljava/util/Vector;)V
+         9: return
+
+  public org.bouncycastle.tls.CertificateRequest(byte[], java.util.Vector, java.util.Vector, java.util.Vector) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: aload_1
+         2: aconst_null
+         3: aload_2
+         4: bipush        80
+         6: invokestatic  #203                // Method checkSupportedSignatureAlgorithms:(Ljava/util/Vector;S)Ljava/util/Vector;
+         9: aload_3
+        10: aload         4
+        12: invokespecial #206                // Method "<init>":([B[SLjava/util/Vector;Ljava/util/Vector;Ljava/util/Vector;)V
+        15: return
+
+  private org.bouncycastle.tls.CertificateRequest(byte[], short[], java.util.Vector, java.util.Vector, java.util.Vector);
+    Code:
+         0: aload_0
+         1: invokespecial #193                // Method java/lang/Object."<init>":()V
+         4: aconst_null
+         5: aload_1
+         6: if_acmpeq     27
+         9: aload_1
+        10: arraylength
+        11: invokestatic  #217                // Method org/bouncycastle/tls/TlsUtils.isValidUint8:(I)Z
+        14: ifne          27
+        17: new           #92                 // class java/lang/IllegalArgumentException
+        20: dup
+        21: ldc           #1                  // String \'certificateRequestContext\' cannot be longer than 255
+        23: invokespecial #191                // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+        26: athrow
+        27: aconst_null
+        28: aload_2
+        29: if_acmpeq     56
+        32: aload_2
+        33: arraylength
+        34: iconst_1
+        35: if_icmplt     46
+        38: aload_2
+        39: arraylength
+        40: invokestatic  #217                // Method org/bouncycastle/tls/TlsUtils.isValidUint8:(I)Z
+        43: ifne          56
+        46: new           #92                 // class java/lang/IllegalArgumentException
+        49: dup
+        50: ldc           #2                  // String \'certificateTypes\' should have length from 1 to 255
+        52: invokespecial #191                // Method java/lang/IllegalArgumentException."<init>":(Ljava/lang/String;)V
+        55: athrow
+        56: aload_0
+        57: aload_1
+        58: invokestatic  #218                // Method org/bouncycastle/tls/TlsUtils.clone:([B)[B
+        61: putfield      #184                // Field certificateRequestContext:[B
+        64: aload_0
+        65: aload_2
+        66: putfield      #185                // Field certificateTypes:[S
+        69: aload_0
+        70: aload_3
+        71: putfield      #187                // Field supportedSignatureAlgorithms:Ljava/util/Vector;
+        74: aload_0
+        75: aload         4
+        77: putfield      #188                // Field supportedSignatureAlgorithmsCert:Ljava/util/Vector;
+        80: aload_0
+        81: aload         5
+        83: putfield      #186                // Field certificateAuthorities:Ljava/util/Vector;
+        86: return
+
+  public byte[] getCertificateRequestContext();
+    Code:
+         0: aload_0
+         1: getfield      #184                // Field certificateRequestContext:[B
+         4: invokestatic  #218                // Method org/bouncycastle/tls/TlsUtils.clone:([B)[B
+         7: areturn
+
+  public short[] getCertificateTypes();
+    Code:
+         0: aload_0
+         1: getfield      #185                // Field certificateTypes:[S
+         4: areturn
+
+  public java.util.Vector getSupportedSignatureAlgorithms();
+    Code:
+         0: aload_0
+         1: getfield      #187                // Field supportedSignatureAlgorithms:Ljava/util/Vector;
+         4: areturn
+
+  public java.util.Vector getSupportedSignatureAlgorithmsCert();
+    Code:
+         0: aload_0
+         1: getfield      #188                // Field supportedSignatureAlgorithmsCert:Ljava/util/Vector;
+         4: areturn
+
+  public java.util.Vector getCertificateAuthorities();
+    Code:
+         0: aload_0
+         1: getfield      #186                // Field certificateAuthorities:Ljava/util/Vector;
+         4: areturn
+
+  public boolean hasCertificateRequestContext(byte[]);
+    Code:
+         0: aload_0
+         1: getfield      #184                // Field certificateRequestContext:[B
+         4: aload_1
+         5: invokestatic  #233                // Method org/bouncycastle/util/Arrays.areEqual:([B[B)Z
+         8: ireturn
+
+  public void encode(org.bouncycastle.tls.TlsContext, java.io.OutputStream) throws java.io.IOException;
+    Code:
+         0: aload_1
+         1: invokeinterface #234,  1          // InterfaceMethod org/bouncycastle/tls/TlsContext.getServerVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+         6: astore_3
+         7: aload_3
+         8: invokestatic  #229                // Method org/bouncycastle/tls/TlsUtils.isTLSv12:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        11: istore        4
+        13: aload_3
+        14: invokestatic  #230                // Method org/bouncycastle/tls/TlsUtils.isTLSv13:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        17: istore        5
+        19: iload         5
+        21: aconst_null
+        22: aload_0
+        23: getfield      #184                // Field certificateRequestContext:[B
+        26: if_acmpeq     33
+        29: iconst_1
+        30: goto          34
+        33: iconst_0
+        34: if_icmpne     86
+        37: iload         5
+        39: aconst_null
+        40: aload_0
+        41: getfield      #185                // Field certificateTypes:[S
+        44: if_acmpne     51
+        47: iconst_1
+        48: goto          52
+        51: iconst_0
+        52: if_icmpne     86
+        55: iload         4
+        57: aconst_null
+        58: aload_0
+        59: getfield      #187                // Field supportedSignatureAlgorithms:Ljava/util/Vector;
+        62: if_acmpeq     69
+        65: iconst_1
+        66: goto          70
+        69: iconst_0
+        70: if_icmpne     86
+        73: iload         5
+        75: ifne          94
+        78: aconst_null
+        79: aload_0
+        80: getfield      #188                // Field supportedSignatureAlgorithmsCert:Ljava/util/Vector;
+        83: if_acmpeq     94
+        86: new           #93                 // class java/lang/IllegalStateException
+        89: dup
+        90: invokespecial #192                // Method java/lang/IllegalStateException."<init>":()V
+        93: athrow
+        94: iload         5
+        96: ifeq          173
+        99: aload_0
+       100: getfield      #184                // Field certificateRequestContext:[B
+       103: aload_2
+       104: invokestatic  #225                // Method org/bouncycastle/tls/TlsUtils.writeOpaque8:([BLjava/io/OutputStream;)V
+       107: new           #95                 // class java/util/Hashtable
+       110: dup
+       111: invokespecial #194                // Method java/util/Hashtable."<init>":()V
+       114: astore        6
+       116: aload         6
+       118: aload_0
+       119: getfield      #187                // Field supportedSignatureAlgorithms:Ljava/util/Vector;
+       122: invokestatic  #212                // Method org/bouncycastle/tls/TlsExtensionsUtils.addSignatureAlgorithmsExtension:(Ljava/util/Hashtable;Ljava/util/Vector;)V
+       125: aconst_null
+       126: aload_0
+       127: getfield      #188                // Field supportedSignatureAlgorithmsCert:Ljava/util/Vector;
+       130: if_acmpeq     142
+       133: aload         6
+       135: aload_0
+       136: getfield      #188                // Field supportedSignatureAlgorithmsCert:Ljava/util/Vector;
+       139: invokestatic  #211                // Method org/bouncycastle/tls/TlsExtensionsUtils.addSignatureAlgorithmsCertExtension:(Ljava/util/Hashtable;Ljava/util/Vector;)V
+       142: aconst_null
+       143: aload_0
+       144: getfield      #186                // Field certificateAuthorities:Ljava/util/Vector;
+       147: if_acmpeq     159
+       150: aload         6
+       152: aload_0
+       153: getfield      #186                // Field certificateAuthorities:Ljava/util/Vector;
+       156: invokestatic  #210                // Method org/bouncycastle/tls/TlsExtensionsUtils.addCertificateAuthoritiesExtension:(Ljava/util/Hashtable;Ljava/util/Vector;)V
+       159: aload         6
+       161: invokestatic  #215                // Method org/bouncycastle/tls/TlsProtocol.writeExtensionsData:(Ljava/util/Hashtable;)[B
+       164: astore        7
+       166: aload         7
+       168: aload_2
+       169: invokestatic  #224                // Method org/bouncycastle/tls/TlsUtils.writeOpaque16:([BLjava/io/OutputStream;)V
+       172: return
+       173: aload_0
+       174: getfield      #185                // Field certificateTypes:[S
+       177: aload_2
+       178: invokestatic  #226                // Method org/bouncycastle/tls/TlsUtils.writeUint8ArrayWithUint8Length:([SLjava/io/OutputStream;)V
+       181: iload         4
+       183: ifeq          194
+       186: aload_0
+       187: getfield      #187                // Field supportedSignatureAlgorithms:Ljava/util/Vector;
+       190: aload_2
+       191: invokestatic  #231                // Method org/bouncycastle/tls/TlsUtils.encodeSupportedSignatureAlgorithms:(Ljava/util/Vector;Ljava/io/OutputStream;)V
+       194: aload_0
+       195: getfield      #186                // Field certificateAuthorities:Ljava/util/Vector;
+       198: ifnull        211
+       201: aload_0
+       202: getfield      #186                // Field certificateAuthorities:Ljava/util/Vector;
+       205: invokevirtual #197                // Method java/util/Vector.isEmpty:()Z
+       208: ifeq          219
+       211: iconst_0
+       212: aload_2
+       213: invokestatic  #223                // Method org/bouncycastle/tls/TlsUtils.writeUint16:(ILjava/io/OutputStream;)V
+       216: goto          347
+       219: new           #96                 // class java/util/Vector
+       222: dup
+       223: aload_0
+       224: getfield      #186                // Field certificateAuthorities:Ljava/util/Vector;
+       227: invokevirtual #195                // Method java/util/Vector.size:()I
+       230: invokespecial #198                // Method java/util/Vector."<init>":(I)V
+       233: astore        6
+       235: iconst_0
+       236: istore        7
+       238: iconst_0
+       239: istore        8
+       241: iload         8
+       243: aload_0
+       244: getfield      #186                // Field certificateAuthorities:Ljava/util/Vector;
+       247: invokevirtual #195                // Method java/util/Vector.size:()I
+       250: if_icmpge     299
+       253: aload_0
+       254: getfield      #186                // Field certificateAuthorities:Ljava/util/Vector;
+       257: iload         8
+       259: invokevirtual #199                // Method java/util/Vector.elementAt:(I)Ljava/lang/Object;
+       262: checkcast     #97                 // class org/bouncycastle/asn1/x500/X500Name
+       265: astore        9
+       267: aload         9
+       269: ldc           #4                  // String DER
+       271: invokevirtual #201                // Method org/bouncycastle/asn1/x500/X500Name.getEncoded:(Ljava/lang/String;)[B
+       274: astore        10
+       276: aload         6
+       278: aload         10
+       280: invokevirtual #200                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+       283: iload         7
+       285: aload         10
+       287: arraylength
+       288: iconst_2
+       289: iadd
+       290: iadd
+       291: istore        7
+       293: iinc          8, 1
+       296: goto          241
+       299: iload         7
+       301: invokestatic  #216                // Method org/bouncycastle/tls/TlsUtils.checkUint16:(I)V
+       304: iload         7
+       306: aload_2
+       307: invokestatic  #223                // Method org/bouncycastle/tls/TlsUtils.writeUint16:(ILjava/io/OutputStream;)V
+       310: iconst_0
+       311: istore        8
+       313: iload         8
+       315: aload         6
+       317: invokevirtual #195                // Method java/util/Vector.size:()I
+       320: if_icmpge     347
+       323: aload         6
+       325: iload         8
+       327: invokevirtual #199                // Method java/util/Vector.elementAt:(I)Ljava/lang/Object;
+       330: checkcast     #87                 // class "[B"
+       333: astore        9
+       335: aload         9
+       337: aload_2
+       338: invokestatic  #224                // Method org/bouncycastle/tls/TlsUtils.writeOpaque16:([BLjava/io/OutputStream;)V
+       341: iinc          8, 1
+       344: goto          313
+       347: return
+
+  public static org.bouncycastle.tls.CertificateRequest parse(org.bouncycastle.tls.TlsContext, java.io.InputStream) throws java.io.IOException;
+    Code:
+         0: aload_0
+         1: invokeinterface #234,  1          // InterfaceMethod org/bouncycastle/tls/TlsContext.getServerVersion:()Lorg/bouncycastle/tls/ProtocolVersion;
+         6: astore_2
+         7: aload_2
+         8: invokestatic  #230                // Method org/bouncycastle/tls/TlsUtils.isTLSv13:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        11: istore_3
+        12: iload_3
+        13: ifeq          79
+        16: aload_1
+        17: invokestatic  #220                // Method org/bouncycastle/tls/TlsUtils.readOpaque8:(Ljava/io/InputStream;)[B
+        20: astore        4
+        22: aload_1
+        23: invokestatic  #219                // Method org/bouncycastle/tls/TlsUtils.readOpaque16:(Ljava/io/InputStream;)[B
+        26: astore        5
+        28: bipush        13
+        30: aload         5
+        32: invokestatic  #214                // Method org/bouncycastle/tls/TlsProtocol.readExtensionsData13:(I[B)Ljava/util/Hashtable;
+        35: astore        6
+        37: aload         6
+        39: invokestatic  #209                // Method org/bouncycastle/tls/TlsExtensionsUtils.getSignatureAlgorithmsExtension:(Ljava/util/Hashtable;)Ljava/util/Vector;
+        42: bipush        109
+        44: invokestatic  #203                // Method checkSupportedSignatureAlgorithms:(Ljava/util/Vector;S)Ljava/util/Vector;
+        47: astore        7
+        49: aload         6
+        51: invokestatic  #208                // Method org/bouncycastle/tls/TlsExtensionsUtils.getSignatureAlgorithmsCertExtension:(Ljava/util/Hashtable;)Ljava/util/Vector;
+        54: astore        8
+        56: aload         6
+        58: invokestatic  #207                // Method org/bouncycastle/tls/TlsExtensionsUtils.getCertificateAuthoritiesExtension:(Ljava/util/Hashtable;)Ljava/util/Vector;
+        61: astore        9
+        63: new           #98                 // class org/bouncycastle/tls/CertificateRequest
+        66: dup
+        67: aload         4
+        69: aload         7
+        71: aload         8
+        73: aload         9
+        75: invokespecial #205                // Method "<init>":([BLjava/util/Vector;Ljava/util/Vector;Ljava/util/Vector;)V
+        78: areturn
+        79: aload_2
+        80: invokestatic  #229                // Method org/bouncycastle/tls/TlsUtils.isTLSv12:(Lorg/bouncycastle/tls/ProtocolVersion;)Z
+        83: istore        4
+        85: aload_1
+        86: iconst_1
+        87: invokestatic  #222                // Method org/bouncycastle/tls/TlsUtils.readUint8ArrayWithUint8Length:(Ljava/io/InputStream;I)[S
+        90: astore        5
+        92: aconst_null
+        93: astore        6
+        95: iload         4
+        97: ifeq          106
+       100: aload_1
+       101: invokestatic  #232                // Method org/bouncycastle/tls/TlsUtils.parseSupportedSignatureAlgorithms:(Ljava/io/InputStream;)Ljava/util/Vector;
+       104: astore        6
+       106: aconst_null
+       107: astore        7
+       109: aload_1
+       110: invokestatic  #219                // Method org/bouncycastle/tls/TlsUtils.readOpaque16:(Ljava/io/InputStream;)[B
+       113: astore        8
+       115: aload         8
+       117: arraylength
+       118: ifle          185
+       121: new           #96                 // class java/util/Vector
+       124: dup
+       125: invokespecial #196                // Method java/util/Vector."<init>":()V
+       128: astore        7
+       130: new           #89                 // class java/io/ByteArrayInputStream
+       133: dup
+       134: aload         8
+       136: invokespecial #190                // Method java/io/ByteArrayInputStream."<init>":([B)V
+       139: astore        9
+       141: aload         9
+       143: iconst_1
+       144: invokestatic  #221                // Method org/bouncycastle/tls/TlsUtils.readOpaque16:(Ljava/io/InputStream;I)[B
+       147: astore        10
+       149: aload         10
+       151: invokestatic  #228                // Method org/bouncycastle/tls/TlsUtils.readASN1Object:([B)Lorg/bouncycastle/asn1/ASN1Primitive;
+       154: astore        11
+       156: aload         11
+       158: invokestatic  #202                // Method org/bouncycastle/asn1/x500/X500Name.getInstance:(Ljava/lang/Object;)Lorg/bouncycastle/asn1/x500/X500Name;
+       161: astore        12
+       163: aload         12
+       165: aload         10
+       167: invokestatic  #227                // Method org/bouncycastle/tls/TlsUtils.requireDEREncoding:(Lorg/bouncycastle/asn1/ASN1Object;[B)V
+       170: aload         7
+       172: aload         12
+       174: invokevirtual #200                // Method java/util/Vector.addElement:(Ljava/lang/Object;)V
+       177: aload         9
+       179: invokevirtual #189                // Method java/io/ByteArrayInputStream.available:()I
+       182: ifgt          141
+       185: new           #98                 // class org/bouncycastle/tls/CertificateRequest
+       188: dup
+       189: aload         5
+       191: aload         6
+       193: aload         7
+       195: invokespecial #204                // Method "<init>":([SLjava/util/Vector;Ljava/util/Vector;)V
+       198: areturn
+}

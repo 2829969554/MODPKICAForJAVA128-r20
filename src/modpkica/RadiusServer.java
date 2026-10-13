@@ -16,6 +16,7 @@ import java.security.SecureRandom;
 import java.security.Signature;
 import java.security.cert.X509Certificate;
 import java.text.SimpleDateFormat;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Date;
@@ -196,14 +197,20 @@ public class RadiusServer {
     static final int EAP_TLS_FLAG_MORE = 0x40;
     static final int EAP_TLS_FLAG_START = 0x20;
 
-    /** 服务器 → 客户端每条 EAP-Request/TLS 的载荷上限（RADIUS EAP-Message 属性 253-头 留余量）。 */
-    static final int EAP_TLS_FRAG = 240;
+    /** 服务器 → 客户端每条 EAP-Request/TLS 的载荷上限（RFC 5216 分片）。
+     *  取 1100B：EAP-TLS 数据 + 4B 长度头 + flags 后，RADIUS EAP-Message 属性（≤253B）
+     *  与 UDP 包均保持在典型 MTU(1500) 内，避免触发 IP 分片；完整 TLS flight 经
+     *  L/M 位标准分片下发，客户端按 RFC 5216 §2.1 续片拉取。 */
+    static final int EAP_TLS_FRAG = 1100;
     /** 客户端 → 服务器单条 EAP-Response/TLS 重组上限（防恶意超长，16KB TLS 记录够用）。 */
     static final int EAP_TLS_MAX_IN = 65536;
     /** 握手超时（秒）。 */
     static final int EAP_TLS_TIMEOUT_S = 8;
 
     static final long EAP_STATE_TTL_MS = 30_000L;
+
+    /** EAP-TLS 是否允许协商 TLS 1.3（默认否；原因见 ModpkicaTlsServer#getSupportedVersions）。 */
+    static final boolean EAP_TLS_ALLOW_TLS13 = Boolean.getBoolean("modpkica.eaptls.tls13");
 
     // ==================== 实例状态 ====================
 
@@ -223,6 +230,29 @@ public class RadiusServer {
 
     /** EAP-TLS/PEAP/TTLS 会话表：双键索引（Integer radiusId + String src），RADIUS 中继场景 identifier 递增时以 src 兜底。 */
     private final Map<Object, EapTlsSession> tlsSessions = new ConcurrentHashMap<>();
+
+    /** src 维度的 EAP-TLS 最近一笔事务（RFC 3748 §5.1；会话被覆盖/回收后的重传兜底）。
+     *  strongSwan eap-radius 等 NAS 对未确认的 Access-Request 整包重传时仅 RADIUS
+     *  identifier 递增（EAP-Id 与 EAP 数据逐字节相同）。会话是"identifier + src"双键
+     *  存储，src 键可能被新会话（如 NAK 重传触发二次 startEapTls）覆盖，故这里独立留一份
+     *  与入包绑定的下发记录（{@link TlsTx}：响应快照 + 片内偏移 + 当时的
+     *  EAP-Identifier），先于会话查找执行。命中即重放**该笔**响应——而非旧实现的
+     *  "最近一次响应体"（拉片阶段最近一次是末片，重传的 ClientHello 会拿到末片 → 死循环）。 */
+    private static final class RetxState {
+        volatile TlsTx lastTx;
+        final long createdAt = System.currentTimeMillis();
+    }
+    private final ConcurrentHashMap<String, RetxState> tlsRetx = new ConcurrentHashMap<>();
+
+    /** 记录该来源最近一笔 EAP-TLS 事务（会话被覆盖/回收后仍可按事务重放）。 */
+    private void recordSrcTx(String src, TlsTx tx) {
+        RetxState rx = tlsRetx.get(src);
+        if (rx == null) {
+            rx = new RetxState();
+            tlsRetx.put(src, rx);
+        }
+        rx.lastTx = tx;
+    }
 
     /** 服务端 TLS 凭据（懒加载，来自 PKI 证书库 CA/ROOT 的 RSA/ECC 证书）。 */
     private volatile TlsServerCred tlsServerCred;
@@ -273,7 +303,7 @@ public class RadiusServer {
         long expires;
     }
 
-    private final Map<Integer, EapPwdState> pwdStates = new HashMap<>();
+    private final Map<String, EapPwdState> pwdStates = new HashMap<>();
 
     // ==================== EAP-TLS（RFC 5216 + BC TLS 1.2） ====================
 
@@ -290,7 +320,10 @@ public class RadiusServer {
         }
     }
 
-    /** 阻塞式输入流：握手线程从队列取客户端 EAP 数据；空数组=EOF。 */
+    // 阻塞式输入流：握手线程从队列取客户端 EAP 数据；空数组=EOF。
+    // 诊断开关：TLS1.3 下跳过客户端证书请求（定位 internal_error(80) 用，正常必须 false）。
+    private static final boolean DEBUG_NO_CLIENT_CERT = false;
+
     static final class BlockingInput extends InputStream {
         private final LinkedBlockingQueue<byte[]> q;
         private byte[] cur;
@@ -325,6 +358,10 @@ public class RadiusServer {
                     throw new IOException("EAP-TLS 输入流中断");
                 }
                 if (d == null) {
+                    System.err.println("[BlockingInput] 客户端数据超时 q.size=" + q.size()
+                            + " cur=" + (cur == null ? "null" : cur.length) + " curOff=" + curOff
+                            + " eof=" + eof);
+                    new Exception("BlockingInput timeout stack").printStackTrace(System.err);
                     throw new IOException("EAP-TLS 客户端数据超时");
                 }
                 if (d.length == 0) {
@@ -334,11 +371,39 @@ public class RadiusServer {
                 }
                 cur = d;
                 curOff = 0;
+                System.err.println("[BlockingInput] 取到数据 len=" + d.length + " eof=" + eof);
             }
             int n = Math.min(len, cur.length - curOff);
             System.arraycopy(cur, curOff, b, off, n);
             curOff += n;
             return n;
+        }
+    }
+
+    /** EAP 层重传事务（RFC 3748 §5.1）：
+     *  (入包 EAP-Identifier + 数据指纹) → 当时下发的那一条 EAP-Request。
+     *  <p>强约束：重传必须以**相同 EAP-Identifier** 重放**同一笔**响应。旧实现只记
+     *  "最近一次下发的响应体"，而分片拉取阶段最后写入的是**末片**——于是"取完整飞行
+     *  后再重传 ClientHello"会拿到末片（flags=0，M=0）→ 客户端永远解析不出 ServerHello
+     *  → 再重传 → 服务端再回末片：无限循环（iOS 实测日志无限重复 [iOS兼容]）。
+     *  现记"该笔响应取自哪份快照的哪个偏移"，重放＝按原偏移重新取片（首片仍是首片）。 */
+    static final class TlsTx {
+        /** 入包 EAP-Identifier 与数据指纹（Arrays.hashCode，与旧实现一致）。 */
+        final int inId;
+        final long inFp;
+        /** 当时下发响应用的 EAP-Identifier（重传须复用）。 */
+        final int outId;
+        /** 响应所取的输出快照；null = 非分片响应（空挑战 1 字节）。 */
+        final byte[] flight;
+        /** 响应在该快照中的起始偏移。 */
+        final int outIdx;
+
+        TlsTx(int inId, long inFp, int outId, byte[] flight, int outIdx) {
+            this.inId = inId;
+            this.inFp = inFp;
+            this.outId = outId;
+            this.flight = flight;
+            this.outIdx = outIdx;
         }
     }
 
@@ -356,8 +421,9 @@ public class RadiusServer {
         volatile boolean ok;
         volatile String err = "";
         Thread thread;
-        /** 待分片下发的服务器 TLS 输出缓冲（RFC 5216 §2.1：每片一个 EAP 包）。 */
-        byte[] outBuf;
+        /** 当前服务器输出快照（一次完整 flight；RFC 5216 §2.1 分片游标 outSent 指向其中位置）。
+         *  发完后**不置空**——保留快照，重传才能按事务回放同一片（回绕 outSent 即逐字节复现）。 */
+        byte[] curFlight;
         int outSent;
         /** PEAP：TLS 握手完成后进入内层 EAP 认证（RFC 5216 §3.2）。 */
         volatile boolean innerEap;
@@ -374,29 +440,94 @@ public class RadiusServer {
          *  经 BC exportKeyingMaterial 导出；用于 Access-Accept 下发 MS-MPPE-Recv/Send-Key，
          *  供 strongSwan 等 NAS 建立 IKEv2 密钥（RFC 5996 §2.16）。 */
         volatile byte[] msk;
+        /** 会话创建时刻：供 evictTlsSessions 回收"发一条消息就消失"的会话。 */
+        final long createdAt = System.currentTimeMillis();
 
-        /** 取下一片（首片带 L|len，未发完带 M）；发完即清空缓冲并返回 null。 */
-        byte[] nextOutFrag() {
-            if (outBuf == null) {
+        /** 最近若干笔事务（含空拉取片）：网关重传风暴/迟到重复包可能命中较早的事务。 */
+        private final ArrayDeque<TlsTx> txs = new ArrayDeque<>();
+
+        /** 记录一笔事务（保留最近 8 笔）。 */
+        void addTx(int inId, long inFp, int outId, byte[] flight, int outIdx) {
+            synchronized (txs) {
+                txs.addLast(new TlsTx(inId, inFp, outId, flight, outIdx));
+                while (txs.size() > 8) {
+                    txs.removeFirst();
+                }
+            }
+        }
+
+        /** 事务查找：入包 EAP-Identifier 与数据指纹都与某笔事务一致 → 判为重传（RFC 3748 §5.1）。 */
+        TlsTx findTx(int inId, long inFp) {
+            synchronized (txs) {
+                for (TlsTx tx : txs) {
+                    if (tx.inId == inId && tx.inFp == inFp) {
+                        return tx;
+                    }
+                }
+            }
+            return null;
+        }
+
+        /** 服务器 Request 的 EAP-Identifier 序列（RFC 3748 §4.1：每个新 Request 必须递增）。
+         *  旧实现回显客户端 Identifier：连续两次空拉取片因此逐字节完全相同，无法区分
+         *  "请求下一片"与"IKE 层重传上一片"——重传被当成新拉取 → 跳片 → 客户端手里
+         *  的飞行中间缺片，解析必然失败。自增后回显型客户端每次拉取携带新 Id，
+         *  重传则携带旧 Id，可与 {@link #findTx} 一起精确判定。 */
+        private int outEapIdSeq = -1;
+
+        /** 分配下一个 EAP-Request 的 Identifier（不足 8 位自动回绕）。 */
+        int allocOutEapId() {
+            if (outEapIdSeq < 0) {
+                outEapIdSeq = 0;
+            }
+            int id = outEapIdSeq & 0xff;
+            outEapIdSeq = (outEapIdSeq + 1) & 0xff;
+            return id;
+        }
+
+        /** 会话的 Id 序列起点（由入口/重启点的入包 Id 决定）。 */
+        void initOutEapIdSeq(int incomingId) {
+            outEapIdSeq = (incomingId + 1) & 0xff;
+        }
+
+        /** 已喂给 BC 状态机的客户端 TLS 记录数：>0 表示握手已在推进。
+         *  用于识别"客户端重启 EAP-TLS"（握手推进中又收到完整 ClientHello）。 */
+        int fedCount;
+
+        /** 按偏移切分片（纯函数：同一 (flight, idx) 必生成同一份字节，供重传逐字节复现）。 */
+        static byte[] fragAt(byte[] flight, int idx) {
+            if (flight == null || idx >= flight.length) {
                 return null;
             }
-            int n = Math.min(EAP_TLS_FRAG, outBuf.length - outSent);
-            int flags = (outSent == 0 ? EAP_TLS_FLAG_LENGTH : 0)
-                    | (outSent + n < outBuf.length ? EAP_TLS_FLAG_MORE : 0);
+            int n = Math.min(EAP_TLS_FRAG, flight.length - idx);
+            int flags = (idx == 0 ? EAP_TLS_FLAG_LENGTH : 0)
+                    | (idx + n < flight.length ? EAP_TLS_FLAG_MORE : 0);
             ByteArrayOutputStream b = new ByteArrayOutputStream();
             b.write(flags);
             if ((flags & EAP_TLS_FLAG_LENGTH) != 0) {
-                b.write((outBuf.length >> 24) & 0xff);
-                b.write((outBuf.length >> 16) & 0xff);
-                b.write((outBuf.length >> 8) & 0xff);
-                b.write(outBuf.length & 0xff);
+                b.write((flight.length >> 24) & 0xff);
+                b.write((flight.length >> 16) & 0xff);
+                b.write((flight.length >> 8) & 0xff);
+                b.write(flight.length & 0xff);
             }
-            b.write(outBuf, outSent, n);
-            outSent += n;
-            if (outSent >= outBuf.length) {
-                outBuf = null;
-            }
+            b.write(flight, idx, n);
             return b.toByteArray();
+        }
+
+        /** 取下一片（游标前进；快照发完返回 null，快照本身保留供重传回放）。
+         *  RFC 5216 §2.1.5（Fragmentation）：
+         *   - L 位：分片首片必须置位（含 4 字节 TLS Message Length）；
+         *   - M 位：除最后一片外必须置位；
+         *   - S 位：仅在 EAP-TLS Start 消息（无数据）中由服务器设置，
+         *     握手响应分片一律不得带 S。iOS 原生 EAP-TLS 严格按此校验，
+         *     带 S 位的响应会被判定为非法 Start 消息而丢弃（strongSwan 宽松可容忍）。 */
+        byte[] nextOutFrag() {
+            byte[] f = fragAt(curFlight, outSent);
+            if (f == null) {
+                return null;
+            }
+            outSent += fragBodyLen(f);
+            return f;
         }
 
         EapTlsSession(String username) {
@@ -420,36 +551,64 @@ public class RadiusServer {
             inQ.add(data == null ? new byte[0] : data);
         }
 
-        /** 读取自 sent 游标后的全部新输出；无新输出且未完成时阻塞等待最多 timeoutMs。 */
+        /** 读取自 sent 游标后的全部新输出；无新输出且未完成时阻塞等待最多 timeoutMs。
+         *  <p>关键语义（Win11 原生 IKEv2 EAP-TLS 实测根因）：BC 的 TlsServerProtocol 写
+         *  TLS1.3 服务端 flight 是分段的——先写明文记录（ServerHello+CertificateRequest，
+         *  约 200B），再写加密记录（EncryptedExtensions+Certificate+CertificateVerify+
+         *  Finished，约 2~3KB）。旧实现只要发现 out 有新数据就立即返回，导致只拿到明文段
+         *  （200B）就作为"完整 EAP-TLS 消息"（无 M 位）下发；客户端收到残缺 TLS flight 后
+         *  等待后续记录，服务端等待客户端消息 → 死锁 → 网关 29s 超时删 IKE_SA。
+         *  <p>本实现：一旦累积到新输出，继续静默观察 QUIET_MS（250ms）；期间若 BC 继续写
+         *  入（加密段紧随明文段），则一并收齐；直到连续 QUIET_MS 无新输出（BC 已进入
+         *  "等待客户端下一消息"的阻塞态，或握手线程已 done）才返回累积的完整 flight。
+         *  这样服务端下发的永远是"一个完整 TLS flight"，RFC 5216 分片 L/M 位也随之正确。
+         */
         byte[] pollOutput(long timeoutMs) {
+            final long QUIET_MS = 250;
             long deadline = System.currentTimeMillis() + timeoutMs;
             synchronized (lock) {
-                while (!done) {
+                ByteArrayOutputStream acc = new ByteArrayOutputStream();
+                long quietDeadline = -1;
+                while (true) {
                     byte[] all = out.toByteArray();
                     if (all.length > sent) {
-                        byte[] fresh = Arrays.copyOfRange(all, sent, all.length);
+                        acc.write(all, sent, all.length - sent);
                         sent = all.length;
-                        return fresh;
+                        // 有新输出：重置静默观察窗口，等 BC 可能紧随的下一段写入
+                        quietDeadline = System.currentTimeMillis() + QUIET_MS;
                     }
-                    long remain = deadline - System.currentTimeMillis();
-                    if (remain <= 0) {
-                        return null;
+                    long now = System.currentTimeMillis();
+                    if (done) {
+                        break;
+                    }
+                    if (acc.size() > 0 && now >= quietDeadline) {
+                        // 已累积数据且连续静默期到 → BC 已进入阻塞等待客户端输入 → 完整 flight
+                        break;
+                    }
+                    if (acc.size() == 0 && now >= deadline) {
+                        return null;   // 全程无新输出且超时
+                    }
+                    long waitTo = (acc.size() > 0 ? quietDeadline : deadline);
+                    long wait = waitTo - now;
+                    if (wait <= 0) {
+                        break;
                     }
                     try {
-                        // 250ms 轮询：握手线程产出后不主动 notify 也能及时取回
-                        lock.wait(Math.min(remain, 250));
+                        lock.wait(Math.min(wait, 250));
                     } catch (InterruptedException ie) {
                         Thread.currentThread().interrupt();
-                        return null;
+                        break;
                     }
                 }
                 byte[] all = out.toByteArray();
                 if (all.length > sent) {
-                    byte[] fresh = Arrays.copyOfRange(all, sent, all.length);
+                    acc.write(all, sent, all.length - sent);
                     sent = all.length;
-                    return fresh;
                 }
-                return new byte[0];
+                if (acc.size() == 0) {
+                    return new byte[0];
+                }
+                return acc.toByteArray();
             }
         }
 
@@ -577,9 +736,97 @@ public class RadiusServer {
         @Override
         public org.bouncycastle.tls.crypto.TlsStreamSigner getStreamSigner(SignatureAndHashAlgorithm alg)
                 throws IOException {
-            // TLS 1.2 使用 generateRawSignature；流式签名（TLS 1.3）不需要
-            return null;
+            // 只有 TLS 1.3 才用流式 RSASSA-PSS 签名（RFC 8446 §4.2.3：RSA 证书的
+            // CertificateVerify 必须用 rsa_pss_rsae_*）。
+            //
+            // 关键：BC 的 TlsUtils.generateServerKeyExchangeSignature 会**优先**调用
+            // getStreamSigner()，只有它返回 null 才回退到 generateRawSignature()。
+            // TLS 1.2 的 ServerKeyExchange/CertificateVerify 要求 PKCS#1 v1.5，
+            // 因此 TLS 1.2 下必须返回 null —— 否则会产出 PSS 签名、却按声明的
+            // rsa_pkcs1_sha256(0x0401) 发出，所有客户端验签必然失败
+            // （实测：Windows SChannel 回 bad_certificate(42)、BC 客户端回
+            //  decrypt_error(51)，strongSwan/iOS/安卓同样失败）。
+            if (alg == null || !isRsaPssSignature(alg.getSignature())) {
+                return null;
+            }
+            if (!(key instanceof RSAKeyParameters)) {
+                // ECDSA 服务端证书在 TLS 1.3 下的流式签名由 BC 默认路径处理，
+                // 本项目 EAP-TLS 服务端凭据为 RSA（getSupportedCipherSuites 亦仅 RSA），防御性返回 null。
+                return null;
+            }
+            final int hash = alg.getHash();
+            final org.bouncycastle.crypto.Digest dig;
+            final int saltLen;
+            switch (hash) {
+                case HashAlgorithm.sha256:
+                    dig = new org.bouncycastle.crypto.digests.SHA256Digest();
+                    saltLen = 32;
+                    break;
+                case HashAlgorithm.sha384:
+                    dig = new org.bouncycastle.crypto.digests.SHA384Digest();
+                    saltLen = 48;
+                    break;
+                case HashAlgorithm.sha512:
+                    dig = new org.bouncycastle.crypto.digests.SHA512Digest();
+                    saltLen = 64;
+                    break;
+                default:
+                    throw new IOException("不支持的 TLS1.3 PSS 哈希: " + hash);
+            }
+            // PSSSigner 内部实现 EMSA-PSS-ENCODE（RFC 8017 §9.1.1）+ RSASP1 模幂，
+            // 流式接收 BC 传入的 TBS（" "*64 || context || 0x00 || Transcript-Hash）。
+            final org.bouncycastle.crypto.signers.PSSSigner signer =
+                    new org.bouncycastle.crypto.signers.PSSSigner(
+                            new org.bouncycastle.crypto.engines.RSAEngine(), dig, saltLen);
+            signer.init(true, new org.bouncycastle.crypto.params.ParametersWithRandom(
+                    (RSAKeyParameters) key, new SecureRandom()));
+            return new org.bouncycastle.tls.crypto.TlsStreamSigner() {
+                @Override
+                public java.io.OutputStream getOutputStream() {
+                    return new java.io.OutputStream() {
+                        @Override
+                        public void write(int b) {
+                            signer.update((byte) b);
+                        }
+
+                        @Override
+                        public void write(byte[] b, int off, int len) {
+                            signer.update(b, off, len);
+                        }
+                    };
+                }
+
+                @Override
+                public byte[] getSignature() throws IOException {
+                    try {
+                        return signer.generateSignature();
+                    } catch (Exception e) {
+                        throw new IOException("TLS1.3 PSS 签名失败: " + e, e);
+                    }
+                }
+            };
         }
+        /** 是否为 RSA-PSS 系列签名算法（仅这些算法才用流式 PSS 签名）。 */
+        private static boolean isRsaPssSignature(short signatureAlgorithm) {
+            switch (signatureAlgorithm) {
+                case SignatureAlgorithm.rsa_pss_rsae_sha256:
+                case SignatureAlgorithm.rsa_pss_rsae_sha384:
+                case SignatureAlgorithm.rsa_pss_rsae_sha512:
+                case SignatureAlgorithm.rsa_pss_pss_sha256:
+                case SignatureAlgorithm.rsa_pss_pss_sha384:
+                case SignatureAlgorithm.rsa_pss_pss_sha512:
+                    return true;
+                default:
+                    return false;
+            }
+        }
+    }
+
+    /** 客户端证书附加策略（EAP-TLS 证书登录）：链验证通过后进一步校验吊销与账户状态。
+     *  实现抛出 IOException 即拒绝认证。 */
+    @FunctionalInterface
+    interface ClientCertPolicy {
+        void check(X509Certificate leaf) throws IOException;
     }
 
     /** EAP-TLS 服务端 TlsServer：证书来自 PKI 证书库（CA 优先，回退 ROOT），仅协商 TLS 1.2。 */
@@ -589,27 +836,77 @@ public class RadiusServer {
         private final boolean requireClientCert;
         /** 客户端证书信任锚（PKI/ROOT + PKI/CA，仅 requireClientCert 时使用）。 */
         private final List<X509Certificate> clientTrust;
+        /** 客户端证书附加策略（吊销 / 用户账户状态），仅 requireClientCert 时使用；可为 null。 */
+        private final ClientCertPolicy certPolicy;
         /** 验证通过的客户端证书主体 DN（供 EAP-TLS 成功后记录身份）。 */
         volatile String clientDn;
 
         ModpkicaTlsServer(TlsServerCred cred, boolean requireClientCert,
-                          List<X509Certificate> clientTrust) {
+                          List<X509Certificate> clientTrust, ClientCertPolicy certPolicy) {
             super(cred.crypto);
             this.cred = cred;
             this.requireClientCert = requireClientCert;
             this.clientTrust = clientTrust;
+            this.certPolicy = certPolicy;
         }
 
         @Override
         protected ProtocolVersion[] getSupportedVersions() {
-            // EAP-TLS（RFC 5216）基于 TLS ≤1.2；TLS 1.3 属 RFC 9190 另行实现
-            return new ProtocolVersion[]{ProtocolVersion.TLSv12};
+            // EAP-TLS 只协商 TLS 1.2（RFC 5216）。
+            //
+            // 为什么不能声明 TLS 1.3：BC 的 writeDowngradeMarker 条件是
+            // 「协商版本 != getProtocolVersions() 的最新版本」——只要服务端声明了 1.3、
+            // 而某次握手停在 1.2，BC 就往 ServerHello.random 尾部写降级哨兵
+            // "DOWNGRD\x01"（RFC 8446 §4.1.3）。TLS 1.3 客户端（Windows SChannel 等）
+            // 收到带哨兵的 1.2 ServerHello 必须中止握手——表现就是 Win11 原生 IKEv2
+            // 收到 ServerHello 后既不拉片也不 ACK、静默断开。
+            // 只声明 TLS 1.2 → 协商版本即最新版本 → 不写哨兵；提议 1.3 的客户端按标准
+            // 降级到 1.2（SChannel / strongSwan / iOS / Android 均支持 EAP-TLS over TLS 1.2）。
+            //
+            // 另外本实现未处理 RFC 9190（TLS 1.3 in EAP-TLS）的握手后收尾
+            // （NewSessionTicket 经 EAP 传输等），协商到 1.3 会让客户端卡在收尾阶段。
+            // 需要实验 1.3 时可用 -Dmodpkica.eaptls.tls13=true 打开。
+            System.err.println("[TlsSrv] getSupportedVersions tls13=" + EAP_TLS_ALLOW_TLS13);
+            return EAP_TLS_ALLOW_TLS13
+                    ? new ProtocolVersion[]{ProtocolVersion.TLSv13, ProtocolVersion.TLSv12}
+                    : new ProtocolVersion[]{ProtocolVersion.TLSv12};
+        }
+
+        @Override
+        public void notifyClientVersion(ProtocolVersion clientVersion) throws IOException {
+            System.err.println("[TlsSrv] notifyClientVersion=" + clientVersion);
+            super.notifyClientVersion(clientVersion);
+        }
+
+        @Override
+        public void notifyHandshakeComplete() throws IOException {
+            System.err.println("[TlsSrv] notifyHandshakeComplete");
+            super.notifyHandshakeComplete();
         }
 
         @Override
         public boolean shouldUseExtendedMasterSecret() {
-            // RFC 7627 EMS 不强制：strongSwan/部分 Windows 原生 IKEv2 的 EAP-TLS
-            // 客户端不发 0x0017 扩展，BC 默认要求 EMS 会直接抛 handshake_failure(40)
+            // RFC 7627 EMS：客户端 ClientHello 携带 0x0017 时服务器回 EMS 扩展。
+            // requiresExtendedMasterSecret() 默认 false（不强制），因此：
+            //   - iOS 原生 IKEv2/EAP-TLS 请求 EMS → 回 EMS（修复 iOS 丢弃 ServerHello）；
+            //   - strongSwan / Windows 原生不请求 → 自动走传统模式，兼容不受影响。
+            return true;
+        }
+
+        @Override
+        public boolean shouldUseGMTUnixTime() {
+            // RFC 5246 §7.4.1.2：ServerHello.random 前 4 字节 SHOULD 为 GMT Unix 时间。
+            // BC 默认 false（全随机）。iOS 原生 SecureTransport 对时间字段校验较严格，
+            // 置 true 让 random 前 4B 写入真实时间，其余 28B 仍随机。
+            return true;
+        }
+
+        @Override
+        protected boolean allowCertificateStatus() {
+            // 关闭 OCSP stapling（status_request 扩展）：本服务无 CertificateStatus 响应源，
+            // BC 默认 allowCertificateStatus=true 会在 ServerHello 回空的 status_request 扩展，
+            // 但随后不发 CertificateStatus 消息——违反 RFC 6066，iOS 原生 EAP-TLS 严格校验
+            // 会直接丢弃 ServerHello（strongSwan 宽松可容忍）。关闭后不回该扩展，客户端不期待。
             return false;
         }
 
@@ -626,9 +923,14 @@ public class RadiusServer {
             // 套件必须与服务器凭据密钥类型匹配，否则客户端会报 bad certificate
             // （BC 1.85 不校验凭据与套件一致性，按客户端偏好可能选中 ECDSA 套件，
             //   而服务端只有 RSA 证书 → OpenSSL/strongSwan 验签失败）
+            // TLS 1.3 套件（0x1301/1302/1303，RFC 8446 §9.1）与证书类型无关，
+            // 必须一并返回，否则 Win11 提议 TLS 1.3 时 BC 报 "No selectable cipher suite"。
             boolean rsa = cred.key instanceof RSAKeyParameters;
             if (rsa) {
                 return new int[]{
+                        CipherSuite.TLS_AES_128_GCM_SHA256,
+                        CipherSuite.TLS_AES_256_GCM_SHA384,
+                        CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
                         CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256,
                         CipherSuite.TLS_ECDHE_RSA_WITH_AES_128_CBC_SHA,
                         CipherSuite.TLS_RSA_WITH_AES_128_GCM_SHA256,
@@ -636,6 +938,9 @@ public class RadiusServer {
                 };
             }
             return new int[]{
+                    CipherSuite.TLS_AES_128_GCM_SHA256,
+                    CipherSuite.TLS_AES_256_GCM_SHA384,
+                    CipherSuite.TLS_CHACHA20_POLY1305_SHA256,
                     CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256,
                     CipherSuite.TLS_ECDHE_ECDSA_WITH_AES_128_CBC_SHA,
             };
@@ -643,8 +948,14 @@ public class RadiusServer {
 
         @Override
         public TlsCredentials getCredentials() throws IOException {
+            // TLS 1.3（RFC 8446 §4.2.3）：CertificateVerify 只允许 PSS/ECDSA 类签名算法，
+            // rsa_pkcs1 属 TLS 1.2 专用；按协商版本选择服务端凭据签名算法。
+            boolean tls13 = context.getServerVersion().isEqualOrLaterVersionOf(ProtocolVersion.TLSv13);
+            System.err.println("[TlsSrv] getCredentials tls13=" + tls13 + " ver=" + context.getServerVersion());
             SignatureAndHashAlgorithm sig = cred.key instanceof RSAKeyParameters
-                    ? new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.rsa)
+                    ? (tls13
+                    ? new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.rsa_pss_rsae_sha256)
+                    : new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.rsa))
                     : new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa);
             TlsCryptoParameters cryptoParams = new TlsCryptoParameters(context);
             TlsSigner signer = new ModpkicaTlsSigner(cred.crypto, cred.key);
@@ -656,7 +967,22 @@ public class RadiusServer {
                     throw new IOException("证书编码失败: " + cee, cee);
                 }
             }
-            return new DefaultTlsCredentialedSigner(cryptoParams, signer, new Certificate(list), sig);
+            // BC 1.85 Certificate.encode(TlsContext,...)：TLS 1.3 要求 certificateRequestContext 非 null
+            // （RFC 8446 §4.4.2），TLS 1.2 要求 null——二者不符直接抛 IllegalStateException。
+            // 默认构造 Certificate(TlsCertificate[]) 的 context=null → TLS 1.3 下必崩。
+            // 无 CR（允许匿名）时 context 为长度 0 的 octets；恢复 CR 后该值必须与 CR 的 context 一致。
+            Certificate certificate;
+            if (tls13) {
+                org.bouncycastle.tls.CertificateEntry[] entries =
+                        new org.bouncycastle.tls.CertificateEntry[list.length];
+                for (int i = 0; i < list.length; i++) {
+                    entries[i] = new org.bouncycastle.tls.CertificateEntry(list[i], null);
+                }
+                certificate = new Certificate(org.bouncycastle.tls.TlsUtils.EMPTY_BYTES, entries);
+            } else {
+                certificate = new Certificate(list);
+            }
+            return new DefaultTlsCredentialedSigner(cryptoParams, signer, certificate, sig);
         }
 
         @Override
@@ -666,10 +992,32 @@ public class RadiusServer {
             if (!requireClientCert) {
                 return null;
             }
+            // TLS 1.3（RFC 8446 §4.3.2）：CertificateRequest 必须携带 certificate_request_context，
+            // 且 supported_signature_algorithms 只能用 TLS 1.3 算法（rsa_pss_rsae_sha256 等）。
+            // BC 旧 3 参构造（TLS 1.2 格式）在 TLS 1.3 下无 context，
+            // send13ServerHelloCoda 会抛 TlsFatalAlert internal_error(80)。
+            boolean tls13 = context.getServerVersion().isEqualOrLaterVersionOf(ProtocolVersion.TLSv13);
+            System.err.println("[TlsSrv] getCertificateRequest tls13=" + tls13 + " ver=" + context.getServerVersion());
             java.util.Vector<org.bouncycastle.tls.SignatureAndHashAlgorithm> sigAlgs =
                     new java.util.Vector<>();
-            sigAlgs.add(new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.rsa));
-            sigAlgs.add(new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa));
+            if (tls13) {
+                sigAlgs.add(new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.rsa_pss_rsae_sha256));
+                sigAlgs.add(new SignatureAndHashAlgorithm(HashAlgorithm.sha384, SignatureAlgorithm.rsa_pss_rsae_sha384));
+                sigAlgs.add(new SignatureAndHashAlgorithm(HashAlgorithm.sha512, SignatureAlgorithm.rsa_pss_rsae_sha512));
+                sigAlgs.add(new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa));
+                sigAlgs.add(new SignatureAndHashAlgorithm(HashAlgorithm.sha384, SignatureAlgorithm.ecdsa));
+                sigAlgs.add(new SignatureAndHashAlgorithm(HashAlgorithm.sha512, SignatureAlgorithm.ecdsa));
+            } else {
+                sigAlgs.add(new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.rsa));
+                sigAlgs.add(new SignatureAndHashAlgorithm(HashAlgorithm.sha256, SignatureAlgorithm.ecdsa));
+            }
+            if (tls13) {
+                // 4 参构造 = (context, sigAlgs, supportedSignatureAlgorithmsCert, certificateAuthorities)：
+                // 空 Vector 会被 encode 当作"非 null"→ 对空列表调 encodeSupportedSignatureAlgorithms →
+                // IllegalArgumentException（length=0）。两个可选列表都传 null 最安全。
+                return new org.bouncycastle.tls.CertificateRequest(
+                        org.bouncycastle.tls.TlsUtils.EMPTY_BYTES, sigAlgs, null, null);
+            }
             java.util.Vector<byte[]> caNames = new java.util.Vector<>();
             return new org.bouncycastle.tls.CertificateRequest(
                     new short[]{org.bouncycastle.tls.ClientCertificateType.rsa_sign,
@@ -698,6 +1046,9 @@ public class RadiusServer {
                 X509Certificate leaf = chain.get(0);
                 checkClientEku(leaf);
                 verifyClientChain(chain, clientTrust);
+                if (certPolicy != null) {
+                    certPolicy.check(leaf);
+                }
                 clientDn = leaf.getSubjectX500Principal().getName();
             } catch (IOException ioe) {
                 throw ioe;
@@ -728,17 +1079,20 @@ public class RadiusServer {
                     }
                 }
             } else {
-                clientAuth = true;   // 无 EKU 扩展：兼容放行
+                clientAuth = true;   // 无 EKU 扩展：按 RFC 5280 EKU 缺省不限制，兼容放行
             }
         } catch (Exception ex) {
-            clientAuth = true;   // 扩展解析失败：保守放行，避免误拒正常证书
+            // 扩展存在但无法解析：按拒绝处理（fail-closed），不给畸形扩展留下绕行口
+            throw new IOException("客户端证书 EKU 扩展解析失败: " + ex.getMessage(), ex);
         }
         if (!clientAuth) {
             throw new IOException("客户端证书 EKU 不含客户端身份验证 (1.3.6.1.5.5.7.3.2)");
         }
     }
 
-    /** 客户端证书链验证：逐级签名校验，链顶必须锚定到本 PKI 的 ROOT/CA 信任。 */
+    /** 客户端证书链验证：逐级签名校验 + 全链有效期校验，链顶必须锚定到本 PKI 的 ROOT/CA 信任。
+     *  注意：链验证只证明"由本 CA 签发且签名/时效正确"，吊销与账户状态由
+     *  {@link ClientCertPolicy} 在链验证之后另行检查。 */
     private static void verifyClientChain(List<X509Certificate> chain, List<X509Certificate> anchors)
             throws IOException {
         if (chain == null || chain.isEmpty()) {
@@ -762,6 +1116,19 @@ public class RadiusServer {
                     extended = true;
                     break;
                 }
+            }
+        }
+        // 有效期校验（RFC 5280 §6.1.3）：过期/未生效证书不得用于认证——旧实现只验签名
+        java.util.Date now = new java.util.Date();
+        for (X509Certificate c : chain) {
+            try {
+                c.checkValidity(now);
+            } catch (java.security.cert.CertificateExpiredException ex) {
+                throw new IOException("客户端证书链含已过期证书: "
+                        + c.getSubjectX500Principal() + "（到期 " + c.getNotAfter() + "）", ex);
+            } catch (java.security.cert.CertificateNotYetValidException ex) {
+                throw new IOException("客户端证书链含尚未生效证书: "
+                        + c.getSubjectX500Principal() + "（生效 " + c.getNotBefore() + "）", ex);
             }
         }
         // 逐级签名验证
@@ -1015,8 +1382,9 @@ public class RadiusServer {
         acctThread.start();
 
         int n = UsersDB.load(baseDir).size();
+        // 共享密钥不写入日志：日志可在 WebAdmin 面板查看，密钥泄露即认证可伪造
         addLog("RADIUS 服务器已启动，认证端口=" + this.authPort
-                + "，计费端口=" + this.acctPort + "，密钥=" + this.secret);
+                + "，计费端口=" + this.acctPort + "，密钥长度=" + this.secret.length());
         addLog("已加载 " + n + " 个账号（PKI/USERS.txt）");
         addLog("正在等待 NAS 的 request 消息，如果没有，请检查 NAS 配置。");
         MLog.append(baseDir, "Radius 服务启动",
@@ -1044,7 +1412,21 @@ public class RadiusServer {
             acctThread.interrupt();
             acctThread = null;
         }
-        eapStates.clear();
+        // 清空全部会话状态：只清 eapStates 会让 tlsSessions/tlsRetx/pwdStates 及
+        // 其阻塞中的握手线程跨 stop/start 周期残留
+        synchronized (eapStates) {
+            eapStates.clear();
+        }
+        synchronized (pwdStates) {
+            pwdStates.clear();
+        }
+        for (EapTlsSession s : tlsSessions.values()) {
+            if (s.thread != null && s.thread.isAlive()) {
+                s.thread.interrupt();
+            }
+        }
+        tlsSessions.clear();
+        tlsRetx.clear();
         addLog("RADIUS 服务器已停止");
         MLog.append(baseDir, "Radius 服务停止", "", "RADIUS 服务器已停止");
         return "RADIUS 服务器已停止";
@@ -1101,8 +1483,15 @@ public class RadiusServer {
         String src = pkt.getAddress().getHostAddress() + ":" + pkt.getPort();
         String username = p.getString(ATTR_USER_NAME);
 
-        // 校验 Message-Authenticator（EAP 请求必须携带；有则校验，失败直接拒绝）
+        // RFC 3579 §3.2：Access-Request 含 EAP-Message 时必须携带并通过 Message-Authenticator；
+        // 缺失/校验失败一律拒绝（旧实现"有则校验、无则放行"，客户端去掉该属性即可绕过完整性校验）
+        byte[] eap = getEapMessageConcat(p);
         byte[] ma = p.getAttr(ATTR_MESSAGE_AUTHENTICATOR);
+        if (eap != null && ma == null) {
+            addLog("拒绝 EAP 请求：缺少 Message-Authenticator 来源=" + src + " 用户=" + username);
+            return buildAuthResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
+                    null, username, pkt.getAddress(), "认证失败");
+        }
         if (ma != null && !verifyMessageAuthenticator(pkt.getData(), pkt.getLength(), p.identifier, secret)) {
             addLog("Message-Authenticator 校验失败 来源=" + src + " 用户=" + username);
             return buildAuthResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
@@ -1113,7 +1502,6 @@ public class RadiusServer {
         logTunnelAttrs(p, src, username, "认证");
 
         // 1) EAP（RFC 3579 §2.1：EAP-Message 可多属性，按出现顺序拼接还原）
-        byte[] eap = getEapMessageConcat(p);
         if (eap != null) {
             addLog("[DBG] EAP 消息进入 type=" + (eap.length > 4 ? (eap[4] & 0xff) : -1)
                     + " len=" + eap.length + " 来源=" + src
@@ -1267,6 +1655,8 @@ public class RadiusServer {
 
     private byte[] handleEap(Packet p, byte[] eap, String src) {
         String username = p.getString(ATTR_USER_NAME);
+        // 定期回收超时未完成的 EAP-TLS/PEAP/TTLS 会话（无认证流量可造成会话表增长）
+        evictTlsSessions();
         // 第二阶段确认（MSCHAPV2_OK pending）：客户端收到方法层 Success 后回的确认 EAP-Response
         // （Len=4 空包，或 Type=26 空数据）→ 回 Access-Accept + MS-MPPE 密钥，完成认证。
         // 注意：Identity 等其它 EAP 类型不得触发 pending（防止新会话的 Identity 被误判为确认）。
@@ -1598,7 +1988,7 @@ public class RadiusServer {
 
     // ---------- EAP-TLS（RFC 5216：EAP 承载 TLS 1.2 握手，BC TlsServerProtocol） ----------
 
-    /**
+    /*
      * EAP-TLS 入口（客户端 EAP-Identity 带 tls:/eap-tls: 前缀）：
      * 加载服务端证书 → 建会话 → 启动 BC 握手线程 → 回 EAP-Request/TLS Start。
      */
@@ -1683,11 +2073,30 @@ public class RadiusServer {
                     username, eapId, EAP_CODE_FAILURE, null, "EAP-TLS 服务端证书缺失");
         }
         int radiusId = p.identifier;
+        // 先清理同 (radiusId, src) 的残留会话（含超时线程留下的失效会话），
+        // 避免 getTlsSession 命中旧键把新 ClientHello 喂给已终止的 BC 状态机
+        dropTlsSession(radiusId, src);
+        addLog("[DBG] startEapTls r=" + radiusId + " src=" + src + " map=" + tlsSessions.size());
+        EapTlsSession s = beginTlsHandshake(radiusId, src, username, cred, eapId);
+        // RFC 3748 §4.1：每个新 EAP-Request 递增 Identifier（不再回显客户端 Id——
+        // 回显会让连续两次空拉取片逐字节相同，无法区分"下一片"与"重传"）。
+        return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
+                username, s.allocOutEapId(), EAP_CODE_REQUEST, EAP_TYPE_TLS,
+                eapTlsFragments(new byte[0], 0, true), null);
+    }
+
+    /** 建 EAP-TLS 会话 + 注册 + 启动 BC 握手线程（不含任何 EAP 响应）。
+     *  正常入口（Identity 带 tls: 前缀 → startEapTls）与"客户端重启握手"
+     *  （handleEapTls 收到新 ClientHello）共用。 */
+    private EapTlsSession beginTlsHandshake(int radiusId, String src, String username,
+                                            TlsServerCred cred, int incomingEapId) {
         EapTlsSession s = new EapTlsSession(username);
+        s.initOutEapIdSeq(incomingEapId);
         putTlsSession(radiusId, src, s);
         s.thread = new Thread(() -> {
             try {
-                ModpkicaTlsServer server = new ModpkicaTlsServer(cred, true, loadClientTrustAnchors());
+                ModpkicaTlsServer server = new ModpkicaTlsServer(cred, true,
+                        loadClientTrustAnchors(), this::checkClientCertPolicy);
                 TlsServerProtocol proto = new TlsServerProtocol(s.inStream, s.outStream);
                 proto.accept(server);
                 s.clientDn = server.clientDn;   // 客户端证书验证通过的 DN
@@ -1711,11 +2120,24 @@ public class RadiusServer {
                 s.ok = true;
             } catch (Exception ex) {
                 s.err = ex.toString();
-                System.err.println("[EAP-TLS][t=" + System.currentTimeMillis() % 100000 + "] 握手异常: " + ex
-                        + " inQ残留=" + s.inQ.size());
+                synchronized (s.lock) {
+                    System.err.println("[EAP-TLS][t=" + System.currentTimeMillis() % 100000 + "] 握手异常: " + ex
+                            + " inQ残留=" + s.inQ.size() + " out总=" + s.out.size() + " sent=" + s.sent);
+                }
                 StackTraceElement[] st = ex.getStackTrace();
                 for (int i = 0; i < Math.min(12, st.length); i++) {
                     System.err.println("    at " + st[i]);
+                }
+                Throwable cause = ex.getCause();
+                int ci = 0;
+                while (cause != null && ci < 5) {
+                    System.err.println("    cause[" + ci + "]=" + cause);
+                    StackTraceElement[] cst = cause.getStackTrace();
+                    for (int j = 0; j < Math.min(8, cst.length); j++) {
+                        System.err.println("        at " + cst[j]);
+                    }
+                    cause = cause.getCause();
+                    ci++;
                 }
             } finally {
                 s.done = true;
@@ -1725,9 +2147,7 @@ public class RadiusServer {
         s.thread.setDaemon(true);
         s.thread.start();
         addLog("EAP-TLS 启动握手 来源=" + src + " 用户=" + username);
-        return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TLS,
-                eapTlsFragments(new byte[0], 0, true), null);
+        return s;
     }
 
     /** 启动统一自适应 EAP-MSCHAPv2 认证（RFC 2759，EAP 类型 26）。
@@ -1966,7 +2386,7 @@ public class RadiusServer {
         putTlsSession(radiusId, src, s);
         s.thread = new Thread(() -> {
             try {
-                ModpkicaTlsServer server = new ModpkicaTlsServer(cred, false, null);
+                ModpkicaTlsServer server = new ModpkicaTlsServer(cred, false, null, null);
                 TlsServerProtocol proto = new TlsServerProtocol(s.inStream, s.outStream);
                 s.tlsProto = proto;
                 proto.accept(server);   // 外层 TLS 隧道握手（RFC 5216 §3.1）
@@ -2070,7 +2490,7 @@ public class RadiusServer {
                             username, eapId, EAP_CODE_REQUEST, EAP_TYPE_PEAP,
                             eapTlsFragments(new byte[0], 0, false), null);
                 }
-                s.outBuf = o2;
+                s.curFlight = o2;
                 s.outSent = 0;
                 next = s.nextOutFrag();
             }
@@ -2107,7 +2527,7 @@ public class RadiusServer {
                     return buildEapResponse(CODE_ACCESS_ACCEPT, p.identifier, p.authenticator,
                             username, eapId, EAP_CODE_SUCCESS, null, "PEAP 认证通过");
                 }
-                s.outBuf = o2;
+                s.curFlight = o2;
                 s.outSent = 0;
                 return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
                         username, eapId, EAP_CODE_REQUEST, EAP_TYPE_PEAP, s.nextOutFrag(), null);
@@ -2143,7 +2563,7 @@ public class RadiusServer {
                     username, eapId, EAP_CODE_REQUEST, EAP_TYPE_PEAP,
                     eapTlsFragments(new byte[0], 0, false), null);
         }
-        s.outBuf = out;
+        s.curFlight = out;
         s.outSent = 0;
         return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
                 username, eapId, EAP_CODE_REQUEST, EAP_TYPE_PEAP, s.nextOutFrag(), null);
@@ -2217,7 +2637,7 @@ public class RadiusServer {
                             username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TTLS,
                             eapTlsFragments(new byte[0], 0, false), null);
                 }
-                s.outBuf = o2;
+                s.curFlight = o2;
                 s.outSent = 0;
                 next = s.nextOutFrag();
             }
@@ -2254,7 +2674,7 @@ public class RadiusServer {
                     return buildEapResponse(CODE_ACCESS_ACCEPT, p.identifier, p.authenticator,
                             username, eapId, EAP_CODE_SUCCESS, null, "TTLS 认证通过");
                 }
-                s.outBuf = o2;
+                s.curFlight = o2;
                 s.outSent = 0;
                 return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
                         username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TTLS, s.nextOutFrag(), null);
@@ -2290,7 +2710,7 @@ public class RadiusServer {
                     username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TTLS,
                     eapTlsFragments(new byte[0], 0, false), null);
         }
-        s.outBuf = out;
+        s.curFlight = out;
         s.outSent = 0;
         return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
                 username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TTLS, s.nextOutFrag(), null);
@@ -2445,9 +2865,33 @@ public class RadiusServer {
         return mac.doFinal(bos.toByteArray());
     }
 
+    /** EAP-pwd 状态键：RADIUS identifier 会跨客户端冲突，必须带来源（与 eapStates 同一约定）。 */
+    private static String pwdKey(Packet p, String src) {
+        return src + "|" + p.identifier;
+    }
+
     private void evictPwdStates() {
         long now = System.currentTimeMillis();
         pwdStates.entrySet().removeIf(e -> e.getValue().expires < now);
+    }
+
+    /** EAP-TLS/TTLS/PEAP 会话与重传表的定期清理。
+     *  旧实现只清 eapStates/pwdStates：客户端发一条 EAP-Identity（或 NAK）后消失，
+     *  tlsSessions / tlsRetx 条目会永久驻留（无认证即可造成内存增长）。
+     *  会话创建超过 {@code EAP_TLS_TIMEOUT_S*4} 秒仍未完成握手即回收，并中断其握手线程。 */
+    private void evictTlsSessions() {
+        long now = System.currentTimeMillis();
+        long ttl = EAP_TLS_TIMEOUT_S * 4000L;
+        for (Map.Entry<Object, EapTlsSession> e : tlsSessions.entrySet()) {
+            EapTlsSession s = e.getValue();
+            if (now - s.createdAt > ttl) {
+                tlsSessions.remove(e.getKey(), s);
+                if (s.thread != null && s.thread.isAlive()) {
+                    s.thread.interrupt();
+                }
+            }
+        }
+        tlsRetx.entrySet().removeIf(e -> now - e.getValue().createdAt > ttl);
     }
 
     /** EAP-pwd 启动：校验用户并回 EAP-Request/EAP-pwd/ID（Group=6=P-256）。 */
@@ -2472,7 +2916,7 @@ public class RadiusServer {
         st.phase = 0;
         st.expires = System.currentTimeMillis() + EAP_STATE_TTL_MS;
         synchronized (pwdStates) {
-            pwdStates.put(p.identifier, st);
+            pwdStates.put(pwdKey(p, src), st);
             evictPwdStates();
         }
         addLog("EAP-pwd 启动 来源=" + src + " 用户=" + realUser + " → 发送 EAP-pwd/ID（Group=P-256）");
@@ -2491,9 +2935,9 @@ public class RadiusServer {
         }
         EapPwdState st;
         synchronized (pwdStates) {
-            st = pwdStates.get(p.identifier);
+            st = pwdStates.get(pwdKey(p, src));
             if (st != null && st.expires < System.currentTimeMillis()) {
-                pwdStates.remove(p.identifier);
+                pwdStates.remove(pwdKey(p, src));
                 st = null;
             }
         }
@@ -2510,7 +2954,7 @@ public class RadiusServer {
                     if (data.length != 2 || data[0] != 0 || data[1] != 6) {
                         authFail++;
                         addLog("EAP-pwd ID/Response 组不匹配 来源=" + src + " 用户=" + username);
-                        pwdStates.remove(p.identifier);
+                        pwdStates.remove(pwdKey(p, src));
                         return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                                 username, eapId, EAP_CODE_FAILURE, null, "EAP-pwd 组不匹配");
                     }
@@ -2518,7 +2962,7 @@ public class RadiusServer {
                     if (u == null || !u.enabled()) {
                         authFail++;
                         addLog("EAP-pwd 用户不存在 来源=" + src + " 用户=" + st.username);
-                        pwdStates.remove(p.identifier);
+                        pwdStates.remove(pwdKey(p, src));
                         return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                                 username, eapId, EAP_CODE_FAILURE, null, "用户不存在");
                     }
@@ -2543,7 +2987,7 @@ public class RadiusServer {
                     if (data.length < 2) {
                         authFail++;
                         addLog("EAP-pwd Commit/Response 长度非法 来源=" + src);
-                        pwdStates.remove(p.identifier);
+                        pwdStates.remove(pwdKey(p, src));
                         return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                                 username, eapId, EAP_CODE_FAILURE, null, "EAP-pwd Commit 非法");
                     }
@@ -2551,7 +2995,7 @@ public class RadiusServer {
                     if (l != 32 || data.length != 2 + l + 33) {
                         authFail++;
                         addLog("EAP-pwd Commit/Response 长度非法 来源=" + src + " len=" + data.length);
-                        pwdStates.remove(p.identifier);
+                        pwdStates.remove(pwdKey(p, src));
                         return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                                 username, eapId, EAP_CODE_FAILURE, null, "EAP-pwd Commit 非法");
                     }
@@ -2575,14 +3019,14 @@ public class RadiusServer {
                     if (data.length != 32 || !MessageDigest.isEqual(data, st.confirmC)) {
                         authFail++;
                         addLog("EAP-pwd Confirm 校验失败 来源=" + src + " 用户=" + st.username);
-                        pwdStates.remove(p.identifier);
+                        pwdStates.remove(pwdKey(p, src));
                         logAuthResult(src, st.username, "EAP-pwd", false, "EAP");
                         return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                                 username, eapId, EAP_CODE_FAILURE, null, "EAP-pwd 确认失败");
                     }
                     authOk++;
                     addLog("EAP-pwd 认证通过 来源=" + src + " 用户=" + st.username);
-                    pwdStates.remove(p.identifier);
+                    pwdStates.remove(pwdKey(p, src));
                     logAuthResult(src, st.username, "EAP-pwd", true, "EAP");
                     return buildEapResponse(CODE_ACCESS_ACCEPT, p.identifier, p.authenticator,
                             username, eapId, EAP_CODE_SUCCESS, null, "EAP-pwd 认证通过");
@@ -2590,14 +3034,14 @@ public class RadiusServer {
                 default:
                     authFail++;
                     addLog("EAP-pwd 状态非法 来源=" + src);
-                    pwdStates.remove(p.identifier);
+                    pwdStates.remove(pwdKey(p, src));
                     return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                             username, eapId, EAP_CODE_FAILURE, null, "EAP-pwd 状态非法");
             }
         } catch (Exception ex) {
             authFail++;
             addLog("EAP-pwd 处理异常: " + ex + " 来源=" + src + " 用户=" + username);
-            pwdStates.remove(p.identifier);
+            pwdStates.remove(pwdKey(p, src));
             return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                     username, eapId, EAP_CODE_FAILURE, null, "EAP-pwd 处理异常");
         }
@@ -2612,6 +3056,22 @@ public class RadiusServer {
         String username = p.getString(ATTR_USER_NAME);
         int radiusId = p.identifier;
         addLog("EAP-TLS 收到 TLS 数据 " + data.length + "B（radiusId=" + radiusId + "） 来源=" + src);
+
+        // ---------- 网关重传检测（RFC 3748 §5.1，事务化，先于会话查找） ----------
+        // 会话按 "identifier + src" 双键存储，src 键可能被新会话覆盖（如 NAK 重传触发
+        // 二次 startEapTls）。故这里用 src 维度的"最近一笔事务"先判定：入包 EAP-Id 与数据
+        // 指纹完全一致即判为重传，以**同一 EAP-Identifier** 重放**该笔**响应。
+        // （r20：旧实现重放的是"最近一次下发的响应体"——分片拉取阶段那是末片，
+        //  于是"取完整飞行后再重传 ClientHello"拿到末片（M=0）→ 永远解析不出 ServerHello
+        //  → 再重传 → 无限循环，即 iOS 实测日志无限重复 [iOS兼容]。）
+        if (data.length > 1) {
+            RetxState rx = tlsRetx.get(src);
+            TlsTx stx = rx != null ? rx.lastTx : null;
+            if (stx != null && stx.inId == eapId && stx.inFp == Arrays.hashCode(data)) {
+                return replayTlsTx(p, username, src, eapId, data.length, stx, "src");
+            }
+        }
+
         if (data.length < 1) {
             authFail++;
             addLog("EAP-TLS 数据为空 来源=" + src + " 用户=" + username);
@@ -2644,15 +3104,61 @@ public class RadiusServer {
         }
 
         EapTlsSession s = getTlsSession(radiusId, src);
+        addLog("[DBG] getTlsSession r=" + radiusId + " src=" + src + " hit=" + (s != null)
+                + (s != null ? " done=" + s.done + " ok=" + s.ok + " inQ=" + s.inQ.size() : "")
+                + " map=" + tlsSessions.size());
+        // 会话维度事务缓存：覆盖"非最近一笔"的迟到重传（网关重传风暴 / 乱序重复包）。
+        // 空拉取片（1B 0x00）同样纳入——旧实现把重传的拉取片当"新拉取"直接前进，
+        // 会跳过一片，客户端手里的飞行中间缺片 → 解析必然失败（iOS 死循环触发器）。
+        long fp = Arrays.hashCode(data);
+        if (s != null) {
+            TlsTx tx = s.findTx(eapId, fp);
+            if (tx != null) {
+                return replayTlsTx(p, username, src, eapId, data.length, tx, "会话");
+            }
+        }
         if (s == null) {
             authFail++;
+            tlsRetx.remove(src);
             addLog("EAP-TLS 会话已失效（超时或被清除） 来源=" + src + " 用户=" + username);
             return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                     username, eapId, EAP_CODE_FAILURE, null, "EAP-TLS 会话失效");
         }
+        // ---------- 客户端重启 EAP-TLS（重拨 / 客户端侧重试） ----------
+        // 握手已在推进（已喂过客户端 TLS 记录）却又收到一份**新的** ClientHello（指纹与
+        // 已处理过的都不同，故未被上面的事务缓存拦下）：这是客户端重开了 TLS 握手，而不是
+        // 网关重传。旧实现把它喂给同一个 BC 状态机 → TlsFatalAlert unexpected_message(10)
+        // → 立刻回 alert + EAP-Failure，客户端重启一次就被判死（无任何恢复路径）。
+        // 现改为重建会话：丢弃旧会话（含其握手线程）→ 新会话 → 该 ClientHello 作为首个输入。
+        if (data.length > 1 && s.fedCount > 0 && looksLikeClientHello(frag)) {
+            TlsServerCred cred = loadTlsServerCred();
+            if (cred == null) {
+                authFail++;
+                addLog("EAP-TLS 无可用服务端证书（客户端重启） 来源=" + src + " 用户=" + username);
+                return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
+                        username, eapId, EAP_CODE_FAILURE, null, "EAP-TLS 服务端证书缺失");
+            }
+            addLog("[iOS兼容] EAP-TLS 客户端重启握手（新 ClientHello，EAP-Id=" + eapId
+                    + "）→ 重建会话 来源=" + src + " 用户=" + username);
+            dropTlsSession(radiusId, src);
+            s = beginTlsHandshake(radiusId, src, username, cred, eapId);
+        }
+        if (s.done && !s.ok) {
+            // 残留的失败会话（握手线程已异常结束）：清理并拒绝本轮，
+            // 避免把数据喂给已终止的 BC 状态机造成 unexpected_message
+            dropTlsSession(radiusId, src);
+            authFail++;
+            addLog("EAP-TLS 命中已失败会话（done=" + s.done + " ok=" + s.ok + " err=" + s.err
+                    + "）已清理 来源=" + src + " 用户=" + username);
+            return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
+                    username, eapId, EAP_CODE_FAILURE, null, "EAP-TLS 会话已失效");
+        }
 
-        // RFC 5216 §2.1：客户端拉取续片（空 EAP-Response/TLS，flags=0）——不下发 TLS 数据、不 feed
+        // RFC 5216 §2.1：客户端拉取续片（空 EAP-Response/TLS，flags=0）——不下发 TLS 数据、不 feed。
+        // 重传判定已在上方按事务完成：同一 (EAP-Id, 数据) 的重复拉取＝IKE 层重传 → 回放上一片；
+        // 只有"新"拉取才推进游标（旧实现无条件前进，重传拉取会跳片）。
         if (data.length == 1 && (data[0] & 0xff) == 0) {
+            int idx = s.outSent;
             byte[] next = s.nextOutFrag();
             if (next == null) {
                 // 缓冲已发完——尝试取握手线程新输出（若已完成则收尾）
@@ -2669,35 +3175,47 @@ public class RadiusServer {
                         authOk++;
                         return eapTlsAccept(p, eapId, username, src, s);
                     }
-                    return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                            username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TLS,
-                            eapTlsFragments(new byte[0], 0, false), null);
+                    return tlsSendEmpty(p, s, username, src, eapId, fp);
                 }
-                s.outBuf = o2;
+                s.curFlight = o2;
                 s.outSent = 0;
+                idx = 0;
                 next = s.nextOutFrag();
             }
+            int outId = s.allocOutEapId();
+            s.addTx(eapId, fp, outId, s.curFlight, idx);
+            recordSrcTx(src, new TlsTx(eapId, fp, outId, s.curFlight, idx));
+            addLog("[DBG] 下发续片 快照=" + s.curFlight.length + "B 片偏移=" + idx
+                    + " flags=0x" + String.format("%02x", next[0] & 0xff)
+                    + " 剩余=" + (s.curFlight.length - s.outSent) + "B 来源=" + src);
             return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                    username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TLS, next, null);
+                    username, outId, EAP_CODE_REQUEST, EAP_TYPE_TLS, next, null);
         }
+
+        // 重传判定见方法开头（src 维度 lastTx）与会话查找后（会话维度事务缓存）——
+        // 两条路径都以"同一 EAP-Identifier + 同一数据指纹"为条件，命中即重放该笔响应，
+        // 不会把重传的 ClientHello/中间分片再次 feed 给 BC（否则 unexpected_message(10)）。
 
         // 客户端 → 服务器 分片重组
         byte[] full;
         try {
             full = s.reassemble(frag, flags, totalLen);
-        } catch (IllegalArgumentException iae) {
-            authFail++;
+        } catch (IllegalArgumentException iae) {            authFail++;
             addLog("EAP-TLS 重组失败: " + iae.getMessage() + " 来源=" + src);
             dropTlsSession(radiusId, src);
             return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
                     username, eapId, EAP_CODE_FAILURE, null, "EAP-TLS 重组失败");
         }
         if (full != null) {
+            s.fedCount++;
             s.feed(full);   // 完整 TLS 记录：喂给握手线程
             // 握手线程可能需要更多客户端数据（如等待 CertVerify/Finished 分片）。
             // 不能 8s 干等：短等 500ms，若无输出且握手未完成，回 1B 空挑战维持，
             // 让客户端继续发送剩余分片（RFC 5216 请求/响应交替，服务器必须回应每个包）。
             byte[] out = s.pollOutput(500);
+            System.err.println("[handleEapTls] feed后 pollOutput=" + (out == null ? "null" : out.length + "B")
+                    + " done=" + s.done + " ok=" + s.ok + " err=" + s.err
+                    + (out != null && out.length > 0 ? " hex=" + hexHead(out) : ""));
             if (out == null || out.length == 0) {
                 if (s.done) {
                     dropTlsSession(radiusId, src);
@@ -2710,56 +3228,106 @@ public class RadiusServer {
                     authOk++;
                     return eapTlsAccept(p, eapId, username, src, s);
                 }
-                return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                        username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TLS,
-                        eapTlsFragments(new byte[0], 0, false), null);
+                return tlsSendEmpty(p, s, username, src, eapId, fp);
             }
             if (s.done) {
                 // 握手已完成但服务端 ChangeCipherSpec/Finished 可能仍在输出缓冲：
                 // 必须先发给客户端，客户端收到服务器 Finished 后才能完成 TLS 握手
                 // 并导出 MSK（RFC 5216 §2.4），否则 strongSwan 报 "failed to establish MSK"。
-                if (out != null && out.length > 0) {
-                    s.outBuf = out;
-                    s.outSent = 0;
-                    byte[] first = s.nextOutFrag();
-                    return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                            username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TLS, first, null);
-                }
-                dropTlsSession(radiusId, src);
-                if (!s.ok) {
-                    authFail++;
-                    addLog("EAP-TLS 握手失败: " + s.err + " 来源=" + src + " 用户=" + username);
-                    return buildEapResponse(CODE_ACCESS_REJECT, p.identifier, p.authenticator,
-                            username, eapId, EAP_CODE_FAILURE, null, "EAP-TLS 握手失败");
-                }
-                authOk++;
-                return eapTlsAccept(p, eapId, username, src, s);
+                return tlsSendFrag(p, s, username, src, eapId, fp, out, "done续片下发");
             }
-            s.outBuf = out;
-            s.outSent = 0;
-            byte[] first = s.nextOutFrag();
-            return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                    username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TLS, first, null);
+            return tlsSendFrag(p, s, username, src, eapId, fp, out, "首片下发");
         } else {
             // 分片未齐（客户端多片传输中）：不 feed 半记录；短等后发空挑战让客户端继续发下一片
             byte[] o2 = s.pollOutput(500);
             if (o2 != null && o2.length > 0) {
-                if (s.done) {
-                    // 同主路径：服务端 Finished 尚未下发，先发握手输出，客户端 ACK 后再收尾
-                    s.outBuf = o2;
-                    s.outSent = 0;
-                    return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                            username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TLS, s.nextOutFrag(), null);
-                }
-                s.outBuf = o2;
-                s.outSent = 0;
-                return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                        username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TLS, s.nextOutFrag(), null);
+                // s.done 时同主路径：服务端 Finished 尚未下发，先发握手输出，客户端 ACK 后再收尾
+                return tlsSendFrag(p, s, username, src, eapId, fp, o2, s.done ? "done续片下发" : "续片下发");
             }
-            return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
-                    username, eapId, EAP_CODE_REQUEST, EAP_TYPE_TLS,
-                    eapTlsFragments(new byte[0], 0, false), null);
+            return tlsSendEmpty(p, s, username, src, eapId, fp);
         }
+    }
+
+    /** 下发服务器输出快照的下一片：分配 EAP-Identifier（RFC 3748 §4.1 自增）、
+     *  记录 (入包 EAP-Id + 数据指纹 → 该片) 事务（会话维度 + src 维度），构造 Access-Challenge。
+     *  @param snapshot 非空则在发片前替换当前快照并把游标归零 */
+    private byte[] tlsSendFrag(Packet p, EapTlsSession s, String username, String src,
+                               int inEapId, long inFp, byte[] snapshot, String tag) {
+        if (snapshot != null && snapshot.length > 0) {
+            s.curFlight = snapshot;
+            s.outSent = 0;
+        }
+        int idx = s.outSent;
+        byte[] body = s.nextOutFrag();
+        if (body == null) {
+            return tlsSendEmpty(p, s, username, src, inEapId, inFp);
+        }
+        int outId = s.allocOutEapId();
+        s.addTx(inEapId, inFp, outId, s.curFlight, idx);
+        recordSrcTx(src, new TlsTx(inEapId, inFp, outId, s.curFlight, idx));
+        addLog("[DBG] " + tag + " 快照=" + s.curFlight.length + "B 片偏移=" + idx
+                + " flags=0x" + String.format("%02x", body[0] & 0xff)
+                + " 剩余=" + (s.curFlight.length - s.outSent) + "B 来源=" + src);
+        return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
+                username, outId, EAP_CODE_REQUEST, EAP_TYPE_TLS, body, null);
+    }
+
+    /** 空挑战（服务器暂无新数据，1 字节 flags=0）：同样按事务记账，供重传精确重放。 */
+    private byte[] tlsSendEmpty(Packet p, EapTlsSession s, String username, String src,
+                                int inEapId, long inFp) {
+        int outId = s.allocOutEapId();
+        s.addTx(inEapId, inFp, outId, null, 0);
+        recordSrcTx(src, new TlsTx(inEapId, inFp, outId, null, 0));
+        return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
+                username, outId, EAP_CODE_REQUEST, EAP_TYPE_TLS,
+                eapTlsFragments(new byte[0], 0, false), null);
+    }
+
+    /** 分片体长度（去掉 flags 1B 与可选 4B 总长头）。 */
+    private static int fragBodyLen(byte[] frag) {
+        return frag.length - (((frag[0] & EAP_TLS_FLAG_LENGTH) != 0) ? 5 : 1);
+    }
+
+    /** RFC 3748 §5.1 重传重放：以该事务当时的 EAP-Identifier 重发当时那一条响应。
+     *  分片响应按 (快照, 偏移) 逐字节重建；若该快照仍是当前快照，同时把游标放回该片之后，
+     *  保证客户端后续拉取顺序不乱（客户端重开 TLS 时仍需从首片起完整收一遍）。 */
+    private byte[] replayTlsTx(Packet p, String username, String src, int eapId, int inLen,
+                               TlsTx tx, String scope) {
+        byte[] body;
+        String where;
+        if (tx.flight == null) {
+            body = eapTlsFragments(new byte[0], 0, false);
+            where = "（空挑战）";
+        } else {
+            body = EapTlsSession.fragAt(tx.flight, tx.outIdx);
+            where = "（快照 " + tx.flight.length + "B，片偏移 " + tx.outIdx + "）";
+            EapTlsSession s = getTlsSession(p.identifier, src);
+            if (s != null && s.curFlight == tx.flight && body != null) {
+                s.outSent = tx.outIdx + fragBodyLen(body);
+            }
+        }
+        addLog("[iOS兼容] EAP-TLS 检测到网关重传（EAP-Id=" + eapId + "，" + inLen
+                + "B，scope=" + scope + "），按 RFC 3748 §5.1 重放该事务响应" + where
+                + " 来源=" + src + " 用户=" + username
+                + (body != null && body.length > 5 ? " body=" + hexHead(body) : " body=空"));
+        return buildEapResponse(CODE_ACCESS_CHALLENGE, p.identifier, p.authenticator,
+                username, tx.outId, EAP_CODE_REQUEST, EAP_TYPE_TLS,
+                body != null ? body : eapTlsFragments(new byte[0], 0, false), null);
+    }
+
+    /** 该入包（重组前分片）是否以完整 ClientHello 记录打头（TLS 记录 0x16 + 握手 0x01）。 */
+    private static boolean looksLikeClientHello(byte[] frag) {
+        return frag != null && frag.length >= 6
+                && (frag[0] & 0xff) == 0x16 && (frag[5] & 0xff) == 0x01;
+    }
+
+    /** 取 EAP-TLS 分片数据头若干字节用于调试日志。 */
+    private static String hexHead(byte[] b) {
+        StringBuilder sb = new StringBuilder();
+        for (int i = 0; i < Math.min(b.length, 60); i++) {
+            sb.append(String.format("%02x", b[i]));
+        }
+        return sb.toString();
     }
 
     /** EAP-TLS 认证成功收尾：用户名优先取验证通过的客户端证书 DN（证书登录身份），
@@ -2804,19 +3372,23 @@ public class RadiusServer {
         tlsSessions.put(src, s);
     }
 
-    /** TLS 会话双键查找：先按 identifier，再按 src 回退。 */
+    /** TLS 会话双键查找：先按 src（同源最可靠），radiusId 仅作回退。
+     *  注意：radiusId 是 0-255 单字节，不同客户端可能相同；若残留会话占用了
+     *  radiusId 键而 src 键未命中，回退可能拿到他人会话，故 radiusId 回退命中后
+     *  由调用方对 done/ok 状态复核（handleEapTls 已对 done&&!ok 会话清理拒绝）。 */
     private EapTlsSession getTlsSession(int radiusId, String src) {
-        EapTlsSession s = tlsSessions.get(radiusId);
+        EapTlsSession s = tlsSessions.get(src);
         if (s == null) {
-            s = tlsSessions.get(src);
+            s = tlsSessions.get(radiusId);
         }
         return s;
     }
 
-    /** TLS 会话双键清理。 */
+    /** TLS 会话双键清理（同步清理 src 维度的重传状态，避免泄漏）。 */
     private void dropTlsSession(int radiusId, String src) {
         tlsSessions.remove(radiusId);
         tlsSessions.remove(src);
+        tlsRetx.remove(src);
     }
 
     /** 服务器 → 客户端：把 TLS 输出切成 EAP-TLS 分片（首片带总长度，逐片带 MORE 标志）。 */
@@ -3132,6 +3704,59 @@ public class RadiusServer {
         }
     }
 
+    /** EAP-TLS 客户端证书附加策略：吊销状态（CERTS.txt）+ 用户账户状态（USERS.txt）。
+     *  证书链验证只保证"由本 CA 签发、签名与时效正确"，不代表该证书仍被授权接入——
+     *  已吊销证书、已停用账号必须拒绝（旧实现只验链，二者均可继续登录）。 */
+    private void checkClientCertPolicy(X509Certificate leaf) throws IOException {
+        String serial = leaf.getSerialNumber().toString(16);
+        // 1) 吊销状态：序列号在 CERTS.txt 登记为 R 即拒绝
+        try {
+            CertsDB db = new CertsDB();
+            db.load(baseDir);
+            CertsDB.CertEntry e = db.findBySerial(serial);
+            if (e != null && e.status == 'R') {
+                addLog("EAP-TLS 拒绝：客户端证书已吊销 序列号=" + serial);
+                throw new IOException("客户端证书已吊销（CERTS.txt 状态=R）: " + serial);
+            }
+        } catch (IOException ioe) {
+            throw ioe;
+        } catch (Exception ex) {
+            // 台账不可读时按"未登记"处理：链验证（签发/签名/时效）已通过
+            addLog("EAP-TLS 吊销检查异常（按未吊销处理）: " + ex);
+        }
+        // 2) 账户状态：证书 CN 命中 USERS.txt 且账号已停用时拒绝
+        try {
+            String cn = certCommonName(leaf);
+            if (cn != null && !cn.isEmpty()) {
+                UsersDB.User u = UsersDB.find(baseDir, cn);
+                if (u != null && !u.enabled()) {
+                    addLog("EAP-TLS 拒绝：证书对应用户已停用 CN=" + cn);
+                    throw new IOException("客户端证书对应用户已停用（USERS.txt 状态=D）: " + cn);
+                }
+            }
+        } catch (IOException ioe) {
+            throw ioe;
+        } catch (Exception ex) {
+            addLog("EAP-TLS 用户状态检查异常（按通过处理）: " + ex);
+        }
+    }
+
+    /** 从证书主体中提取 CN（按 X.500 解析，正确处理转义/多值 RDN）。 */
+    private static String certCommonName(X509Certificate cert) {
+        try {
+            org.bouncycastle.asn1.x500.X500Name xn = new org.bouncycastle.asn1.x500.X500Name(
+                    cert.getSubjectX500Principal().getName());
+            org.bouncycastle.asn1.x500.RDN[] rdns =
+                    xn.getRDNs(org.bouncycastle.asn1.x500.style.BCStyle.CN);
+            if (rdns.length > 0 && rdns[0].getFirst() != null) {
+                return rdns[0].getFirst().getValue().toString();
+            }
+        } catch (Exception ignore) {
+            // 解析失败视为无 CN
+        }
+        return null;
+    }
+
     /** 加载客户端证书信任锚（PKI/ROOT + PKI/CA 全部 .crt），供 EAP-TLS 客户端证书链验证使用。 */
     private List<X509Certificate> loadClientTrustAnchors() {
         List<X509Certificate> anchors = new ArrayList<>();
@@ -3340,6 +3965,19 @@ public class RadiusServer {
         totalAcct++;
         String src = pkt.getAddress().getHostAddress() + ":" + pkt.getPort();
         String user = p.getString(ATTR_USER_NAME);
+        // RFC 2866 §3：计费请求必须校验 Request Authenticator（含共享密钥的 MD5）；
+        // 携带 Message-Authenticator 时一并校验。否则任意主机可伪造 Start/Stop/Interim 记录。
+        byte[] ma = p.getAttr(ATTR_MESSAGE_AUTHENTICATOR);
+        if (ma != null && !verifyMessageAuthenticator(pkt.getData(), pkt.getLength(),
+                p.identifier, secret)) {
+            addLog("计费请求 Message-Authenticator 校验失败（已丢弃）来源=" + src + " 用户=" + user);
+            return null;
+        }
+        if (!verifyAcctRequestAuthenticator(pkt.getData(), pkt.getLength(), secret)) {
+            addLog("计费请求 Request Authenticator 校验失败（共享密钥不匹配或伪造，已丢弃）来源="
+                    + src + " 用户=" + user);
+            return null;
+        }
         int status = p.getInt(ATTR_ACCT_STATUS_TYPE);
         String session = p.getString(ATTR_ACCT_SESSION_ID);
         String statusName = status == 1 ? "Start" : status == 2 ? "Stop"
@@ -3460,6 +4098,25 @@ public class RadiusServer {
         return p;
     }
 
+    /** RFC 3579 §2.1：把超长 EAP-Message 属性的值按 ≤253 字节切分为多个同名属性。
+     *  RADIUS 属性长度字段只有 1 字节（最大 255 = 2 字节头 + 253 数据），
+     *  超过 253 字节会被截断写入 → 接收端属性遍历中断，读不到其后的属性
+     *  （曾导致客户端 1100B 的 EAP-TLS 片被编码成畸形包，服务端解析不到 Message-Authenticator）。 */
+    static List<Attr> splitEapAttributes(List<Attr> attrs) {
+        List<Attr> out = new ArrayList<>(attrs.size());
+        for (Attr a : attrs) {
+            if (a.type == ATTR_EAP_MESSAGE && a.value.length > 253) {
+                for (int off = 0; off < a.value.length; off += 253) {
+                    out.add(new Attr(ATTR_EAP_MESSAGE, Arrays.copyOfRange(a.value, off,
+                            Math.min(a.value.length, off + 253))));
+                }
+            } else {
+                out.add(a);
+            }
+        }
+        return out;
+    }
+
     /** 组装 RADIUS 包并计算响应 Authenticator = MD5(Code+Id+Length+ReqAuth+Attrs+Secret)。 */
     static byte[] buildPacket(int code, int id, byte[] reqAuth, List<Attr> attrs, String secret) {
         return buildPacket(code, id, reqAuth, attrs, secret, false);
@@ -3467,7 +4124,7 @@ public class RadiusServer {
 
     /** 组装 RADIUS 包；withMa=true 时附加 Message-Authenticator（HMAC-MD5，RFC 2869 §5.14）。 */
     static byte[] buildPacket(int code, int id, byte[] reqAuth, List<Attr> attrs, String secret, boolean withMa) {
-        List<Attr> list = new ArrayList<>(attrs);
+        List<Attr> list = new ArrayList<>(splitEapAttributes(attrs));
         int maOffset = -1;
         if (withMa) {
             list.add(new Attr(ATTR_MESSAGE_AUTHENTICATOR, new byte[16]));
@@ -3499,6 +4156,18 @@ public class RadiusServer {
         byte[] respAuth = md5(out, secret);
         System.arraycopy(respAuth, 0, out, 4, 16);
         return out;
+    }
+
+    /** 校验计费请求（RFC 2866 §3）Request Authenticator：
+     *  MD5(Code + Identifier + Length + 16 个 0 字节 + 请求属性 + Secret)，与包内 16 字节比对。 */
+    static boolean verifyAcctRequestAuthenticator(byte[] data, int len, String secret) {
+        if (data == null || len < 20 || data.length < len) {
+            return false;
+        }
+        byte[] copy = Arrays.copyOf(data, len);
+        byte[] got = Arrays.copyOfRange(copy, 4, 20);
+        Arrays.fill(copy, 4, 20, (byte) 0);
+        return constantTimeEquals(md5(copy, secret), got);
     }
 
     /** 校验请求包 Message-Authenticator：清掉属性 80 后对整包做 HMAC-MD5(secret)。 */
@@ -4397,7 +5066,7 @@ public class RadiusServer {
         putTlsSession(radiusId, src, s);
         s.thread = new Thread(() -> {
             try {
-                ModpkicaTlsServer server = new ModpkicaTlsServer(cred, false, null);
+                ModpkicaTlsServer server = new ModpkicaTlsServer(cred, false, null, null);
                 TlsServerProtocol proto = new TlsServerProtocol(s.inStream, s.outStream);
                 s.tlsProto = proto;
                 proto.accept(server);   // 外层 TLS 隧道握手（RFC 5281 §7）
@@ -5519,7 +6188,8 @@ public class RadiusServer {
 
     /** 构造 Access-Request 包（Authenticator 保持随机值；withMa=true 时附 Message-Authenticator）。 */
     static byte[] buildRequestPacket(int id, byte[] reqAuth, List<Attr> attrs, String secret, boolean withMa) {
-        List<Attr> list = new ArrayList<>(attrs);
+        // EAP-Message 超长须切分为多个属性（RFC 3579 §2.1），否则属性长度字节溢出成畸形包
+        List<Attr> list = new ArrayList<>(splitEapAttributes(attrs));
         int maOffset = -1;
         if (withMa) {
             list.add(new Attr(ATTR_MESSAGE_AUTHENTICATOR, new byte[16]));

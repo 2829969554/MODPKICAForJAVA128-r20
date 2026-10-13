@@ -9,6 +9,7 @@ import org.bouncycastle.asn1.DEROctetString;
 import org.bouncycastle.asn1.DERSequence;
 import org.bouncycastle.asn1.x509.AccessDescription;
 import org.bouncycastle.asn1.x509.AlgorithmIdentifier;
+import org.bouncycastle.asn1.x509.AuthorityInformationAccess;
 import org.bouncycastle.asn1.x509.AuthorityKeyIdentifier;
 import org.bouncycastle.asn1.x509.BasicConstraints;
 import org.bouncycastle.asn1.x509.CRLDistPoint;
@@ -382,6 +383,94 @@ public final class CertUtil {
     }
 
     /**
+     * 校验私钥与证书公钥是否配对——"文件存在"不等于"是同一个密钥对"。
+     *
+     * <p>用该密钥对做一次"私钥签名 → 证书公钥验签"闭环，天然覆盖
+     * RSA / RSA-PSS / ECC / SM2 / EdDSA / DSA / PQC(ML-DSA) 等全部算法，
+     * 无需按算法解析密钥结构。不匹配时抛 IllegalStateException，防止误配的
+     * .key 文件（换错/损坏）静默签出无法链式验证的证书或 CRL。
+     *
+     * @param key  私钥（应为证书对应私钥）
+     * @param cert 证书（提供公钥）
+     * @param what 角色描述，用于错误信息（如 "颁发者"）
+     */
+    public static void assertKeyMatchesCert(PrivateKey key, X509Certificate cert, String what) {
+        PublicKey pub = cert.getPublicKey();
+        String sigAlg = probeSignatureAlgorithm(pub);
+        if (sigAlg == null) {
+            System.out.println("[警告] 无法校验" + what + "私钥与证书是否配对（公钥算法 "
+                    + pub.getAlgorithm() + "），已跳过检查");
+            return;
+        }
+        try {
+            byte[] probe = new byte[32];
+            new SecureRandom().nextBytes(probe);
+            java.security.Signature s = java.security.Signature.getInstance(sigAlg, "BC");
+            s.initSign(key);
+            s.update(probe);
+            byte[] sig = s.sign();
+            s.initVerify(pub);
+            s.update(probe);
+            if (!s.verify(sig)) {
+                throw new IllegalStateException(what + "私钥与证书公钥不匹配："
+                        + "请确认该 ID 对应的 .key 与 .crt 来自同一密钥对");
+            }
+        } catch (IllegalStateException e) {
+            throw e;
+        } catch (Exception e) {
+            // 算法名在本 Provider 不支持等：告警放行，避免新算法被误拦
+            System.out.println("[警告] " + what + "私钥与证书配对校验无法执行（"
+                    + e.getClass().getSimpleName() + ": " + e.getMessage() + "），已跳过");
+        }
+    }
+
+    /** 按公钥类型选择配对校验用签名算法；无法确定返回 null。 */
+    private static String probeSignatureAlgorithm(PublicKey pub) {
+        String alg = pub.getAlgorithm() == null ? "" : pub.getAlgorithm().toUpperCase(Locale.ROOT);
+        if (alg.contains("RSA")) {
+            return "SHA256withRSA";
+        }
+        if (alg.contains("EC") || alg.contains("ECDSA")) {
+            // BC 对 SM2 密钥也报告 "EC"，必须按曲线区分：SM2 用 SM3withSM2
+            return isSm2PublicKey(pub) ? "SM3withSM2" : "SHA256withECDSA";
+        }
+        if (alg.contains("DSA")) {
+            return "SHA256withDSA";
+        }
+        if (alg.contains("ED25519")) {
+            return "Ed25519";
+        }
+        if (alg.contains("ED448")) {
+            return "Ed448";
+        }
+        if (PemIO.isPqcAlgName(alg)) {
+            return pub.getAlgorithm(); // ML-DSA 等纯签名算法：算法名即签名算法名
+        }
+        return null;
+    }
+
+    /** 判断公钥是否为 SM2 曲线（BC 对 SM2 也报告 "EC"，须按曲线名/阶区分）。 */
+    static boolean isSm2PublicKey(PublicKey pub) {
+        if (!(pub instanceof java.security.interfaces.ECPublicKey)) {
+            return false;
+        }
+        try {
+            java.security.spec.ECParameterSpec spec =
+                    ((java.security.interfaces.ECPublicKey) pub).getParams();
+            if (spec instanceof ECNamedCurveSpec) {
+                String name = ((ECNamedCurveSpec) spec).getName();
+                return name != null && name.toLowerCase(Locale.ROOT).contains("sm2");
+            }
+            // 退化判断：SM2 推荐曲线的阶
+            return new BigInteger(
+                    "FFFFFFFEFFFFFFFFFFFFFFFFFFFFFFFF7203DF6B21C6052B53BBF40939D54123", 16)
+                    .equals(spec.getOrder());
+        } catch (Exception ignore) {
+            return false;
+        }
+    }
+
+    /**
      * 根据颁发者私钥与算法类型构造 ContentSigner。
      * SM2 时返回自定义 {@link SM2ContentSigner}。
      *
@@ -537,8 +626,8 @@ public final class CertUtil {
      *
      * @param issuerCert 颁发者证书
      * @param issuerKey  颁发者私钥
-     * @param subject    新证书主体 DN
-     * @param subjectPub 新证书公钥
+     * @param subject    使用者
+     * @param subjectPub 使用者公钥
      * @param serial     序列号
      * @param notBefore  生效起
      * @param notAfter   生效止
@@ -598,8 +687,7 @@ public final class CertUtil {
                         new GeneralName(GeneralName.uniformResourceIdentifier, caIssuerUrl)));
             }
             cb.addExtension(Extension.authorityInfoAccess, false,
-                    org.bouncycastle.asn1.x509.AuthorityInformationAccess.getInstance(
-                            new DERSequence(vec)));
+                    AuthorityInformationAccess.getInstance(new DERSequence(vec)));
         }
 
         // CertificatePolicies(CPS + UserNotice)
